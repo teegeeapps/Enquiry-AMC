@@ -1,0 +1,117 @@
+## Employee table
+
+CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_name VARCHAR(100) NOT NULL,
+    employee_number VARCHAR(50) UNIQUE NOT NULL,
+    contact_no VARCHAR(15) NOT NULL,
+    email_id VARCHAR(100),
+    last_login_time DATETIME NULL,
+    password VARCHAR(255) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_by VARCHAR(50) NULL,
+    updated_by VARCHAR(50) NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+###########Create Role Table
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(50) UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO roles (role_name) VALUES ('Admin'), ('Manager'), ('Technician');
+
+#######Create employee and role mapping table
+CREATE TABLE employee_roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    role_id INT NOT NULL,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+##### Enquiry Status table
+CREATE TABLE enquiry_status (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    status_name VARCHAR(100) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO enquiry_status (status_name) VALUES
+('Enquiry list'),
+('Quotation sent'),
+('In Progress'),
+('Order confirmed'),
+('Order delivered'),
+('Order dropped'),
+('Not interested'),
+('Customer not reachable');
+
+
+#### Enquiry table creation
+
+CREATE TABLE enquiries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquiry_id VARCHAR(20) UNIQUE, -- For EQ-prefixed enquiry ID (generate in code)
+    client_name VARCHAR(255) NOT NULL,
+    contact_person_name VARCHAR(255) NOT NULL,
+    contact_no1 VARCHAR(15) NOT NULL,
+    contact_no2 VARCHAR(15),
+    email_id VARCHAR(100),
+    address TEXT NOT NULL,
+    requirement TEXT NOT NULL,
+    requirement_category VARCHAR(100) NOT NULL,
+    source_of_enquiry VARCHAR(100),
+    enquiry_date DATE NOT NULL,
+    enquiry_status_id INT NOT NULL,
+    follow_up_date DATE,
+    follow_up_notes TEXT,
+    delivered_date DATE,
+    requested_delivery_date DATE,
+    amc_date DATE,
+    is_active TINYINT(1) DEFAULT 1,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (enquiry_status_id) REFERENCES enquiry_status(id) ON DELETE RESTRICT
+);
+
+## Follow up details 
+
+CREATE TABLE enquiry_followups (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquiry_id INT NOT NULL,
+    follow_up_date DATE NOT NULL,
+    follow_up_notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (enquiry_id) REFERENCES enquiries(id) ON DELETE CASCADE
+);
+
+
+#### Sample Query for Enquiry Fetch (with status name):
+
+SELECT e.*, s.status_name
+FROM enquiries e
+JOIN enquiry_status s ON e.enquiry_status_id = s.id;
+
+
+
+#### Technician and enquiry mapping Table
+### Enquiry_technician_map
+CREATE TABLE enquiry_technician_map (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquiry_id VARCHAR(20) NOT NULL,
+    technician_employee_id INT NOT NULL,
+    assigned_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    assigned_by VARCHAR(50),
+    FOREIGN KEY (enquiry_id) REFERENCES enquiry(enquiry_id),
+    FOREIGN KEY (technician_employee_id) REFERENCES employees(id)
+);
+
