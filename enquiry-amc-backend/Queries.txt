@@ -114,3 +114,30 @@ CREATE TABLE enquiry_technician_map (
     FOREIGN KEY (technician_employee_id) REFERENCES employees(id)
 );
 
+
+-- ❌ Drop old table if exists
+DROP TABLE IF EXISTS enquiry_technician_map;
+
+-- ✅ Technician assignment table
+CREATE TABLE enquiry_assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquiry_id VARCHAR(20) NOT NULL,
+    technician_employee_id INT NOT NULL,
+    delivery_instructions TEXT,
+    customer_location TEXT,
+    assigned_by VARCHAR(50),
+    assigned_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (enquiry_id) REFERENCES enquiries(enquiry_id) ON DELETE CASCADE,
+    FOREIGN KEY (technician_employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+-- ✅ Visit history table
+CREATE TABLE enquiry_visit_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquiry_id VARCHAR(20) NOT NULL,
+    visit_date DATE NOT NULL,
+    added_by VARCHAR(50),
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (enquiry_id) REFERENCES enquiries(enquiry_id) ON DELETE CASCADE
+);
+
