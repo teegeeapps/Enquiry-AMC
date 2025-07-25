@@ -13,14 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Read input
-//$data = json_decode(file_get_contents("php://input"), true);
-$inputJSON = '{
+$data = json_decode(file_get_contents("php://input"), true);
+/* $inputJSON = '{
   "employee_id": "E01",
   "role_id": 1,
   "modified_by": "Admin"
-}';
+}'; */
 
-$data = json_decode($inputJSON, true);
+//$data = json_decode($inputJSON, true);
 $employeeNumber = $data['employee_id'] ?? null;
 $roleId = $data['role_id'] ?? null;
 $currentUser = $data['modified_by'] ?? 'system';

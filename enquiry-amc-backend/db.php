@@ -2,7 +2,7 @@
 $host = 'localhost';
 $user = 'root';
 $pass = '';
-$db = 'enquiry_amc';
+$db = 'amc';
 
 $conn = new mysqli($host, $user, $pass, $db);
 

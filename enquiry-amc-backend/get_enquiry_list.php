@@ -67,8 +67,8 @@ if ($result->num_rows > 0) {
             etm.assigned_by, etm.assigned_date,
             f.follow_up_date, f.follow_up_notes
         FROM enquiries e
-        INNER JOIN enquiry_technician_map etm ON e.enquiry_id = etm.enquiry_id
-        INNER JOIN employees emp ON etm.technician_employee_id = emp.id
+        INNER JOIN enquiry_assignments etm ON e.enquiry_id = etm.enquiry_id
+        INNER JOIN employees emp ON etm.technician_employee_id = emp.employee_number
         LEFT JOIN (
             SELECT f1.*
             FROM enquiry_followups f1
@@ -122,8 +122,8 @@ if ($result->num_rows > 0) {
         emp.employee_name AS technician_name,
         s.status_name
     FROM enquiries e
-    LEFT JOIN enquiry_technician_map etm ON e.enquiry_id = etm.enquiry_id
-    LEFT JOIN employees emp ON etm.technician_employee_id = emp.id
+    LEFT JOIN enquiry_assignments etm ON e.enquiry_id = etm.enquiry_id
+    LEFT JOIN employees emp ON etm.technician_employee_id = emp.employee_number
     LEFT JOIN enquiry_status s ON e.enquiry_status_id = s.id
     WHERE e.is_active = 1
 ";

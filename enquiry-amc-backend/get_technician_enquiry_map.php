@@ -1,7 +1,8 @@
 <?php
-require 'db.php';
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+require 'db.php';
 // { "enquiry_id": "EQ001" } -> sample request
 $data = json_decode(file_get_contents("php://input"), true);
 $enquiryId = $data['enquiry_id'] ?? '';
@@ -24,7 +25,7 @@ $stmt->close();
 $sql2 = "SELECT ea.technician_employee_id, e.employee_name AS technician_name,
                 ea.delivery_instructions, ea.customer_location, ea.assigned_by, ea.assigned_date
          FROM enquiry_assignments ea
-         LEFT JOIN employees e ON ea.technician_employee_id = e.id
+         LEFT JOIN employees e ON ea.technician_employee_id = e.employee_number
          WHERE ea.enquiry_id=?";
 $stmt2 = $conn->prepare($sql2);
 $stmt2->bind_param("s", $enquiryId);
