@@ -2,9 +2,9 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
 require 'db.php';
 
-//$employee_number = trim($_POST['employee_number']);
 $input = json_decode(file_get_contents("php://input"), true);
 $employee_number = $input['employee_number'];
 
@@ -16,6 +16,7 @@ if (!$employee_number) {
 $stmt = $conn->prepare("
     SELECT e.id, e.employee_name, e.employee_number, e.contact_no, e.email_id,
            e.is_active, e.last_login_time, e.created_at, e.updated_at,
+           e.password,                -- 🔹 Added password field
            r.role_name
     FROM employees e
     LEFT JOIN employee_roles er ON e.id = er.employee_id
