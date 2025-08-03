@@ -141,3 +141,22 @@ CREATE TABLE enquiry_visit_history (
     FOREIGN KEY (enquiry_id) REFERENCES enquiries(enquiry_id) ON DELETE CASCADE
 );
 
+CREATE TABLE amc_list (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquiry_id VARCHAR(50),
+    client_name VARCHAR(100),
+    contact_person_name VARCHAR(100),
+    contact_no1 VARCHAR(20),
+    requirement_category VARCHAR(100),
+    delivered_date DATE,
+    amc_date DATE,
+    amc_period VARCHAR(50),
+    amc_status VARCHAR(50),
+
+    created_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_by VARCHAR(50),
+    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+ALTER TABLE enquiry_assignments ADD COLUMN assignment_type VARCHAR(20) DEFAULT 'ENQUIRY';
