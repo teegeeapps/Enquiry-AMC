@@ -5,6 +5,26 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 
+/* Sample request
+to list down all roles
+{
+  "action": "get"
+}
+
+To add new role
+{
+  "action": "add",
+  "role_name": "Technician"
+}
+
+to update
+{
+  "action": "update",
+  "role_id": 2,
+  "role_name": "Field Technician"
+}
+*/
+
 // Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -83,26 +103,3 @@ try {
 
 $conn->close();
 ?>
-
-
-
-
-/* Sample request
-to list down all roles
-{
-  "action": "get"
-}
-
-To add new role
-{
-  "action": "add",
-  "role_name": "Technician"
-}
-
-to update
-{
-  "action": "update",
-  "role_id": 2,
-  "role_name": "Field Technician"
-}
-*/

@@ -14,13 +14,21 @@ if (!$employee_number) {
 }
 
 $stmt = $conn->prepare("
-    SELECT e.id, e.employee_name, e.employee_number, e.contact_no, e.email_id,
-           e.is_active, e.last_login_time, e.created_at, e.updated_at,
-           e.password,                -- 🔹 Added password field
-           r.role_name
+    SELECT 
+        e.id, 
+        e.employee_name, 
+        e.employee_number, 
+        e.contact_no, 
+        e.email_id,
+        e.is_active, 
+        e.last_login_time, 
+        e.created_at, 
+        e.updated_at,
+        e.password, 
+        e.role_id,
+        r.role_name
     FROM employees e
-    LEFT JOIN employee_roles er ON e.id = er.employee_id
-    LEFT JOIN roles r ON er.role_id = r.id
+    LEFT JOIN roles r ON e.role_id = r.id
     WHERE LOWER(e.employee_number) = LOWER(?)
 ");
 $stmt->bind_param("s", $employee_number);
