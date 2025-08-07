@@ -1,0 +1,21 @@
+<div class="enquiry-header">
+  <h2>📋 Employee Master</h2>
+</div>
+
+<app-dynamic-table *ngIf="employeeColumns.length"
+  [data]="employeeData"
+  [columns]="employeeColumns"
+  [enablePagination]="true"
+  [enableFilter]="true"
+  [showAssignTechnician]="false" 
+  (edit)="onEditEmployee($event)"
+  >
+</app-dynamic-table>
+
+
+<!-- Floating Add Button -->
+<button mat-fab color="primary" class="fab-button" (click)="addNewEmployee()" matTooltip="Add New Employee">
+  <mat-icon>add</mat-icon>
+</button>
+
+

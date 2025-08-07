@@ -1,0 +1,193 @@
+<div class="enquiry-form-wrapper mat-elevation-z4">
+  <h2>{{ isEditMode ? 'Edit Enquiry' : 'Create New Enquiry' }}</h2>
+
+  <form [formGroup]="enquiryForm" (ngSubmit)="onSubmit()">
+
+    <mat-accordion multi="true">
+
+      <!-- Client Details -->
+      <mat-expansion-panel expanded>
+        <mat-expansion-panel-header>
+          <mat-panel-title class="label-sec">
+            <mat-icon>business</mat-icon> Client Details
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="enquiry-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Client / Company Name</mat-label>
+            <input matInput formControlName="client_name" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contact Person Name</mat-label>
+            <input matInput formControlName="contact_person" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contact No 1</mat-label>
+            <input matInput type="tel" formControlName="contact_number" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contact No 2</mat-label>
+            <input matInput type="tel" formControlName="alt_contact_number" />
+          </mat-form-field>
+
+          <!-- Email ID -->
+          <mat-form-field appearance="outline">
+            <mat-label>Email ID</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+
+          <!-- Empty spacer to move textarea to next row -->
+          <div class="grid-spacer"></div>
+
+          <!-- Address (Full Width) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Address</mat-label>
+            <textarea matInput formControlName="address" rows="4"></textarea>
+          </mat-form-field>
+
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Requirement Info -->
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>assignment</mat-icon> Requirement Info
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="enquiry-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Requirement</mat-label>
+            <input matInput formControlName="requirement" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Requirement Category</mat-label>
+            <mat-select formControlName="requirement_category">
+              <mat-option *ngFor="let status of req_cat" [value]="status.name">{{ status.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Source of Enquiry</mat-label>
+            <mat-select formControlName="source">
+              <mat-option *ngFor="let status of sourceEnq" [value]="status.name">{{ status.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Dates & Status -->
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>event</mat-icon> Enquiry Status & Dates
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="enquiry-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Enquiry Date</mat-label>
+            <input matInput [matDatepicker]="enqDatePicker" formControlName="enquiry_date" />
+            <mat-datepicker-toggle matSuffix [for]="enqDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #enqDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Requested Delivery Date</mat-label>
+            <input matInput [matDatepicker]="reqDatePicker" formControlName="requested_delivery_date" />
+            <mat-datepicker-toggle matSuffix [for]="reqDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #reqDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="enquiryStatusOptions?.length">
+            <mat-label>Enquiry Status</mat-label>
+            <mat-select formControlName="enquiry_status">
+              <mat-option *ngFor="let status of enquiryStatusOptions" [value]="status.id">
+                {{ status.status_name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-expansion-panel>
+      <!-- Dates & Status -->
+
+
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>chat</mat-icon> Follow Up
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="enquiry-form-grid">
+          <!-- Follow-up Date -->
+          <mat-form-field appearance="outline">
+            <mat-label>Follow-up Date</mat-label>
+            <input matInput [matDatepicker]="fpicker" formControlName="follow_up_dates" />
+            <mat-datepicker-toggle matSuffix [for]="fpicker"></mat-datepicker-toggle>
+            <mat-datepicker #fpicker></mat-datepicker>
+          </mat-form-field>
+
+          <!-- Empty div to push textarea to full row -->
+          <div class="grid-spacer"></div>
+
+          <!-- Follow-up Notes -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Follow-up Notes / Remarks</mat-label>
+            <textarea matInput formControlName="follow_up_notes" rows="4"></textarea>
+          </mat-form-field>
+        </div>
+
+      </mat-expansion-panel>
+
+      <!-- Delivery & AMC -->
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>local_shipping</mat-icon> Delivery & AMC
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="enquiry-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Delivered Date</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="delivered_date"
+              (dateChange)="calculateAmcDate()" />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>No. of Years</mat-label>
+            <mat-select formControlName="no_of_years" (selectionChange)="calculateAmcDate()">
+              <mat-option *ngFor="let year of yearsList" [value]="year">{{ year }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- AMC Date (auto + editable) -->
+          <mat-form-field appearance="outline">
+            <mat-label>AMC Date</mat-label>
+            <input matInput [matDatepicker]="amcPicker" formControlName="amc_date" />
+            <mat-datepicker-toggle matSuffix [for]="amcPicker"></mat-datepicker-toggle>
+            <mat-datepicker #amcPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </mat-expansion-panel>
+
+    </mat-accordion>
+
+    <!-- Submit Button -->
+    <div class="submit-row">
+      <button mat-raised-button color="primary" type="submit">
+        {{ isEditMode ? 'Update' : 'Save' }}
+      </button>
+    </div>
+
+  </form>
+</div>

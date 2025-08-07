@@ -1,0 +1,75 @@
+<div class="assign-wrapper mat-elevation-z4">
+  <h2>Assign Technician</h2>
+
+  <form [formGroup]="assignForm" (ngSubmit)="onSubmit()" class="assign-grid">
+
+    <!-- Client Name -->
+    <mat-form-field appearance="outline">
+      <mat-label>Client Name</mat-label>
+      <input matInput formControlName="client_name" required />
+    </mat-form-field>
+
+    <!-- Contact Person -->
+    <mat-form-field appearance="outline">
+      <mat-label>Contact Person</mat-label>
+      <input matInput formControlName="contact_person" required />
+    </mat-form-field>
+
+    <!-- Contact Number -->
+    <mat-form-field appearance="outline">
+      <mat-label>Contact Number</mat-label>
+      <input matInput type="tel" formControlName="contact_number" required />
+    </mat-form-field>
+
+    <!-- Visit Date -->
+    <mat-form-field appearance="outline">
+      <mat-label>Visit Date</mat-label>
+      <input matInput [matDatepicker]="visitPicker" formControlName="visit_date" required />
+      <mat-datepicker-toggle matSuffix [for]="visitPicker"></mat-datepicker-toggle>
+      <mat-datepicker #visitPicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Address -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Address</mat-label>
+      <textarea matInput formControlName="address" rows="2"></textarea>
+    </mat-form-field>
+
+    <!-- Delivery Instructions -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Delivery Instructions</mat-label>
+      <textarea matInput formControlName="delivery_instructions" rows="2"></textarea>
+    </mat-form-field>
+
+    <!-- Customer Location -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Customer Location</mat-label>
+      <input matInput formControlName="customer_location" />
+    </mat-form-field>
+
+    <!-- Assigned For Dropdown -->
+    <mat-form-field appearance="outline">
+      <mat-label>Assigned For</mat-label>
+      <mat-select formControlName="assigned_for" required>
+        <mat-option value="AMC">AMC</mat-option>
+        <mat-option value="Enquiry">Enquiry</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Assigned To Multi-Select -->
+    <mat-form-field appearance="outline">
+      <mat-label>Assigned To (Technicians)</mat-label>
+      <mat-select formControlName="assigned_to" multiple required>
+        <mat-option *ngFor="let employee of employeeData" [value]="employee.employee_id">
+          {{ employee.employee_name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Submit Button Full Width -->
+    <div class="full-width submit-row">
+      <button mat-raised-button color="primary" type="submit">Assign</button>
+    </div>
+
+  </form>
+</div>

@@ -1,0 +1,13 @@
+<app-dynamic-table 
+  [data]="amcData" 
+  [columns]="amcColumns" 
+  [enableFilter]="true" 
+  [enablePagination]="true"
+  (edit)="editAMC($event)"
+  >
+</app-dynamic-table>
+
+<!-- Floating Add Button -->
+<button mat-fab color="primary" class="fab-button" (click)="addNewAMC()" matTooltip="Add New AMC">
+  <mat-icon>add</mat-icon>
+</button>

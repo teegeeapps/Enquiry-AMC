@@ -1,0 +1,75 @@
+/* Page Background */
+body {
+  background-color: #f4f6f9; /* Light grey background */
+}
+
+/* Wrapper for the whole form */
+.enquiry-form-wrapper {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 25px;
+  background: #ffffff; /* White card */
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Accordion Panels */
+mat-expansion-panel {
+  background-color: #fafafa; /* Slightly off-white */
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+
+  mat-expansion-panel-header {
+   // background: linear-gradient(90deg, #cbcbcd 0%, #a0a0a2 100%);
+    color: #fff;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+/* Grid Layout */
+.enquiry-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Submit Button Row */
+.submit-row {
+  margin-top: 25px;
+  text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .enquiry-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive: Single column on small screens */
+@media (max-width: 768px) {
+  .enquiry-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.material-icons {
+    font-size: 1.3rem;
+    margin-right: 0.5rem;
+    color: #dcbc07;
+  }
+
+
+
+  /* .label-sec{
+    color: #323a74;
+  } */

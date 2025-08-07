@@ -1,0 +1,35 @@
+<div class="config-container">
+  <h2>App Configuration</h2>
+  <form [formGroup]="configForm" (ngSubmit)="onSubmit()" enctype="multipart/form-data">
+
+    <!-- App Title -->
+    <div class="form-group">
+      <label>App Title <span class="required">*</span></label>
+      <input type="text" formControlName="appTitle" />
+    </div>
+
+    <!-- Logo Upload -->
+    <div class="form-group">
+      <label>App Logo</label>
+      <input type="file" (change)="onLogoChange($event)" accept="image/*" />
+      <div *ngIf="logoPreview" class="logo-preview">
+        <img [src]="logoPreview" alt="Logo Preview" />
+      </div>
+    </div>
+
+    <!-- Roles -->
+    <div class="form-group">
+      <label>Roles (comma separated) <span class="required">*</span></label>
+      <input type="text" formControlName="roles" />
+    </div>
+
+    <!-- Enquiry Statuses -->
+    <div class="form-group">
+      <label>Enquiry Statuses (comma separated) <span class="required">*</span></label>
+      <input type="text" formControlName="enquiryStatuses" />
+    </div>
+
+    <!-- Submit -->
+    <button type="submit">Save Configuration</button>
+  </form>
+</div>

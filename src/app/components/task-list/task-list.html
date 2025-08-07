@@ -1,0 +1,20 @@
+
+  <div class="enquiry-header">
+  <h2>📋 Technician View
+</h2>
+</div>
+
+<app-dynamic-table
+  *ngIf="taskColumns.length"
+  [data]="taskList"
+  [columns]="taskColumns"
+  [enablePagination]="true"
+  [enableFilter]="true"
+  [showCompletedDropdown]="true"
+  (edit)="onEdittask($event)">
+</app-dynamic-table>
+<!-- 
+  <div class="save-btn-wrapper">
+    <button (click)="saveTasks()">Save</button>
+  </div>
+ -->

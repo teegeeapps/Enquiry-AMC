@@ -1,0 +1,28 @@
+<div class="enquiry-header">
+  <h2>📋 Enquiry Dashboard</h2>
+</div>
+
+<app-dynamic-table
+  *ngIf="displayedColumns.length && enquiryData.length"
+  [data]="enquiryData"
+  [columns]="displayedColumns"  
+  [enablePagination]="true"
+  [enableFilter]="true"
+  [showAssignTechnician]="true"
+  [showAmcButton]="true"
+  (edit)="onEditEnquiry($event)"
+  (assignTechnician)="onAssignTechnician($event)"
+  (amc)="onAmcUpdate($event)"
+>
+</app-dynamic-table>
+
+<!-- No Data Message -->
+<div *ngIf="!enquiryData.length" class="no-data-message">
+  <mat-icon>info</mat-icon>
+  No enquiries found.
+</div>
+
+<!-- Floating Add Button -->
+<button mat-fab color="primary" class="fab-button" (click)="addNewEnquiry()" matTooltip="Add New Enquiry">
+  <mat-icon>add</mat-icon>
+</button>

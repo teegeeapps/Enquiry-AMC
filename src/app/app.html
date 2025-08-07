@@ -1,0 +1,60 @@
+<mat-toolbar class="navbar custom-toolbar" *ngIf="router.url !== '/login'">
+  <!-- <mat-toolbar-row> -->
+  <button mat-icon-button (click)="toggleSidebar()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <button mat-button class="toolbar-item" [routerLink]="'/home'" routerLinkActive="active-link">
+    <img src="logo.png" class="logo-img" />
+  </button>
+ 
+  <span class="example-spacer"></span>
+   <!-- ✅ Username display -->
+  <span class="username" *ngIf="username">
+    <mat-icon>person</mat-icon> {{username}}
+  </span>
+  <button mat-button class="toolbar-item" (click)="onSubmit()">Logout</button>
+  <!-- </mat-toolbar-row> -->
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container">
+
+  <mat-sidenav #sidenav mode="side" opened class="sidenav" *ngIf="router.url !== '/login'">
+    
+    <!-- Admin: Show Enquiry & Employee -->
+    <mat-nav-list *ngIf="userRole === 'Admin'">
+
+      <a mat-list-item routerLink="/employee-list">
+        <mat-icon matListIcon>group</mat-icon>
+        Employee Master
+      </a>
+
+      <a mat-list-item routerLink="/enquiry-list">
+        <mat-icon matListIcon>dashboard</mat-icon>
+        Enquiry Dashboard
+      </a>
+
+    </mat-nav-list>
+
+    <!-- Technician: Show Task List -->
+    <mat-nav-list *ngIf="userRole === 'Technician'">
+      <a mat-list-item routerLink="/task-list">
+        <mat-icon matListIcon>assignment_turned_in</mat-icon>
+        Technician View
+      </a>
+    </mat-nav-list>
+
+    <!-- Common Logout Link -->
+    <a mat-list-item (click)="logout()">
+      <mat-icon matListIcon>logout</mat-icon>
+      Log Out
+    </a>
+
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+  
+</mat-sidenav-container>

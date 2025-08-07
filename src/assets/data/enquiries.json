@@ -1,0 +1,29 @@
+[
+  {
+    "id": 101,
+    "client_name": "XYZ Corp",
+    "contact_person_name": "XYZ",
+    "contact_number":"9087655643",
+    "enquiry_date": "2025-06-17",
+    "requested_delivery_date": "2025-06-25",
+    "enquiry_status": "Order Confirmed",
+    "latest_stage": "Delivery",
+    "amc_date": "2026-06-25",
+    "technician_name": "Karthik",
+    "enquiry_remarks": "Needs urgent delivery"
+  },
+  {
+    "id": 102,
+    "client_name": "ABC Ltd",
+     "contact_person_name": "ABC",
+      "contact_number":"9087655643",
+    "enquiry_date": "2025-06-20",
+    "requested_delivery_date": "2025-06-30",
+    "enquiry_status": "Quotation Send",
+    "latest_stage": "Product Initial Enquiry",
+    "amc_date": null,
+    "technician_name": null,
+    "enquiry_remarks": ""
+  }
+]
+

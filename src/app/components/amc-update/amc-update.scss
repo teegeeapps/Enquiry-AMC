@@ -1,0 +1,37 @@
+.amc-form-wrapper {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 25px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+  h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #323a74;
+    font-weight: 600;
+  }
+}
+
+.amc-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.submit-row {
+  text-align: right;
+  margin-top: 20px;
+}
+
+/* Responsive for Mobile */
+@media (max-width: 768px) {
+  .amc-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

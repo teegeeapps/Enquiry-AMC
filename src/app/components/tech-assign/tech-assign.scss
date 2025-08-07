@@ -1,0 +1,28 @@
+.assign-wrapper {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.assign-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .submit-row {
+    text-align: right;
+  }
+}
+
+/* Responsive: Single column on small screens */
+@media (max-width: 768px) {
+  .assign-grid {
+    grid-template-columns: 1fr;
+  }
+}

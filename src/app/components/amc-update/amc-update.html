@@ -1,0 +1,70 @@
+<div class="amc-form-wrapper">
+  <h2>{{ isEditMode ? 'Update AMC' : 'Create AMC' }}</h2>
+
+  <form [formGroup]="amcForm" (ngSubmit)="onSubmit()" class="amc-form-grid">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Client (Company Name)</mat-label>
+      <input matInput formControlName="client_name" required />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Contact Person Name</mat-label>
+      <input matInput formControlName="contact_person" required />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Contact No 1</mat-label>
+      <input matInput type="tel" formControlName="contact_number" required />
+    </mat-form-field>
+
+    <!-- Delivered Date with Datepicker -->
+    <mat-form-field appearance="outline">
+      <mat-label>Delivered Date</mat-label>
+      <input 
+        matInput 
+        [matDatepicker]="deliveredPicker" 
+        formControlName="delivered_date" 
+        (dateChange)="calculateAmcDate()" 
+        required 
+      />
+      <mat-datepicker-toggle matSuffix [for]="deliveredPicker"></mat-datepicker-toggle>
+      <mat-datepicker #deliveredPicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- No. of Years Dropdown -->
+    <mat-form-field appearance="outline">
+      <mat-label>No. of Years</mat-label>
+      <mat-select formControlName="no_of_years" (selectionChange)="calculateAmcDate()" required>
+        <mat-option *ngFor="let year of yearsList" [value]="year">{{ year }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- AMC Date with Datepicker (User can override) -->
+    <mat-form-field appearance="outline">
+      <mat-label>AMC Date</mat-label>
+      <input matInput [matDatepicker]="amcPicker" formControlName="amc_date" required />
+      <mat-datepicker-toggle matSuffix [for]="amcPicker"></mat-datepicker-toggle>
+      <mat-datepicker #amcPicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Current Year AMC Status only in Update Mode -->
+    <mat-form-field *ngIf="isEditMode" appearance="outline">
+      <mat-label>Current Year AMC Status</mat-label>
+      <mat-select formControlName="current_amc_status" required>
+        <mat-option value="">Select</mat-option>
+        <mat-option value="Active">Active</mat-option>
+        <mat-option value="AMC Pending">AMC Pending</mat-option>
+        <mat-option value="AMC Closed">AMC Closed</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Submit Button -->
+    <div class="submit-row full-width">
+      <button mat-raised-button color="primary" type="submit">
+        {{ isEditMode ? 'Update' : 'Save' }}
+      </button>
+    </div>
+
+  </form>
+</div>

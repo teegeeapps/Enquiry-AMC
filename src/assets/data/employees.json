@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "Ravi Kumar",
+    "employee_id": "EMP001",
+    "contact_number": "9876543210",
+    "email": "ravi@example.com",
+    "role": "Manager",
+    "status": "Active"
+  },
+  {
+    "id": 2,
+    "name": "Divya S",
+    "employee_id": "EMP002",
+    "contact_number": "9876540000",
+    "email": "divya@example.com",
+    "role": "Technician",
+    "status": "Inactive"
+  },
+   {
+    "id": 3,
+    "name": "Karan",
+    "employee_id": "EMP003",
+    "contact_number": "9876543210",
+    "email": "karan@example.com",
+    "role": "Manager",
+    "status": "Active"
+  },
+  {
+    "id": 4,
+    "name": "Deepak",
+    "employee_id": "EMP004",
+    "contact_number": "9876540900",
+    "email": "deepak@example.com",
+    "role": "Technician",
+    "status": "Inactive"
+  }
+]
