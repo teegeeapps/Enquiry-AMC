@@ -108,12 +108,15 @@ if ($enquiryId && !$technicianId) {
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
+     // 🔹 Define columns you want to show in Angular Table
+    $columns = ['enquiry_id', 'client_name', 'contact_person_name', 'contact_no1', 'enquiry_date', 'status_name', 'technician_name'];
 
     echo json_encode([
         "status" => "success",
         "mode" => "technician_enquiries",
         "technician_id" => $technicianId,
         "filters" => $data,
+        "columns" => $columns,
         "data" => $result->fetch_all(MYSQLI_ASSOC)
     ]);
 
@@ -125,6 +128,8 @@ if ($enquiryId && !$technicianId) {
             e.client_name,
             e.contact_person_name,
             e.contact_no1,
+            e.requirement_category,
+            e.enquiry_date,
             emp.employee_name AS technician_name,
             s.status_name
         FROM enquiries e
@@ -156,10 +161,13 @@ if ($enquiryId && !$technicianId) {
     }
     $stmt->execute();
     $result = $stmt->get_result();
+     // 🔹 Define columns dynamically
+    $columns = ['client_name', 'contact_person_name', 'contact_no1', 'requirement_category', 'enquiry_date', 'enquiry_status_id', 'technician_name', 'status_name'];
 
     echo json_encode([
         "status" => "success",
         "mode" => "all_enquiries",
+        "columns" => $columns,
         "data" => $result->fetch_all(MYSQLI_ASSOC)
     ]);
 }
