@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 
 export class ApiService {
-  private baseUrl = 'http://localhost/enquiry-amc/enquiry-amc-backend'; // 🔁 Your backend base URL
+  private baseUrl = 'http://localhost/enquiry-amc-backend'; // 🔁 Your backend base URL
 
   constructor(private http: HttpClient) {}
 

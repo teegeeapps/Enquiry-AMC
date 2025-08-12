@@ -1,5 +1,5 @@
 .content-container {
-        min-height: 100vh;
+       // min-height: 100vh;
         box-sizing: border-box;
         padding: 25px;
       }
@@ -20,6 +20,7 @@
 }
 
  .toolbar-item{
+   color: #fff;
     font-size: 14px;
   }
 
@@ -55,6 +56,7 @@
   background-color: #ffffff !important;
 } */
 
+
 .toolbar-item {
     font-size: 14px;
     color: white !important;
@@ -72,3 +74,13 @@
   gap: 4px;
   font-weight: 500;
 }
+
+.sidenav{
+  background-color: #bbc3f9 !important;
+  //background-color: rgb(64, 61, 249);
+  color: white;
+}
+
+mat-sidenav-container {
+      height: 100%;
+    }

@@ -56,15 +56,26 @@
       </mat-select>
     </mat-form-field>
 
-    <!-- Assigned To Multi-Select -->
+     <!-- Assigned For Dropdown -->
     <mat-form-field appearance="outline">
+      <mat-label>Assigned To (Technicians)</mat-label>
+      <mat-select formControlName="assigned_to" required>
+       <mat-option *ngFor="let employee of employeeData" [value]="employee.employee_id">
+          {{ employee.employee_name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+   <!-- Assigned To Multi-Select -->
+   
+<!--<mat-form-field appearance="outline">
       <mat-label>Assigned To (Technicians)</mat-label>
       <mat-select formControlName="assigned_to" multiple required>
         <mat-option *ngFor="let employee of employeeData" [value]="employee.employee_id">
           {{ employee.employee_name }}
         </mat-option>
       </mat-select>
-    </mat-form-field>
+    </mat-form-field> -->
 
     <!-- Submit Button Full Width -->
     <div class="full-width submit-row">
@@ -73,3 +84,4 @@
 
   </form>
 </div>
+
