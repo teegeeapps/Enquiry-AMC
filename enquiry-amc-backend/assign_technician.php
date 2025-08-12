@@ -5,6 +5,7 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 require 'db.php';
+
 // ✅ Handle preflight request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -14,27 +15,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ✅ Read JSON input
 $data = json_decode(file_get_contents("php://input"), true);
 
-// ✅ For quick test uncomment below
-// $data = json_decode('{"enquiry_id":"EQ001"}', true);
-
 $enquiryId            = $data['enquiry_id'] ?? null;
 $technicianId         = $data['technician_employee_id'] ?? null;
 $deliveryInstructions = $data['delivery_instructions'] ?? '';
 $customerLocation     = $data['customer_location'] ?? '';
 $assignedBy           = $data['assigned_by'] ?? 'system';
 $visitDate            = $data['visit_date'] ?? null;
+$completedStatus      = $data['completed_status'] ?? 'Pending'; // ✅ New field
 
 // ✅ Always fetch Technician List
 $techSql = "
     SELECT 
-        e.employee_number AS employee_id,
-        e.employee_name
-    FROM employees e
-    JOIN employee_roles er ON e.id = er.employee_id
-    JOIN roles r ON er.role_id = r.id
+        id AS employee_id,
+        employee_number,
+        employee_name
+    FROM employees
     WHERE 
-        r.role_name = 'Technician'
-        AND e.is_active = 1
+        role_id = (SELECT id FROM roles WHERE role_name = 'Technician')
+        AND is_active = 1
 ";
 $techResult = $conn->query($techSql);
 
@@ -45,7 +43,6 @@ if ($techResult && $techResult->num_rows > 0) {
     }
 }
 
-// ✅ Prepare placeholders
 $enquiryDetails     = null;
 $existingAssignment = null;
 $visitHistory       = [];
@@ -64,7 +61,7 @@ if ($enquiryId) {
     $stmt->close();
 
     // ✅ Fetch existing technician assignment
-    $assignSql = "SELECT technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_date 
+    $assignSql = "SELECT technician_employee_id, delivery_instructions, customer_location, completed_status, assigned_by, assigned_date 
                   FROM enquiry_assignments WHERE enquiry_id = ?";
     $stmt2 = $conn->prepare($assignSql);
     $stmt2->bind_param("s", $enquiryId);
@@ -90,8 +87,8 @@ if ($enquiryId) {
     $stmt3->close();
 }
 
-// ✅ If NO update params (technicianId/visitDate) → just return fetched data
-if (!$technicianId && !$visitDate && !$deliveryInstructions && !$customerLocation) {
+// ✅ If NO update params → just return fetched data
+if (!$technicianId && !$visitDate && !$deliveryInstructions && !$customerLocation && !$completedStatus) {
     echo json_encode([
         "status"             => "success",
         "message"            => "Fetched enquiry details, technician list & assignment",
@@ -104,7 +101,7 @@ if (!$technicianId && !$visitDate && !$deliveryInstructions && !$customerLocatio
     exit();
 }
 
-// ✅ Otherwise → Update Mode (assign technician, update instructions/location, add visit)
+// ✅ Otherwise → Update Mode
 $conn->begin_transaction();
 
 try {
@@ -112,7 +109,6 @@ try {
 
     // ✅ Technician assignment insert/update
     if ($technicianId) {
-        // Check if already assigned
         $checkSql = "SELECT id FROM enquiry_assignments WHERE enquiry_id=?";
         $stmt = $conn->prepare($checkSql);
         $stmt->bind_param("s", $enquiryId);
@@ -122,23 +118,21 @@ try {
         $stmt->close();
 
         if ($exists) {
-            // Update existing assignment
             $updateSql = "UPDATE enquiry_assignments 
                           SET technician_employee_id=?, delivery_instructions=?, customer_location=?, 
-                              assigned_by=?, assigned_date=NOW()
+                              completed_status=?, assigned_by=?, assigned_date=NOW()
                           WHERE enquiry_id=?";
             $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->bind_param("sssss", $technicianId, $deliveryInstructions, $customerLocation, $assignedBy, $enquiryId);
+            $updateStmt->bind_param("ssssss", $technicianId, $deliveryInstructions, $customerLocation, $completedStatus, $assignedBy, $enquiryId);
             $updateStmt->execute();
             $messages[] = "Technician assignment updated";
             $updateStmt->close();
         } else {
-            // Insert new assignment
             $insertSql = "INSERT INTO enquiry_assignments 
-                          (enquiry_id, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_date)
-                          VALUES (?, ?, ?, ?, ?, NOW())";
+                          (enquiry_id, technician_employee_id, delivery_instructions, customer_location, completed_status, assigned_by, assigned_date)
+                          VALUES (?, ?, ?, ?, ?, ?, NOW())";
             $insertStmt = $conn->prepare($insertSql);
-            $insertStmt->bind_param("sssss", $enquiryId, $technicianId, $deliveryInstructions, $customerLocation, $assignedBy);
+            $insertStmt->bind_param("ssssss", $enquiryId, $technicianId, $deliveryInstructions, $customerLocation, $completedStatus, $assignedBy);
             $insertStmt->execute();
             $messages[] = "Technician assigned successfully";
             $insertStmt->close();
@@ -155,14 +149,13 @@ try {
         $visitStmt->close();
     }
 
-    // ✅ Commit
     $conn->commit();
 
     // ✅ Fetch updated assignment & visit history
     $updatedAssign = null;
     $updatedHistory = [];
 
-    $stmt2 = $conn->prepare("SELECT technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_date 
+    $stmt2 = $conn->prepare("SELECT technician_employee_id, delivery_instructions, customer_location, completed_status, assigned_by, assigned_date 
                              FROM enquiry_assignments WHERE enquiry_id=?");
     $stmt2->bind_param("s", $enquiryId);
     $stmt2->execute();
@@ -207,5 +200,3 @@ try {
 
 $conn->close();
 ?>
-
-

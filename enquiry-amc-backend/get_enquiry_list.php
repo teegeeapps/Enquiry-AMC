@@ -62,13 +62,16 @@ if ($enquiryId && !$technicianId) {
             e.contact_person_name, 
             e.contact_no1,
             e.enquiry_date, 
-            e.enquiry_status_id, 
+
+            e.enquiry_status_id,
+etm.completed_status, 
             s.status_name,
             emp.employee_name AS technician_name,
             etm.assigned_by, 
             etm.assigned_date,
             f.follow_up_date, 
             f.follow_up_notes
+	
         FROM enquiries e
         INNER JOIN enquiry_assignments etm 
             ON e.enquiry_id = etm.enquiry_id AND etm.technician_employee_id = ?
