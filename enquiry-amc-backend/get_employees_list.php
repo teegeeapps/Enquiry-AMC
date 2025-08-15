@@ -6,7 +6,7 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-W
 include 'db.php';
 
 // SQL to get employee list
-$sql = "SELECT id, employee_name, employee_number, contact_no, email_id, is_active 
+$sql = "SELECT id, employee_name, employee_number, contact_no, email_id, status 
         FROM employees";
 $result = $conn->query($sql);
 
@@ -18,11 +18,11 @@ while ($row = $result->fetch_assoc()) {
 
 // Define the column headers for UI
 $columns = [
-    "Employee Name *",
-    "Employee Number",
-    "Contact No *",
-    "Email Id",
-    "Status"
+    "employee_name",
+    "employee_number",
+    "contact_no",
+    "email_id",
+    "status"
 ];
 
 // Prepare final response
