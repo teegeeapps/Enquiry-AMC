@@ -17,7 +17,7 @@ $data = json_decode(file_get_contents("php://input"));
 $employee_name   = $data->employee_name ?? '';
 $contact_no      = $data->contact_no ?? '';
 $email_id        = $data->email_id ?? '';
-$is_active       = $data->status ?? '1'; // default to active
+$status       = $data->status ?? '1'; // default to active
 $password        = $data->password ?? '';
 $created_by      = $data->created_by ?? '';
 $role_id         = $data->role_id ?? null; // new field
@@ -60,11 +60,11 @@ if ($result && $row = $result->fetch_assoc()) {
 
 // ✅ Insert new employee
 $sql = "INSERT INTO employees 
-(employee_name, employee_number, contact_no, email_id, is_active, password, created_at, created_by, role_id) 
+(employee_name, employee_number, contact_no, email_id, status, password, created_at, created_by, role_id) 
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sssssssi", $employee_name, $employee_number, $contact_no, $email_id, $is_active, $password, $created_by, $role_id);
+$stmt->bind_param("sssssssi", $employee_name, $employee_number, $contact_no, $email_id, $status, $password, $created_by, $role_id);
 
 if ($stmt->execute()) {
     echo json_encode([
