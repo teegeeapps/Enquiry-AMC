@@ -51,7 +51,7 @@ if ($result->num_rows === 1) {
             "employee_number" => $user['employee_number'],
             "employee_name" => $user['employee_name'],
             "role_id" => $user['role_id'],
-            "status" => (int)$user['is_active']
+            "status" => (int)$user['status']
         ]);
     } else {
         echo json_encode(["status" => "error", "message" => "Invalid password"]);

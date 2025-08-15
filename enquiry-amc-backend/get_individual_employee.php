@@ -20,7 +20,7 @@ $stmt = $conn->prepare("
         e.employee_number, 
         e.contact_no, 
         e.email_id,
-        e.is_active, 
+        e.status, 
         e.last_login_time, 
         e.created_at, 
         e.updated_at,
