@@ -11,7 +11,7 @@ $columns = array(
     "contact_no_1",
     "requirement_category",
     "delivery_date",
-    "latest_AMC_date"
+    "amc_date"
 );
 
 // Query to get AMC list
