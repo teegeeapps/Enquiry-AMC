@@ -1,0 +1,98 @@
+Sample Request / Response
+1. Insert Assignment
+
+Request
+
+{
+  "mode": "insert",
+  "enquiry_id": 101,
+  "assignment_type": "ENQUIRY",
+  "technicians": [3, 5],
+  "delivery_instructions": "Deliver spare parts ASAP",
+  "customer_location": "Hyderabad",
+  "assigned_by": 1
+}
+
+
+Response
+
+{
+  "status": 1,
+  "message": "Technician assignment saved successfully"
+}
+
+2. Update Assignment
+
+Request
+
+{
+  "mode": "update",
+  "enquiry_id": 101,
+  "assignment_type": "ENQUIRY",
+  "technicians": [2, 4],
+  "delivery_instructions": "Updated instructions",
+  "customer_location": "Bangalore",
+  "assigned_by": 1
+}
+
+
+Response
+
+{
+  "status": 1,
+  "message": "Technician assignment updated successfully"
+}
+
+3. Fetch All Assignments (Admin)
+
+Request
+
+{ "mode": "fetch" }
+
+
+Response
+
+{
+  "status": 1,
+  "message": "Assignments fetched successfully",
+  "columns": ["Enquiry ID", "Assignment Type", "Technicians", "Location", "Delivery Instructions", "Assigned By", "Assigned At", "Status"],
+  "data": [
+    {
+      "enquiry_id": "101",
+      "assignment_type": "ENQUIRY",
+      "technicians": "John Doe, Ravi Kumar",
+      "delivery_instructions": "Deliver spare parts ASAP",
+      "customer_location": "Hyderabad",
+      "assigned_by": "1",
+      "assigned_at": "2025-08-16 15:45:22",
+      "status": "Active"
+    }
+  ]
+}
+
+4. Fetch Assignments by Technician
+
+Request
+
+{ "mode": "fetch_by_technician", "technician_id": 3 }
+
+
+Response
+
+{
+  "status": 1,
+  "message": "Assignments fetched for technician",
+  "columns": ["Enquiry ID", "Assignment Type", "Technicians", "Location", "Delivery Instructions", "Assigned By", "Assigned At", "Status"],
+  "data": [
+    {
+      "enquiry_id": "101",
+      "assignment_type": "ENQUIRY",
+      "technicians": "John Doe, Ravi Kumar",
+      "delivery_instructions": "Deliver spare parts ASAP",
+      "customer_location": "Hyderabad",
+      "assigned_by": "1",
+      "assigned_at": "2025-08-16 15:45:22",
+      "status": "Active"
+    }
+  ]
+}
