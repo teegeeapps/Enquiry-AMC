@@ -179,16 +179,16 @@ if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
         $response['status']  = "success";
         $response['message'] = "Assignments fetched successfully";
         $response['columns'] = [
-            "Enquiry ID",
-            "Assignment Type",
-            "Client Name",
-            "Contact No",
-            "Technicians",
-            "Completed (X/Y)",
-            "Delivery Instructions",
-            "Customer Location",
-            "Assigned By",
-            "Assigned At"
+            "enquiry_id",
+            "assignment_type",
+            "client_name",
+            "contact_no1",
+            "technician_names",
+            "completed_summary",
+            "delivery_instructions",
+            "customer_location",
+            "assigned_by",
+            "assigned_at"
         ];
         $response['data']    = array_map(function($g) {
             return [
@@ -254,45 +254,51 @@ if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
 
         $grouped = [];
         while ($row = $res->fetch_assoc()) {
-            $key = $row['enquiry_id'] . '|' . $row['assignment_type'];
-            if (!isset($grouped[$key])) {
-                $grouped[$key] = [
-                    "enquiry_id"            => $row['enquiry_id'],
-                    "assignment_type"       => $row['assignment_type'],
-                    "client_name"           => $row['client_name'],
-                    "contact_no1"           => $row['contact_no1'],
-                    "delivery_instructions" => $row['delivery_instructions'],
-                    "customer_location"     => $row['customer_location'],
-                    "assigned_by"           => $row['assigned_by'],
-                    "assigned_at"           => $row['assigned_at'],
-                    "my_status"             => 0,
-                    "other_technicians"     => []
-                ];
-            }
-            if ($row['technician_employee_id'] === $my_emp_no) {
-                $grouped[$key]['my_status'] = (int)$row['completed_status'];
-            } else {
-                $grouped[$key]['other_technicians'][] = [
-                    "employee_number"  => $row['technician_employee_id'],
-                    "employee_name"    => $row['employee_name'],
-                    "completed_status" => (int)$row['completed_status']
-                ];
-            }
-        }
+    $key = $row['enquiry_id'] . '|' . $row['assignment_type'];
+    
+    if (!isset($grouped[$key])) {
+        $grouped[$key] = [
+            "enquiry_id"            => $row['enquiry_id'],
+            "assignment_type"       => $row['assignment_type'],
+            "client_name"           => $row['client_name'],
+            "contact_no1"           => $row['contact_no1'],
+            "delivery_instructions" => $row['delivery_instructions'],
+            "customer_location"     => $row['customer_location'],
+            "assigned_by"           => $row['assigned_by'],
+            "assigned_at"           => $row['assigned_at'],
+            "my_status"             => 0, // will update below
+            "technicians"           => [] // full technician list
+        ];
+    }
+
+    $tech = [
+        "employee_number"  => $row['technician_employee_id'],
+        "employee_name"    => $row['employee_name'],
+        "completed_status" => (int)$row['completed_status']
+    ];
+
+    // If this is the logged-in technician, set my_status separately
+    if ($row['technician_employee_id'] === $my_emp_no) {
+        $grouped[$key]['my_status'] = (int)$row['completed_status'];
+    }
+
+    $grouped[$key]['technicians'][] = $tech;
+}
+
 
         $response['status']  = "success";
         $response['message'] = "Assignments for technician fetched";
         $response['columns'] = [
-            "Enquiry ID",
-            "Assignment Type",
-            "Client Name",
-            "Contact No",
-            "Delivery Instructions",
-            "Customer Location",
-            "Assigned By",
-            "Assigned At",
-            "My Status",
-            "Other Technicians"
+            "enquiry_id",
+            "assignment_type",
+            "client_name",
+            "contact_no",
+            "delivery_instructions",
+            "customer_location",
+            "assigned_by",
+            "assigned_at",
+            "my_status",
+            "other_technicians"
         ];
         // format for FE
         $response['data'] = array_values(array_map(function($g) {
@@ -394,7 +400,7 @@ if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
 
         $response['status']   = "success";
         $response['message']  = "Enquiry details fetched";
-        $response['columns']  = [ "Employee Number", "Technician Name", "Completed", "Assigned By", "Assigned At" ];
+        $response['columns']  = [ "employee_number", "technician_name", "completed", "assigned_by", "assigned_at" ];
         $response['data']     = [
             "enquiry"          => $enquiry,
             "assignments"      => $assignments,
@@ -423,7 +429,7 @@ if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
         }
         $response['status']  = "success";
         $response['message'] = "Technicians fetched";
-        $response['columns'] = ["Employee Number", "Technician Name"];
+        $response['columns'] = ["employee_number", "technician_name"];
         $response['data']    = $list;
         echo json_encode($response);
         exit();
