@@ -1,98 +1,236 @@
-Sample Request / Response
-1. Insert Assignment
+ALTER TABLE enquiry_assignments
+    ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER completed_status;
+
+CREATE UNIQUE INDEX uq_enq_type_tech
+ON enquiry_assignments (enquiry_id, assignment_type, technician_employee_id);
+
+Sample requests & responses
+1) INSERT (ENQUIRY) — multiple technicians + visit history logging
 
 Request
 
 {
   "mode": "insert",
-  "enquiry_id": 101,
+  "enquiry_id": "EQ003",
   "assignment_type": "ENQUIRY",
-  "technicians": [3, 5],
-  "delivery_instructions": "Deliver spare parts ASAP",
-  "customer_location": "Hyderabad",
-  "assigned_by": 1
+  "technicians": ["E04","E07"],
+  "delivery_instructions": "Bring ladder & tester",
+  "customer_location": "T. Nagar, Chennai",
+  "assigned_by": "Admin",
+  "visit_date": "2025-08-20"
 }
 
 
 Response
 
 {
-  "status": 1,
-  "message": "Technician assignment saved successfully"
+  "status": "success",
+  "message": "Assignment created successfully",
+  "columns": [],
+  "data": []
 }
 
-2. Update Assignment
+2) INSERT (AMC) — validation fails (no delivery date)
+
+Request
+
+{
+  "mode": "insert",
+  "enquiry_id": "EQ010",
+  "assignment_type": "AMC",
+  "technicians": ["E04","E09"],
+  "delivery_instructions": "Annual check",
+  "customer_location": "Hyderabad",
+  "assigned_by": "Admin"
+}
+
+
+Response
+
+{
+  "status": "error",
+  "message": "AMC assignment not allowed: Delivery Date is missing for this enquiry.",
+  "columns": [],
+  "data": []
+}
+
+3) UPDATE — change techs & set per-tech status
+
+(Replace existing rows for that enquiry+type; sets E07 done, E09 pending)
 
 Request
 
 {
   "mode": "update",
-  "enquiry_id": 101,
+  "enquiry_id": "EQ003",
   "assignment_type": "ENQUIRY",
-  "technicians": [2, 4],
-  "delivery_instructions": "Updated instructions",
-  "customer_location": "Bangalore",
-  "assigned_by": 1
+  "technicians": ["E07","E09"],
+  "technician_status": {
+    "E07": 1,
+    "E09": 0
+  },
+  "delivery_instructions": "Replace cable",
+  "customer_location": "Anna Nagar",
+  "assigned_by": "Admin"
 }
 
 
 Response
 
 {
-  "status": 1,
-  "message": "Technician assignment updated successfully"
+  "status": "success",
+  "message": "Assignment updated successfully",
+  "columns": [],
+  "data": []
 }
 
-3. Fetch All Assignments (Admin)
+4) FETCH (Admin) — list all assignments (grouped by enquiry+type)
 
 Request
 
-{ "mode": "fetch" }
+{
+  "mode": "fetch"
+}
 
 
-Response
+Response (example)
 
 {
-  "status": 1,
+  "status": "success",
   "message": "Assignments fetched successfully",
-  "columns": ["Enquiry ID", "Assignment Type", "Technicians", "Location", "Delivery Instructions", "Assigned By", "Assigned At", "Status"],
+  "columns": [
+    "Enquiry ID",
+    "Assignment Type",
+    "Client Name",
+    "Contact No",
+    "Technicians",
+    "Completed (X/Y)",
+    "Delivery Instructions",
+    "Customer Location",
+    "Assigned By",
+    "Assigned At"
+  ],
   "data": [
     {
-      "enquiry_id": "101",
+      "enquiry_id": "EQ003",
       "assignment_type": "ENQUIRY",
-      "technicians": "John Doe, Ravi Kumar",
-      "delivery_instructions": "Deliver spare parts ASAP",
-      "customer_location": "Hyderabad",
-      "assigned_by": "1",
-      "assigned_at": "2025-08-16 15:45:22",
-      "status": "Active"
+      "client_name": "ECS",
+      "contact_no1": "9876543210",
+      "technician_names": "Nehru (E04), Kiran (E07)",
+      "completed_summary": "1/2",
+      "delivery_instructions": "Replace cable",
+      "customer_location": "Anna Nagar",
+      "assigned_by": "Admin",
+      "assigned_at": "2025-08-18 12:45:11",
+      "technicians": [
+        { "employee_number": "E04", "employee_name": "Nehru", "completed_status": 1 },
+        { "employee_number": "E07", "employee_name": "Kiran", "completed_status": 0 }
+      ]
     }
   ]
 }
 
-4. Fetch Assignments by Technician
+5) FETCH_BY_TECHNICIAN — login-based; show my status + other technicians
 
 Request
 
-{ "mode": "fetch_by_technician", "technician_id": 3 }
+{
+  "mode": "fetch_by_technician",
+  "technician_employee_id": "E04"
+}
 
 
-Response
+Response (example)
 
 {
-  "status": 1,
-  "message": "Assignments fetched for technician",
-  "columns": ["Enquiry ID", "Assignment Type", "Technicians", "Location", "Delivery Instructions", "Assigned By", "Assigned At", "Status"],
+  "status": "success",
+  "message": "Assignments for technician fetched",
+  "columns": [
+    "Enquiry ID",
+    "Assignment Type",
+    "Client Name",
+    "Contact No",
+    "Delivery Instructions",
+    "Customer Location",
+    "Assigned By",
+    "Assigned At",
+    "My Status",
+    "Other Technicians"
+  ],
   "data": [
     {
-      "enquiry_id": "101",
+      "enquiry_id": "EQ003",
       "assignment_type": "ENQUIRY",
-      "technicians": "John Doe, Ravi Kumar",
-      "delivery_instructions": "Deliver spare parts ASAP",
-      "customer_location": "Hyderabad",
-      "assigned_by": "1",
-      "assigned_at": "2025-08-16 15:45:22",
-      "status": "Active"
+      "client_name": "ECS",
+      "contact_no1": "9876543210",
+      "delivery_instructions": "Replace cable",
+      "customer_location": "Anna Nagar",
+      "assigned_by": "Admin",
+      "assigned_at": "2025-08-18 12:45:11",
+      "my_status": 1,
+      "other_technicians": [
+        { "employee_number": "E07", "employee_name": "Kiran", "completed_status": 0 }
+      ]
     }
   ]
 }
+
+6 GET_ENQUIRY — details + assignments + visit history + technician list
+
+If you want a single call that gives Technician List for dropdowns and the current assignment state:
+
+Request
+
+{
+  "mode": "get_enquiry",
+  "enquiry_id": "EQ003"
+}
+
+
+Response (example)
+
+{
+  "status": "success",
+  "message": "Enquiry details fetched",
+  "columns": ["Employee Number","Technician Name","Completed","Assigned By","Assigned At"],
+  "data": {
+    "enquiry": {
+      "enquiry_id": "EQ003",
+      "client_name": "ECS",
+      "contact_person_name": "Venkatram",
+      "contact_no1": "9876543210",
+      "address": "No. 12, Mount Road"
+    },
+    "assignments": {
+      "ENQUIRY": [
+        {
+          "employee_number": "E04",
+          "employee_name": "Nehru",
+          "completed_status": 1,
+          "delivery_instructions": "Replace cable",
+          "customer_location": "Anna Nagar",
+          "assigned_by": "Admin",
+          "assigned_at": "2025-08-18 12:45:11"
+        },
+        {
+          "employee_number": "E07",
+          "employee_name": "Kiran",
+          "completed_status": 0,
+          "delivery_instructions": "Replace cable",
+          "customer_location": "Anna Nagar",
+          "assigned_by": "Admin",
+          "assigned_at": "2025-08-18 12:45:11"
+        }
+      ],
+      "AMC": []
+    },
+    "visit_history": [
+      { "visit_date": "2025-08-20", "added_by": "Admin", "added_at": "2025-08-16 10:00:00" }
+    ],
+    "technician_list": [
+      { "employee_id": 12, "employee_number": "E04", "employee_name": "Nehru" },
+      { "employee_id": 17, "employee_number": "E07", "employee_name": "Kiran" }
+    ]
+  }
+}
+
