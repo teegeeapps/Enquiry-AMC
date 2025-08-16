@@ -61,39 +61,44 @@ if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
 
         $conn->begin_transaction();
 
-        // If update → remove previous rows for this (enquiry_id, type)
-        if ($mode === 'update') {
-            $del = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id = ? AND assignment_type = ?");
-            $del->bind_param("ss", $enquiry_id, $assignment_type);
-            $del->execute();
-            $del->close();
-        }
+       // If update → remove previous rows for this (enquiry_id, type)
+if ($mode === 'update') {
+    $del = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id = ? AND assignment_type = ?");
+    $del->bind_param("ss", $enquiry_id, $assignment_type);
+    $del->execute();
+    $del->close();
+}
 
-        // Insert rows (one per technician), store per-tech completed_status (0/1)
-        $ins = $conn->prepare("
-            INSERT INTO enquiry_assignments 
-                (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, completed_status, is_active)
-            VALUES
-                (?, ?, ?, ?, ?, ?, NOW(), ?, 1)
-        ");
+// Insert rows (one per technician), store per-tech completed_status (0/1)
+$ins = $conn->prepare("
+    INSERT INTO enquiry_assignments 
+        (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, completed_status, is_active)
+    VALUES
+        (?, ?, ?, ?, ?, ?, NOW(), ?, 1)
+");
 
-        foreach ($technicians as $techEmpNo) {
-            $techEmpNo        = trim($techEmpNo); // e.g. "E04"
-            $completed_status = isset($tech_status_map[$techEmpNo]) ? to_bool_int($tech_status_map[$techEmpNo]) : 0;
+foreach ($technicians as $techEmpNo) {
+    $techEmpNo = trim($techEmpNo); // technician employee number
+    $completed_status = isset($tech_status_map[$techEmpNo]) 
+        ? to_bool_int($tech_status_map[$techEmpNo]) 
+        : 0;
 
-            $ins->bind_param(
-                "ssssssi",
-                $enquiry_id,
-                $assignment_type,
-                $techEmpNo,
-                $delivery_instructions,
-                $customer_location,
-                $assigned_by,
-                $completed_status
-            );
-            $ins->execute();
-        }
-        $ins->close();
+    // Bind inside loop so each technician gets correct values
+    $ins->bind_param(
+        "ssssssi",
+        $enquiry_id,
+        $assignment_type,
+        $techEmpNo,
+        $delivery_instructions,
+        $customer_location,
+        $assigned_by,
+        $completed_status
+    );
+
+    $ins->execute();
+}
+
+$ins->close();
 
         // ✅ Visit history logging (optional)
         if (!empty($visit_date)) {
@@ -298,7 +303,7 @@ if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
             "assigned_by",
             "assigned_at",
             "my_status",
-            "other_technicians"
+            "technicians"
         ];
         // format for FE
         $response['data'] = array_values(array_map(function($g) {
@@ -312,7 +317,7 @@ if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
                 "assigned_by"           => $g['assigned_by'],
                 "assigned_at"           => $g['assigned_at'],
                 "my_status"             => $g['my_status'],
-                "other_technicians"     => $g['other_technicians']
+                "technicians"     => $g['technicians']
             ];
         }, $grouped));
 
