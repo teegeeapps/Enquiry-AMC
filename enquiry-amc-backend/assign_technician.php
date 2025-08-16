@@ -42,20 +42,22 @@ try {
         // per-tech status map (optional): { "E04":1, "E07":0 }
         $tech_status_map       = $data['technician_status'] ?? ($data['tech_status'] ?? []);
 
-        if (!$enquiry_id || !in_array($assignment_type, ['ENQUIRY','AMC'], true) || empty($technicians)) {
-            throw new Exception("Missing required fields: enquiry_id, assignment_type, technicians[]");
+        if (!$enquiry_id || !in_array($assignment_type, ['ENQUIRY','AMC','SERVICE'], true) || empty($technicians)) {
+            throw new Exception("Missing required fields: enquiry_iqqd, assignment_type, technicians[]");
         }
 
-        // ✅ AMC validation: must have delivered_date in amc_list
-        if ($assignment_type === 'AMC') {
-            $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id = ? AND delivered_date IS NOT NULL AND delivered_date <> '' LIMIT 1");
-            $chk->bind_param("s", $enquiry_id);
-            $chk->execute();
-            $res = $chk->get_result();
-            if ($res->num_rows === 0) {
-                throw new Exception("AMC assignment not allowed: Delivery Date is missing for this enquiry.");
-            }
-        }
+// ✅ Validation: AMC and SERVICE must have delivered_date in amc_list
+if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
+    $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id = ? AND delivered_date IS NOT NULL AND delivered_date <> '' LIMIT 1");
+    $chk->bind_param("s", $enquiry_id);
+    $chk->execute();
+    $res = $chk->get_result();
+
+    if ($res->num_rows === 0) {
+        throw new Exception("$assignment_type assignment not allowed: Delivery Date is missing for this enquiry.");
+    }
+}
+
 
         $conn->begin_transaction();
 

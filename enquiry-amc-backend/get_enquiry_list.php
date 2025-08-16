@@ -21,7 +21,7 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
                 emp.employee_name,
                 etm.completed_status,
                 etm.assigned_by,
-                etm.assigned_date
+                etm.assigned_at
             FROM enquiry_assignments etm
             INNER JOIN employees emp 
                 ON etm.technician_employee_id = emp.employee_number
