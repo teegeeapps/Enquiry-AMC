@@ -35,8 +35,7 @@ $columns = [
     "contact_no",
     "email_id",
     "status",
-    "role_id",
-    "role_name"
+    "role"
 ];
 
 // Prepare final response
