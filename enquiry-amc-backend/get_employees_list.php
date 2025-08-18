@@ -5,15 +5,27 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-W
 
 include 'db.php';
 
-// SQL to get employee list
-$sql = "SELECT id, employee_name, employee_number, contact_no, email_id, status 
-        FROM employees";
+// SQL with JOIN to fetch role details
+$sql = "SELECT 
+            e.id,
+            e.employee_name,
+            e.employee_number,
+            e.contact_no,
+            e.email_id,
+            e.status,
+            e.role_id,
+            r.role_name
+        FROM employees e
+        LEFT JOIN roles r ON e.role_id = r.id";
+
 $result = $conn->query($sql);
 
 // Prepare data array
 $data = array();
-while ($row = $result->fetch_assoc()) {
-    $data[] = $row;
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
 }
 
 // Define the column headers for UI
@@ -22,7 +34,9 @@ $columns = [
     "employee_number",
     "contact_no",
     "email_id",
-    "status"
+    "status",
+    "role_id",
+    "role_name"
 ];
 
 // Prepare final response

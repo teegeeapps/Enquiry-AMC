@@ -184,15 +184,13 @@ $ins->close();
         $response['status']  = "success";
         $response['message'] = "Assignments fetched successfully";
         $response['columns'] = [
-            "enquiry_id",
-            "assignment_type",
+         
             "client_name",
             "contact_no1",
             "technician_names",
             "completed_summary",
             "delivery_instructions",
             "customer_location",
-            "assigned_by",
             "assigned_at"
         ];
         $response['data']    = array_map(function($g) {
@@ -294,13 +292,10 @@ $ins->close();
         $response['status']  = "success";
         $response['message'] = "Assignments for technician fetched";
         $response['columns'] = [
-            "enquiry_id",
-            "assignment_type",
             "client_name",
             "contact_no",
             "delivery_instructions",
             "customer_location",
-            "assigned_by",
             "assigned_at",
             "my_status",
             "technicians"
@@ -363,7 +358,8 @@ $ins->close();
 
         $assignments = [
             "ENQUIRY" => [],
-            "AMC"     => []
+            "AMC"     => [],
+	"SERVICE" => []
         ];
         while ($row = $ar->fetch_assoc()) {
             $assignments[$row['assignment_type']][] = [
@@ -394,7 +390,7 @@ $ins->close();
             SELECT id AS employee_id, employee_number, employee_name
             FROM employees
             WHERE role_id = (SELECT id FROM roles WHERE role_name = 'Technician')
-              AND is_active = 1
+              AND status = 1
             ORDER BY employee_name ASC
         ";
         $tres = $conn->query($tq);
@@ -424,7 +420,7 @@ $ins->close();
             SELECT id AS employee_id, employee_number, employee_name
             FROM employees
             WHERE role_id = (SELECT id FROM roles WHERE role_name = 'Technician')
-              AND is_active = 1
+              AND status = 1
             ORDER BY employee_name ASC
         ";
         $tres = $conn->query($tq);
