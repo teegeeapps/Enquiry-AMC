@@ -29,6 +29,7 @@ $contact_no1 = $input['contact_no1'];
 $delivered_date = $input['delivered_date'] ?? null; // optional
 $amc_status = $input['amc_status'];
 $amc_date = $input['amc_date'];
+$amc_period = $input['amc_period'];
 $user = $input['user'];
 
 // Check if enquiry exists
@@ -47,18 +48,20 @@ if ($result->num_rows > 0) {
             delivered_date = ?, 
             amc_status = ?, 
             amc_date = ?, 
+            amc_period = ?,
             modified_by = ?, 
             modified_at = NOW()
         WHERE enquiry_id = ?
     ");
     $updateStmt->bind_param(
-        "ssssssss",
+        "sssssssss",
         $client_name,
         $contact_person_name,
         $contact_no1,
         $delivered_date,
         $amc_status,
         $amc_date,
+        $amc_period,
         $user,
         $enquiry_id
     );
