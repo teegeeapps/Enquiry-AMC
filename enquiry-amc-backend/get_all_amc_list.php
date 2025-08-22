@@ -49,7 +49,9 @@ $sql = "SELECT
             contact_no1 AS contact_no_1,
             requirement_category,
             delivered_date AS delivery_date,
-            amc_date
+            amc_date,
+		amc_period,
+		amc_status
         FROM amc_list";
 
 // Apply mode
