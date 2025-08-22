@@ -174,7 +174,7 @@ $ins->close();
             $names = [];
             foreach ($g['technicians'] as $t) {
                 if ($t['completed_status'] === 1) $done++;
-                $names[] = $t['employee_name'] . " (" . $t['employee_number'] . ")";
+                $names[] = $t['employee_name']";
             }
             $g['completed_summary'] = "{$done}/{$total}";
             $g['technician_names']  = implode(", ", $names);
