@@ -170,123 +170,142 @@ try {
         exit();
     }
 
-    // ---------------------------
-    // FETCH (Admin view)
-    // ---------------------------
-    if ($mode === 'fetch') {
-        $sql = "
-            SELECT ea.*, q.client_name, q.contact_no1, emp.employee_name
-            FROM enquiry_assignments ea
-            LEFT JOIN enquiries q ON q.enquiry_id = ea.enquiry_id
-            LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-            ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
-        ";
-        $res = $conn->query($sql);
-        $grouped = [];
-        while ($row = $res->fetch_assoc()) {
-            $key = $row['enquiry_id'].'|'.$row['assignment_type'];
-            if (!isset($grouped[$key])) {
-                $grouped[$key] = [
-                    "enquiry_id"           => $row['enquiry_id'],
-                    "assignment_type"      => $row['assignment_type'],
-                    "client_name"          => $row['client_name'],
-                    "contact_no1"          => $row['contact_no1'],
-                    "delivery_instructions"=> $row['delivery_instructions'],
-                    "customer_location"    => $row['customer_location'],
-                    "assigned_by"          => $row['assigned_by'],
-                    "assigned_at"          => fmt_date($row['assigned_at']),
-                    "created_at"           => fmt_date($row['created_at']),
-                    "updated_at"           => fmt_date($row['updated_at']),
-                    "technicians"          => [],
-                    "completed_summary"    => "0/0"
-                ];
-            }
-            $grouped[$key]["technicians"][] = [
-                "employee_number"  => $row['technician_employee_id'],
-                "employee_name"    => $row['employee_name'],
-                "completed_status" => (int)$row['completed_status'],
-                "completed_at"     => fmt_date($row['completed_at'])
+   // ---------------------------
+// FETCH (Admin view)
+// ---------------------------
+if ($mode === 'fetch') {
+    $sql = "
+        SELECT ea.*, q.client_name, q.contact_no1, emp.employee_name
+        FROM enquiry_assignments ea
+        LEFT JOIN enquiries q ON q.enquiry_id = ea.enquiry_id
+        LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
+        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
+    ";
+    $res = $conn->query($sql);
+    $grouped = [];
+    while ($row = $res->fetch_assoc()) {
+        $key = $row['enquiry_id'].'|'.$row['assignment_type'];
+        if (!isset($grouped[$key])) {
+            $grouped[$key] = [
+                "assignment_id"        => $row['id'], // primary key
+                "enquiry_id"           => $row['enquiry_id'],
+                "assignment_type"      => $row['assignment_type'],
+                "client_name"          => $row['client_name'],
+                "contact_no1"          => $row['contact_no1'],
+                "delivery_instructions"=> $row['delivery_instructions'],
+                "customer_location"    => $row['customer_location'],
+                "assigned_by"          => $row['assigned_by'],
+                "assigned_at"          => fmt_date($row['assigned_at']),
+                "created_at"           => fmt_date($row['created_at']),
+                "updated_at"           => fmt_date($row['updated_at']),
+                "technicians"          => [],
+                "completed_summary"    => "0/0"
             ];
         }
-
-        $final = [];
-        foreach ($grouped as $g) {
-            $total = count($g['technicians']);
-            $done  = array_sum(array_column($g['technicians'], 'completed_status'));
-            $g['completed_summary'] = "{$done}/{$total}";
-            $g['technician_names']  = implode(", ", array_column($g['technicians'], 'employee_name'));
-            $final[] = $g;
-        }
-
-        $response['status'] = "success";
-        $response['message'] = "Assignments fetched successfully";
-        $response['data'] = $final;
-        echo json_encode($response);
-        exit();
+        $grouped[$key]["technicians"][] = [
+            "employee_number"  => $row['technician_employee_id'],
+            "employee_name"    => $row['employee_name'],
+            "completed_status" => (int)$row['completed_status'],
+            "completed_at"     => fmt_date($row['completed_at'])
+        ];
     }
 
-    // ---------------------------
-    // FETCH BY TECHNICIAN
-    // ---------------------------
-    if ($mode === 'fetch_by_technician') {
-        $my_emp_no = $data['technician_employee_id'] ?? null;
-        if (!$my_emp_no) throw new Exception("technician_employee_id is required");
+    $final = [];
+    foreach ($grouped as $g) {
+        $total = count($g['technicians']);
+        $done  = array_sum(array_column($g['technicians'], 'completed_status'));
+        $g['completed_summary'] = "{$done}/{$total}";
+        $g['technician_names']  = implode(", ", array_column($g['technicians'], 'employee_name'));
+        $final[] = $g;
+    }
 
-        $sql = "
-            SELECT ea.*, q.client_name, q.contact_no1, emp.employee_name
-            FROM enquiry_assignments ea
-            LEFT JOIN enquiries q ON q.enquiry_id = ea.enquiry_id
-            LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-            WHERE EXISTS (
-                SELECT 1 FROM enquiry_assignments x
-                WHERE x.enquiry_id = ea.enquiry_id
-                  AND x.assignment_type = ea.assignment_type
-                  AND x.technician_employee_id = ?
-            )
-            ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
-        ";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $my_emp_no);
-        $stmt->execute();
-        $res = $stmt->get_result();
+    $response['status'] = "success";
+    $response['message'] = "Assignments fetched successfully";
+    $response['columns'] = [
+        "client_name",
+        "contact_no1",
+        "technician_names",
+        "completed_summary",
+        "delivery_instructions",
+        "customer_location",
+        "assigned_at"
+    ];
+    $response['data'] = $final;
+    echo json_encode($response);
+    exit();
+}
 
-        $grouped = [];
-        while ($row = $res->fetch_assoc()) {
-            $key = $row['enquiry_id'].'|'.$row['assignment_type'];
-            if (!isset($grouped[$key])) {
-                $grouped[$key] = [
-                    "enquiry_id"           => $row['enquiry_id'],
-                    "assignment_type"      => $row['assignment_type'],
-                    "client_name"          => $row['client_name'],
-                    "contact_no1"          => $row['contact_no1'],
-                    "delivery_instructions"=> $row['delivery_instructions'],
-                    "customer_location"    => $row['customer_location'],
-                    "assigned_by"          => $row['assigned_by'],
-                    "assigned_at"          => fmt_date($row['assigned_at']),
-                    "created_at"           => fmt_date($row['created_at']),
-                    "updated_at"           => fmt_date($row['updated_at']),
-                    "my_status"            => 0,
-                    "technicians"          => []
-                ];
-            }
-            $tech = [
-                "employee_number"  => $row['technician_employee_id'],
-                "employee_name"    => $row['employee_name'],
-                "completed_status" => (int)$row['completed_status'],
-                "completed_at"     => fmt_date($row['completed_at'])
+// ---------------------------
+// FETCH BY TECHNICIAN
+// ---------------------------
+if ($mode === 'fetch_by_technician') {
+    $my_emp_no = $data['technician_employee_id'] ?? null;
+    if (!$my_emp_no) throw new Exception("technician_employee_id is required");
+
+    $sql = "
+        SELECT ea.*, q.client_name, q.contact_no1, emp.employee_name
+        FROM enquiry_assignments ea
+        LEFT JOIN enquiries q ON q.enquiry_id = ea.enquiry_id
+        LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
+        WHERE EXISTS (
+            SELECT 1 FROM enquiry_assignments x
+            WHERE x.enquiry_id = ea.enquiry_id
+              AND x.assignment_type = ea.assignment_type
+              AND x.technician_employee_id = ?
+        )
+        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
+    ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $my_emp_no);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $grouped = [];
+    while ($row = $res->fetch_assoc()) {
+        $key = $row['enquiry_id'].'|'.$row['assignment_type'];
+        if (!isset($grouped[$key])) {
+            $grouped[$key] = [
+                "assignment_id"        => $row['id'], // primary key
+                "enquiry_id"           => $row['enquiry_id'],
+                "assignment_type"      => $row['assignment_type'],
+                "client_name"          => $row['client_name'],
+                "contact_no1"          => $row['contact_no1'],
+                "delivery_instructions"=> $row['delivery_instructions'],
+                "customer_location"    => $row['customer_location'],
+                "assigned_by"          => $row['assigned_by'],
+                "assigned_at"          => fmt_date($row['assigned_at']),
+                "created_at"           => fmt_date($row['created_at']),
+                "updated_at"           => fmt_date($row['updated_at']),
+                "my_status"            => 0,
+                "technicians"          => []
             ];
-            if ($row['technician_employee_id'] === $my_emp_no) {
-                $grouped[$key]['my_status'] = (int)$row['completed_status'];
-            }
-            $grouped[$key]['technicians'][] = $tech;
         }
-
-        $response['status'] = "success";
-        $response['message'] = "Assignments for technician fetched";
-        $response['data'] = array_values($grouped);
-        echo json_encode($response);
-        exit();
+        $tech = [
+            "employee_number"  => $row['technician_employee_id'],
+            "employee_name"    => $row['employee_name'],
+            "completed_status" => (int)$row['completed_status'],
+            "completed_at"     => fmt_date($row['completed_at'])
+        ];
+        if ($row['technician_employee_id'] === $my_emp_no) {
+            $grouped[$key]['my_status'] = (int)$row['completed_status'];
+        }
+        $grouped[$key]['technicians'][] = $tech;
     }
+
+    $response['status'] = "success";
+    $response['message'] = "Assignments for technician fetched";
+    $response['columns'] = [
+        "client_name",
+        "contact_no1",
+        "my_status",
+        "delivery_instructions",
+        "customer_location",
+        "assigned_at"
+    ];
+    $response['data'] = array_values($grouped);
+    echo json_encode($response);
+    exit();
+}
 
     // ---------------------------
     // GET_ENQUIRY (details)
