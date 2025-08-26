@@ -364,93 +364,47 @@ try {
     }
 
     // ---------------------------
-    // TASK_DETAILS (task + checklist + assignments for the same enquiry)
-    // ---------------------------
-    if ($mode === "task_details") {
-        $task_id = isset($data['task_id']) ? intval($data['task_id']) : 0;
-        if ($task_id <= 0) throw new Exception("Invalid Task ID");
+    // TASK_DETAILS (fetch assignment details by its id)
+----------------------
+if ($mode === "task_details") {
+    $task_id = isset($data['task_id']) ? intval($data['task_id']) : 0;
+    if ($task_id <= 0) throw new Exception("Invalid Task ID");
 
-        // fetch task
-        $tsql = "
-            SELECT t.*, e.client_name AS customer_name, e.contact_no1 AS customer_contact, e.email AS customer_email, e.product_name, e.product_model, e.delivery_date
-            FROM tasks t
-            LEFT JOIN enquiries e ON t.enquiry_id = e.enquiry_id
-            WHERE t.id = ?
-        ";
-        $stmt = $conn->prepare($tsql);
-        $stmt->bind_param("i", $task_id);
-        $stmt->execute();
-        $task = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        if (!$task) throw new Exception("Task not found");
+    $tsql = "
+        SELECT ea.*, 
+               emp.employee_name,
+               e.client_name AS customer_name,
+               e.contact_no1 AS customer_contact,
+               e.email AS customer_email,
+               e.product_name,
+               e.product_model,
+               e.delivery_date
+        FROM enquiry_assignments ea
+        LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
+        LEFT JOIN enquiries e ON e.enquiry_id = ea.enquiry_id
+        WHERE ea.id = ?
+    ";
+    $stmt = $conn->prepare($tsql);
+    $stmt->bind_param("i", $task_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $task = $res->fetch_assoc();
+    $stmt->close();
 
-        // format lifecycle on task
-        $task['created_at'] = fmt_date($task['created_at']);
-        $task['updated_at'] = fmt_date($task['updated_at']);
-        $task['completed_at'] = fmt_date($task['completed_at']);
+    if (!$task) throw new Exception("Task not found");
 
-        // checklist
-        $csql = "SELECT id, checklist_item, is_completed, completed_at, created_at, updated_at FROM task_checklist WHERE task_id = ?";
-        $cstmt = $conn->prepare($csql);
-        $cstmt->bind_param("i", $task_id);
-        $cstmt->execute();
-        $checklist = [];
-        $cres = $cstmt->get_result();
-        while ($row = $cres->fetch_assoc()) {
-            $checklist[] = [
-                "id" => $row['id'],
-                "checklist_item" => $row['checklist_item'],
-                "is_completed" => (int)$row['is_completed'],
-                "completed_at" => fmt_date($row['completed_at']),
-                "created_at" => fmt_date($row['created_at']),
-                "updated_at" => fmt_date($row['updated_at'])
-            ];
-        }
-        $cstmt->close();
+    // Format lifecycle fields
+    $task['created_at']   = fmt_date($task['created_at']);
+    $task['updated_at']   = fmt_date($task['updated_at']);
+    $task['assigned_at']  = fmt_date($task['assigned_at']);
+    $task['completed_at'] = fmt_date($task['completed_at']);
 
-        // include assignments for the same enquiry (if task has enquiry_id)
-        $assignments = [];
-        if (!empty($task['enquiry_id'])) {
-            $asql = "
-                SELECT ea.*, emp.employee_name
-                FROM enquiry_assignments ea
-                LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-                WHERE ea.enquiry_id = ?
-                ORDER BY ea.assignment_type, ea.assigned_at DESC
-            ";
-            $a = $conn->prepare($asql);
-            $a->bind_param("s", $task['enquiry_id']);
-            $a->execute();
-            $ar = $a->get_result();
-            while ($row = $ar->fetch_assoc()) {
-                $assignments[] = [
-                    "employee_number"  => $row['technician_employee_id'],
-                    "employee_name"    => $row['employee_name'],
-                    "completed_status" => (int)$row['completed_status'],
-                    "completed_at"     => fmt_date($row['completed_at']),
-                    "delivery_instructions" => $row['delivery_instructions'],
-                    "customer_location" => $row['customer_location'],
-                    "assigned_by" => $row['assigned_by'],
-                    "assigned_at" => fmt_date($row['assigned_at']),
-                    "created_at" => fmt_date($row['created_at']),
-                    "updated_at" => fmt_date($row['updated_at']),
-                    "ass_type" => $row['assignment_type']
-                ];
-            }
-            $a->close();
-        }
-
-        $response['status'] = "success";
-        $response['message'] = "Task details fetched";
-        $response['data'] = [
-            "task" => $task,
-            "checklist" => $checklist,
-            "assignments" => $assignments
-        ];
-        echo json_encode($response);
-        exit();
-    }
-
+    $response['status']  = "success";
+    $response['message'] = "Task details fetched";
+    $response['data']    = $task;
+    echo json_encode($response);
+    exit();
+}
     // ---------------------------
     // TECH_LIST
     // ---------------------------
