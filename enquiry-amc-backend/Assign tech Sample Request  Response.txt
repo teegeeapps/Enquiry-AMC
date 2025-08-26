@@ -1,25 +1,21 @@
-Execute the query
+Sample Requests & Responses (all modes)
 
-ALTER TABLE enquiry_assignments
-    ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER completed_status;
+Use Content-Type: application/json and send JSON body for all calls (POST).
 
-CREATE UNIQUE INDEX uq_enq_type_tech
-ON enquiry_assignments (enquiry_id, assignment_type, technician_employee_id);
-
-Sample requests & responses
-1) INSERT (ENQUIRY) — multiple technicians + visit history logging
+1) insert — create assignment(s)
 
 Request
 
 {
   "mode": "insert",
-  "enquiry_id": "EQ003",
+  "enquiry_id": "ENQ001",
   "assignment_type": "ENQUIRY",
-  "technicians": ["E04","E07"],
-  "delivery_instructions": "Bring ladder & tester",
-  "customer_location": "T. Nagar, Chennai",
-  "assigned_by": "Admin",
-  "visit_date": "2025-08-20"
+  "technicians": ["EMP001", "EMP002"],
+  "delivery_instructions": "Call before visit",
+  "customer_location": "Site A",
+  "assigned_by": "admin",
+  "visit_date": "2025-09-01",
+  "technician_status": { "EMP001": 1, "EMP002": 0 }
 }
 
 
@@ -27,53 +23,22 @@ Response
 
 {
   "status": "success",
-  "message": "Assignment created successfully",
-  "columns": [],
-  "data": []
+  "message": "Assignment created successfully"
 }
 
-2) INSERT (AMC) — validation fails (no delivery date)
-
-Request
-
-{
-  "mode": "insert",
-  "enquiry_id": "EQ010",
-  "assignment_type": "AMC",
-  "technicians": ["E04","E09"],
-  "delivery_instructions": "Annual check",
-  "customer_location": "Hyderabad",
-  "assigned_by": "Admin"
-}
-
-
-Response
-
-{
-  "status": "error",
-  "message": "AMC assignment not allowed: Delivery Date is missing for this enquiry.",
-  "columns": [],
-  "data": []
-}
-
-3) UPDATE — change techs & set per-tech status
-
-(Replace existing rows for that enquiry+type; sets E07 done, E09 pending)
+2) update — update assignment(s) for same enquiry+type
 
 Request
 
 {
   "mode": "update",
-  "enquiry_id": "EQ003",
+  "enquiry_id": "ENQ001",
   "assignment_type": "ENQUIRY",
-  "technicians": ["E07","E09"],
-  "technician_status": {
-    "E07": 1,
-    "E09": 0
-  },
-  "delivery_instructions": "Replace cable",
-  "customer_location": "Anna Nagar",
-  "assigned_by": "Admin"
+  "technicians": ["EMP002"],
+  "delivery_instructions": "Updated note",
+  "customer_location": "Site B",
+  "assigned_by": "manager",
+  "technician_status": { "EMP002": 0 }
 }
 
 
@@ -81,158 +46,200 @@ Response
 
 {
   "status": "success",
-  "message": "Assignment updated successfully",
-  "columns": [],
-  "data": []
+  "message": "Assignment updated successfully"
 }
 
-4) FETCH (Admin) — list all assignments (grouped by enquiry+type)
+3) fetch — admin view (grouped by enquiry+type)
 
 Request
 
-{
-  "mode": "fetch"
-}
+{ "mode": "fetch" }
 
 
-Response (example)
+Response (trimmed example)
 
 {
   "status": "success",
   "message": "Assignments fetched successfully",
-  "columns": [
-    "Enquiry ID",
-    "Assignment Type",
-    "Client Name",
-    "Contact No",
-    "Technicians",
-    "Completed (X/Y)",
-    "Delivery Instructions",
-    "Customer Location",
-    "Assigned By",
-    "Assigned At"
-  ],
   "data": [
     {
-      "enquiry_id": "EQ003",
+      "enquiry_id": "ENQ001",
       "assignment_type": "ENQUIRY",
-      "client_name": "ECS",
+      "client_name": "ABC Corp",
       "contact_no1": "9876543210",
-      "technician_names": "Nehru (E04), Kiran (E07)",
-      "completed_summary": "1/2",
-      "delivery_instructions": "Replace cable",
-      "customer_location": "Anna Nagar",
-      "assigned_by": "Admin",
-      "assigned_at": "2025-08-18 12:45:11",
+      "delivery_instructions": "Call before visit",
+      "customer_location": "Site A",
+      "assigned_by": "admin",
+      "assigned_at": "10:00:00 25-08-2025",
+      "created_at": "09:30:00 25-08-2025",
+      "updated_at": "09:45:00 25-08-2025",
       "technicians": [
-        { "employee_number": "E04", "employee_name": "Nehru", "completed_status": 1 },
-        { "employee_number": "E07", "employee_name": "Kiran", "completed_status": 0 }
-      ]
+        {
+          "employee_number": "EMP001",
+          "employee_name": "John",
+          "completed_status": 1,
+          "completed_at": "10:10:00 25-08-2025"
+        },
+        {
+          "employee_number": "EMP002",
+          "employee_name": "Mary",
+          "completed_status": 0,
+          "completed_at": null
+        }
+      ],
+      "completed_summary": "1/2",
+      "technician_names": "John, Mary"
     }
   ]
 }
 
-5) FETCH_BY_TECHNICIAN — login-based; show my status + other technicians
+4) fetch_by_technician — assignments where I am assigned (includes peers)
 
 Request
 
-{
-  "mode": "fetch_by_technician",
-  "technician_employee_id": "E04"
-}
+{ "mode": "fetch_by_technician", "technician_employee_id": "EMP001" }
 
 
-Response (example)
+Response
 
 {
   "status": "success",
   "message": "Assignments for technician fetched",
-  "columns": [
-    "Enquiry ID",
-    "Assignment Type",
-    "Client Name",
-    "Contact No",
-    "Delivery Instructions",
-    "Customer Location",
-    "Assigned By",
-    "Assigned At",
-    "My Status",
-    "Other Technicians"
-  ],
   "data": [
     {
-      "enquiry_id": "EQ003",
+      "enquiry_id": "ENQ001",
       "assignment_type": "ENQUIRY",
-      "client_name": "ECS",
+      "client_name": "ABC Corp",
       "contact_no1": "9876543210",
-      "delivery_instructions": "Replace cable",
-      "customer_location": "Anna Nagar",
-      "assigned_by": "Admin",
-      "assigned_at": "2025-08-18 12:45:11",
+      "delivery_instructions": "Call before visit",
+      "customer_location": "Site A",
+      "assigned_by": "admin",
+      "assigned_at": "10:00:00 25-08-2025",
+      "created_at": "09:30:00 25-08-2025",
+      "updated_at": "09:45:00 25-08-2025",
       "my_status": 1,
-      "other_technicians": [
-        { "employee_number": "E07", "employee_name": "Kiran", "completed_status": 0 }
+      "technicians": [
+        { "employee_number": "EMP001", "employee_name": "John", "completed_status": 1, "completed_at": "10:10:00 25-08-2025" },
+        { "employee_number": "EMP002", "employee_name": "Mary", "completed_status": 0, "completed_at": null }
       ]
     }
   ]
 }
 
-6 GET_ENQUIRY — details + assignments + visit history + technician list
-
-If you want a single call that gives Technician List for dropdowns and the current assignment state:
+5) get_enquiry — enquiry full details (assignments flat list + visit history + tech list)
 
 Request
 
-{
-  "mode": "get_enquiry",
-  "enquiry_id": "EQ003"
-}
+{ "mode": "get_enquiry", "enquiry_id": "ENQ001" }
 
 
-Response (example)
+Response
 
 {
   "status": "success",
   "message": "Enquiry details fetched",
-  "columns": ["Employee Number","Technician Name","Completed","Assigned By","Assigned At"],
   "data": {
     "enquiry": {
-      "enquiry_id": "EQ003",
-      "client_name": "ECS",
-      "contact_person_name": "Venkatram",
+      "enquiry_id": "ENQ001",
+      "client_name": "ABC Corp",
+      "contact_person_name": "Mr A",
       "contact_no1": "9876543210",
-      "address": "No. 12, Mount Road"
+      "address": "Some address"
     },
-    "assignments": {
-      "ENQUIRY": [
-        {
-          "employee_number": "E04",
-          "employee_name": "Nehru",
-          "completed_status": 1,
-          "delivery_instructions": "Replace cable",
-          "customer_location": "Anna Nagar",
-          "assigned_by": "Admin",
-          "assigned_at": "2025-08-18 12:45:11"
-        },
-        {
-          "employee_number": "E07",
-          "employee_name": "Kiran",
-          "completed_status": 0,
-          "delivery_instructions": "Replace cable",
-          "customer_location": "Anna Nagar",
-          "assigned_by": "Admin",
-          "assigned_at": "2025-08-18 12:45:11"
-        }
-      ],
-      "AMC": []
-    },
-    "visit_history": [
-      { "visit_date": "2025-08-20", "added_by": "Admin", "added_at": "2025-08-16 10:00:00" }
+    "assignments": [
+      {
+        "employee_number": "EMP001",
+        "employee_name": "John",
+        "completed_status": 1,
+        "completed_at": "10:10:00 25-08-2025",
+        "delivery_instructions": "Call before visit",
+        "customer_location": "Site A",
+        "assigned_by": "admin",
+        "assigned_at": "10:00:00 25-08-2025",
+        "created_at": "09:30:00 25-08-2025",
+        "updated_at": "09:45:00 25-08-2025",
+        "ass_type": "ENQUIRY"
+      }
     ],
-    "technician_list": [
-      { "employee_id": 12, "employee_number": "E04", "employee_name": "Nehru" },
-      { "employee_id": 17, "employee_number": "E07", "employee_name": "Kiran" }
+    "visit_history": [
+      { "visit_date": "2025-09-01", "added_by": "admin", "added_at": "09:40:00 25-08-2025" }
+    ],
+    "technician_list": [ { "employee_id": 1, "employee_number": "EMP001", "employee_name": "John" } ]
+  }
+}
+
+6) task_details — task + checklist + assignments (for the enquiry attached to the task)
+
+Request
+
+{ "mode": "task_details", "task_id": 123 }
+
+
+Response
+
+{
+  "status": "success",
+  "message": "Task details fetched",
+  "data": {
+    "task": {
+      "id": 123,
+      "enquiry_id": "ENQ001",
+      "task_name": "Site Visit",
+      "task_description": "Inspect site",
+      "assigned_to": "EMP001",
+      "status": "Open",
+      "customer_name": "ABC Corp",
+      "customer_contact": "9876543210",
+      "customer_email": "abc@corp.com",
+      "product_name": "AC",
+      "product_model": "AC100",
+      "delivery_date": "2025-08-01",
+      "created_at": "09:00:00 25-08-2025",
+      "updated_at": "09:30:00 25-08-2025",
+      "completed_at": null
+    },
+    "checklist": [
+      {
+        "id": 1,
+        "checklist_item": "Verify site access",
+        "is_completed": 1,
+        "completed_at": "09:50:00 25-08-2025",
+        "created_at": "09:10:00 25-08-2025",
+        "updated_at": "09:45:00 25-08-2025"
+      }
+    ],
+    "assignments": [
+      {
+        "employee_number": "EMP001",
+        "employee_name": "John",
+        "completed_status": 1,
+        "completed_at": "10:10:00 25-08-2025",
+        "delivery_instructions": "Call before visit",
+        "customer_location": "Site A",
+        "assigned_by": "admin",
+        "assigned_at": "10:00:00 25-08-2025",
+        "created_at": "09:30:00 25-08-2025",
+        "updated_at": "09:45:00 25-08-2025",
+        "ass_type": "ENQUIRY"
+      }
     ]
   }
 }
 
+7) tech_list — active technicians
+
+Request
+
+{ "mode": "tech_list" }
+
+
+Response
+
+{
+  "status": "success",
+  "message": "Technicians fetched",
+  "data": [
+    { "employee_id": 1, "employee_number": "EMP001", "employee_name": "John" },
+    { "employee_id": 2, "employee_number": "EMP002", "employee_name": "Mary" }
+  ]
+}
