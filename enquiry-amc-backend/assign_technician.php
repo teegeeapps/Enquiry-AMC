@@ -363,27 +363,12 @@ try {
         exit();
     }
 
-    // ---------------------------
-    // TASK_DETAILS (fetch assignment details by its id)
-----------------------
+   // TASK_DETAILS (fetch single assignment details by its id)
 if ($mode === "task_details") {
     $task_id = isset($data['task_id']) ? intval($data['task_id']) : 0;
     if ($task_id <= 0) throw new Exception("Invalid Task ID");
 
-    $tsql = "
-        SELECT ea.*, 
-               emp.employee_name,
-               e.client_name AS customer_name,
-               e.contact_no1 AS customer_contact,
-               e.email AS customer_email,
-               e.product_name,
-               e.product_model,
-               e.delivery_date
-        FROM enquiry_assignments ea
-        LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-        LEFT JOIN enquiries e ON e.enquiry_id = ea.enquiry_id
-        WHERE ea.id = ?
-    ";
+    $tsql = "SELECT * FROM enquiry_assignments WHERE id = ?";
     $stmt = $conn->prepare($tsql);
     $stmt->bind_param("i", $task_id);
     $stmt->execute();
@@ -393,11 +378,11 @@ if ($mode === "task_details") {
 
     if (!$task) throw new Exception("Task not found");
 
-    // Format lifecycle fields
-    $task['created_at']   = fmt_date($task['created_at']);
-    $task['updated_at']   = fmt_date($task['updated_at']);
-    $task['assigned_at']  = fmt_date($task['assigned_at']);
-    $task['completed_at'] = fmt_date($task['completed_at']);
+    // format datetime fields if they exist
+    $task['created_at']   = isset($task['created_at'])   ? fmt_date($task['created_at'])   : null;
+    $task['updated_at']   = isset($task['updated_at'])   ? fmt_date($task['updated_at'])   : null;
+    $task['assigned_at']  = isset($task['assigned_at'])  ? fmt_date($task['assigned_at'])  : null;
+    $task['completed_at'] = isset($task['completed_at']) ? fmt_date($task['completed_at']) : null;
 
     $response['status']  = "success";
     $response['message'] = "Task details fetched";
@@ -405,6 +390,7 @@ if ($mode === "task_details") {
     echo json_encode($response);
     exit();
 }
+
     // ---------------------------
     // TECH_LIST
     // ---------------------------
