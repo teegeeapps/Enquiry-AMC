@@ -49,12 +49,13 @@ try {
 // INSERT assignment
 // ---------------------------
 if ($mode === 'insert') {
-    $enquiry_id            = $data['enquiry_id'] ?? null;
+    $enquiry_id            = trim($data['enquiry_id'] ?? '');
     $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians           = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
     $customer_location     = trim($data['customer_location'] ?? '');
     $visit_date            = trim($data['visit_date'] ?? '');
+    $assigned_by           = trim($data['assigned_by'] ?? 'admin');
 
     // --- Validations ---
     if (!$enquiry_id) {
@@ -84,31 +85,20 @@ if ($mode === 'insert') {
         $chk->bind_param("s", $enquiry_id);
         $chk->execute();
         $del = $chk->get_result()->fetch_assoc();
-        if (empty($del['delivered_date']) || $del['delivered_date'] === '0000-00-00') {
+        if (empty($del['delivered_date'])) {
             echo json_encode(["status" => "error", "message" => "$assignment_type assignment not allowed until delivered_date is set"]);
             exit();
         }
     }
 
-    // Verify all technicians are valid + active (using JOIN correctly)
+    // Verify all technicians are valid + active using role_id=3
     $placeholders = implode(",", array_fill(0, count($technicians), "?"));
     $types = str_repeat("s", count($technicians));
-
-    $sql = "
-        SELECT COUNT(DISTINCT e.employee_number) AS cnt
-        FROM employees e
-        JOIN employee_roles er ON e.id = er.employee_id
-        JOIN roles r ON er.role_id = r.id
-        WHERE e.employee_number IN ($placeholders)
-          AND r.role_name = 'Technician'
-          AND e.status = 1
-    ";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$technicians);
-    $stmt->execute();
-    $cnt = $stmt->get_result()->fetch_assoc()['cnt'];
-
+    $verify_sql = "SELECT COUNT(*) AS cnt FROM employees WHERE employee_number IN ($placeholders) AND status=1 AND role_id=3";
+    $verify = $conn->prepare($verify_sql);
+    $verify->bind_param($types, ...$technicians);
+    $verify->execute();
+    $cnt = $verify->get_result()->fetch_assoc()['cnt'];
     if ($cnt != count($technicians)) {
         echo json_encode(["status" => "error", "message" => "Invalid technician(s)"]);
         exit();
@@ -117,43 +107,27 @@ if ($mode === 'insert') {
     // Transaction start
     $conn->begin_transaction();
     try {
-        // Remove existing uncompleted assignments
+        // Remove existing uncompleted assignments of same type
         $delq = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id=? AND assignment_type=? AND completed_status IS NULL");
         $delq->bind_param("ss", $enquiry_id, $assignment_type);
         $delq->execute();
 
         // Insert new assignments
-        $ins = $conn->prepare("
-            INSERT INTO enquiry_assignments 
-            (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW())
-        ");
+        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW())");
         foreach ($technicians as $tech) {
-            $ins->bind_param("ssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $loggedInUser);
+            $ins->bind_param("sssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $assigned_by, $assigned_by);
             $ins->execute();
         }
 
-        // Log visit history
+        // Log visit history if provided
         if ($visit_date) {
-            $vh = $conn->prepare("
-                INSERT INTO enquiry_visit_history 
-                (enquiry_id, visit_date, added_by, added_at) 
-                VALUES (?, ?, ?, NOW())
-            ");
-            $vh->bind_param("sss", $enquiry_id, $visit_date, $loggedInUser);
+            $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, visit_date, added_by, added_at) VALUES (?, ?, ?, NOW())");
+            $vh->bind_param("sss", $enquiry_id, $visit_date, $assigned_by);
             $vh->execute();
         }
 
         $conn->commit();
-
-        // Format visit_date for response (d-m-Y)
-        $response = [
-            "status" => "success",
-            "message" => "Assignments inserted",
-            "visit_date" => $visit_date ? date("d-m-Y", strtotime($visit_date)) : null
-        ];
-        echo json_encode($response);
-
+        echo json_encode(["status" => "success", "message" => "Assignments inserted"]);
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Insert failed: ".$e->getMessage()]);
