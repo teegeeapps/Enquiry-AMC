@@ -39,177 +39,285 @@ try {
     $inTransaction = false;
 
     // ---------------------------
-// INSERT / UPDATE assignment
 // ---------------------------
-if ($mode === 'insert' || $mode === 'update') {
+// INSERT assignment
+// ---------------------------
+if ($mode === 'insert') {
     $enquiry_id            = $data['enquiry_id'] ?? null;
     $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians           = $data['technicians'] ?? [];
-    $delivery_instructions = $data['delivery_instructions'] ?? '';
-    $customer_location     = $data['customer_location'] ?? '';
-    $assigned_by           = $data['assigned_by'] ?? 'system';
-    $visit_date            = $data['visit_date'] ?? null;
-    $tech_status_map       = $data['technician_status'] ?? ($data['tech_status'] ?? []);
+    $delivery_instructions = trim($data['delivery_instructions'] ?? '');
+    $customer_location     = trim($data['customer_location'] ?? '');
+    $visit_date            = trim($data['visit_date'] ?? '');
 
-    // basic validation
-    if (!$enquiry_id || !in_array($assignment_type, ['ENQUIRY','AMC','SERVICE'], true) || empty($technicians)) {
-        throw new Exception("Missing required fields: enquiry_id, assignment_type, technicians[]");
-    }
-    if ($visit_date && !is_valid_date($visit_date)) {
-        throw new Exception("Invalid visit_date format. Expected YYYY-MM-DD");
+    // --- Validations ---
+    if (!$enquiry_id) {
+        echo json_encode(["status" => "error", "message" => "Missing enquiry_id"]);
+        exit();
     }
 
-    // AMC/SERVICE must have delivered_date in amc_list
-    if ($assignment_type === 'AMC' || $assignment_type === 'SERVICE') {
-        $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id = ? AND delivered_date IS NOT NULL AND delivered_date <> '' LIMIT 1");
+    $validTypes = ["ENQUIRY", "AMC", "SERVICE"];
+    if (!in_array($assignment_type, $validTypes)) {
+        echo json_encode(["status" => "error", "message" => "Invalid assignment_type"]);
+        exit();
+    }
+
+    if (!is_array($technicians) || empty($technicians)) {
+        echo json_encode(["status" => "error", "message" => "Technician list required"]);
+        exit();
+    }
+
+    if ($visit_date && !preg_match("/^\d{4}-\d{2}-\d{2}$/", $visit_date)) {
+        echo json_encode(["status" => "error", "message" => "Invalid visit_date format (Y-m-d)"]);
+        exit();
+    }
+
+    // Restrict AMC/SERVICE unless delivered_date exists
+    if (in_array($assignment_type, ["AMC", "SERVICE"])) {
+        $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id=? LIMIT 1");
         $chk->bind_param("s", $enquiry_id);
         $chk->execute();
-        $r = $chk->get_result();
-        if ($r->num_rows === 0) {
-            throw new Exception("$assignment_type assignment not allowed: Delivery Date is missing for this enquiry.");
+        $del = $chk->get_result()->fetch_assoc();
+        if (empty($del['delivered_date'])) {
+            echo json_encode(["status" => "error", "message" => "$assignment_type assignment not allowed until delivered_date is set"]);
+            exit();
         }
-        $chk->close();
     }
 
-    // verify technicians exist and active
+    // Verify all technicians are valid + active
     $placeholders = implode(",", array_fill(0, count($technicians), "?"));
     $types = str_repeat("s", count($technicians));
-    $v_stmt_sql = "SELECT employee_number FROM employees WHERE employee_number IN ($placeholders) AND role_id = (SELECT id FROM roles WHERE role_name = 'Technician') AND status = 1";
-    $v_stmt = $conn->prepare($v_stmt_sql);
-    $bind_names[] = $types;
-    foreach ($technicians as $k => $t) { $bind_names[] = $technicians[$k]; }
-    $tmp = [];
-    foreach ($bind_names as $key => $value) $tmp[$key] = &$bind_names[$key];
-    call_user_func_array([$v_stmt, 'bind_param'], $tmp);
-    $v_stmt->execute();
-    $vr = $v_stmt->get_result();
-    $validTechs = [];
-    while ($row = $vr->fetch_assoc()) $validTechs[] = $row['employee_number'];
-    $v_stmt->close();
-    if (count($validTechs) !== count($technicians)) {
-        throw new Exception("One or more technicians are invalid or inactive");
+    $verify = $conn->prepare("SELECT COUNT(*) AS cnt FROM technicians WHERE employee_number IN ($placeholders) AND role='Technician' AND is_active=1");
+    $verify->bind_param($types, ...$technicians);
+    $verify->execute();
+    $cnt = $verify->get_result()->fetch_assoc()['cnt'];
+    if ($cnt != count($technicians)) {
+        echo json_encode(["status" => "error", "message" => "Invalid technician(s)"]);
+        exit();
     }
 
-    // Begin transaction
+    // Transaction start
     $conn->begin_transaction();
-    $inTransaction = true;
+    try {
+        // Remove existing uncompleted assignments
+        $delq = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id=? AND assignment_type=? AND completed_status IS NULL");
+        $delq->bind_param("ss", $enquiry_id, $assignment_type);
+        $delq->execute();
 
-    if ($mode === 'update') {
-        $del = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id = ? AND assignment_type = ?");
-        $del->bind_param("ss", $enquiry_id, $assignment_type);
-        $del->execute();
-        $del->close();
-    }
-
-    // Insert / upsert
-    $ins_sql = "
-        INSERT INTO enquiry_assignments
-          (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, completed_status, completed_at, created_at, updated_at, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, NOW(), NOW(), 1)
-        ON DUPLICATE KEY UPDATE
-          delivery_instructions = VALUES(delivery_instructions),
-          customer_location     = VALUES(customer_location),
-          assigned_by           = VALUES(assigned_by),
-          assigned_at           = NOW(),
-          completed_status      = VALUES(completed_status),
-          completed_at          = VALUES(completed_at),
-          updated_at            = NOW(),
-          is_active             = 1
-    ";
-    $ins = $conn->prepare($ins_sql);
-    if (!$ins) throw new Exception("Prepare failed: " . $conn->error);
-
-    foreach ($technicians as $techEmpNo) {
-        $techEmpNo = trim($techEmpNo);
-        // convert status to ENUM text
-        $completed_status = (isset($tech_status_map[$techEmpNo]) && $tech_status_map[$techEmpNo] == 1)
-            ? 'Completed'
-            : 'Pending';
-        $completed_at = ($completed_status === 'Completed') ? date("Y-m-d H:i:s") : null;
-
-        // bind parameters: 7 strings, 1 string nullable => "ssssssss"
-        $ins->bind_param(
-            "ssssssss",
-            $enquiry_id,
-            $assignment_type,
-            $techEmpNo,
-            $delivery_instructions,
-            $customer_location,
-            $assigned_by,
-            $completed_status,
-            $completed_at
-        );
-        $ins->execute();
-        if ($ins->errno) {
-            throw new Exception("Insert failed: " . $ins->error);
+        // Insert new
+        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, 'admin', NOW())");
+        foreach ($technicians as $tech) {
+            $ins->bind_param("ssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $loggedInUser);
+            $ins->execute();
         }
+
+        // Log visit history
+        if ($visit_date) {
+            $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) VALUES (?, ?, ?, NOW())");
+            $vh->bind_param("sss", $enquiry_id, $assignment_type, $visit_date);
+            $vh->execute();
+        }
+
+        $conn->commit();
+        echo json_encode(["status" => "success", "message" => "Assignments inserted"]);
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(["status" => "error", "message" => "Insert failed"]);
     }
-    $ins->close();
-
-    // visit history
-    if (!empty($visit_date)) {
-        $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, visit_date, added_by, added_at) VALUES (?, ?, ?, NOW())");
-        $vh->bind_param("sss", $enquiry_id, $visit_date, $assigned_by);
-        $vh->execute();
-        $vh->close();
-    }
-
-    $conn->commit();
-    $inTransaction = false;
-
-    $response['status'] = "success";
-    $response['message'] = ($mode === 'insert' ? "Assignment created" : "Assignment updated") . " successfully";
-    echo json_encode($response);
     exit();
 }
 
-   // ---------------------------
-// FETCH (Admin view)
+// ---------------------------
+// UPDATE assignment
+// ---------------------------
+if ($mode === 'update') {
+    $enquiry_id            = $data['enquiry_id'] ?? null;
+    $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
+    $technicians           = $data['technicians'] ?? [];
+    $delivery_instructions = trim($data['delivery_instructions'] ?? '');
+    $customer_location     = trim($data['customer_location'] ?? '');
+    $visit_date            = trim($data['visit_date'] ?? '');
+
+    if (!$enquiry_id || !is_array($technicians)) {
+        echo json_encode(["status" => "error", "message" => "Missing required fields"]);
+        exit();
+    }
+
+    $conn->begin_transaction();
+    try {
+        // Soft delete old unselected technicians
+        $del = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id=? AND assignment_type=? AND completed_status IS NULL AND technician_employee_id NOT IN (" . implode(",", array_fill(0, count($technicians), "?")) . ")");
+        $types = "ss" . str_repeat("s", count($technicians));
+        $params = array_merge([$enquiry_id, $assignment_type], $technicians);
+        $del->bind_param($types, ...$params);
+        $del->execute();
+
+        // Update existing or insert missing
+        foreach ($technicians as $tech) {
+            $check = $conn->prepare("SELECT id FROM enquiry_assignments WHERE enquiry_id=? AND assignment_type=? AND technician_employee_id=? LIMIT 1");
+            $check->bind_param("sss", $enquiry_id, $assignment_type, $tech);
+            $check->execute();
+            $row = $check->get_result()->fetch_assoc();
+            if ($row) {
+                $upd = $conn->prepare("UPDATE enquiry_assignments SET delivery_instructions=?, customer_location=?, updated_by='admin', updated_at=NOW() WHERE id=?");
+                $upd->bind_param("sss", $delivery_instructions, $customer_location, $row['id']);
+                $upd->execute();
+            } else {
+                $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, 'admin', NOW())");
+                $ins->bind_param("ssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $loggedInUser);
+                $ins->execute();
+            }
+        }
+
+        // Visit history log
+        if ($visit_date) {
+            $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) VALUES (?, ?, ?, NOW())");
+            $vh->bind_param("sss", $enquiry_id, $assignment_type, $visit_date);
+            $vh->execute();
+        }
+
+        $conn->commit();
+        echo json_encode(["status" => "success", "message" => "Assignments updated"]);
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(["status" => "error", "message" => "Update failed"]);
+    }
+    exit();
+}
+
+// ---------------------------
+// TECHNICIAN UPDATE
+// ---------------------------
+if ($mode === 'technician_update') {
+    $assignment_id    = $data['assignment_id'] ?? null;
+    $completed_status = $data['completed_status'] ?? null;
+    $remarks          = trim($data['remarks'] ?? '');
+
+    if (!$assignment_id) {
+        echo json_encode(["status" => "error", "message" => "Missing assignment_id"]);
+        exit();
+    }
+
+    $stmt = $conn->prepare("UPDATE enquiry_assignments SET completed_status=?, completed_at=NOW(), remarks=?, updated_by='technician', updated_at=NOW() WHERE id=?");
+    $stmt->bind_param("ssi", $completed_status, $remarks, $assignment_id);
+    $stmt->execute();
+
+    echo json_encode(["status" => "success", "message" => "Technician updated"]);
+    exit();
+}
+
+// ---------------------------
+// FETCH assignments (with d-m-Y date format)
+// ---------------------------
+if ($mode === 'fetch') {
+    $enquiry_id      = $data['enquiry_id'] ?? null;
+    $assignment_type = strtoupper(trim($data['assignment_type'] ?? ''));
+
+    $result = [];
+    $sql = "SELECT 
+                ea.id AS assignment_id,
+                ea.enquiry_id,
+                ea.assignment_type,
+                ea.technician_employee_id,
+                t.name AS technician_name,
+                ea.assigned_by,
+                ea.delivery_instructions,
+                ea.customer_location,
+                DATE_FORMAT(ea.assigned_at, '%d-%m-%Y') AS assigned_at,
+                ea.completed_status,
+                DATE_FORMAT(ea.completed_at, '%d-%m-%Y') AS completed_at,
+                ea.remarks,
+                DATE_FORMAT(ea.updated_at, '%d-%m-%Y') AS updated_at,
+                CASE WHEN ea.updated_by='technician' THEN 'technician_update' ELSE 'admin_update' END AS last_update_source
+            FROM enquiry_assignments ea
+            LEFT JOIN technicians t ON ea.technician_employee_id = t.employee_number
+            WHERE ea.enquiry_id=? AND ea.assignment_type=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $enquiry_id, $assignment_type);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $result[] = $row;
+    }
+
+    echo json_encode(["status" => "success", "data" => $result]);
+    exit();
+}
+// ---------------------------
+// FETCH (Admin view - Flat list with completed_summary + technician_names)
 // ---------------------------
 if ($mode === 'fetch') {
     $sql = "
-        SELECT ea.*, q.client_name, q.contact_no1, emp.employee_name
+        SELECT 
+            ea.id AS assignment_id,
+            ea.enquiry_id,
+            ea.assignment_type,
+            ea.delivery_instructions,
+            ea.customer_location,
+            ea.assigned_by,
+            ea.assigned_at,
+            ea.created_at,
+            ea.updated_at,
+            ea.technician_employee_id,
+            ea.completed_status,
+            ea.completed_at,
+            q.client_name,
+            q.contact_no1,
+            emp.employee_name
         FROM enquiry_assignments ea
         LEFT JOIN enquiries q ON q.enquiry_id = ea.enquiry_id
         LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
+        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type, emp.employee_name
     ";
+
     $res = $conn->query($sql);
-    $grouped = [];
-    while ($row = $res->fetch_assoc()) {
-        $key = $row['enquiry_id'].'|'.$row['assignment_type'];
-        if (!isset($grouped[$key])) {
-            $grouped[$key] = [
-                "assignment_id"        => $row['id'], // primary key
-                "enquiry_id"           => $row['enquiry_id'],
-                "assignment_type"      => $row['assignment_type'],
-                "client_name"          => $row['client_name'],
-                "contact_no1"          => $row['contact_no1'],
-                "delivery_instructions"=> $row['delivery_instructions'],
-                "customer_location"    => $row['customer_location'],
-                "assigned_by"          => $row['assigned_by'],
-                "assigned_at"          => fmt_date($row['assigned_at']),
-                "created_at"           => fmt_date($row['created_at']),
-                "updated_at"           => fmt_date($row['updated_at']),
-                "technicians"          => [],
-                "completed_summary"    => "0/0"
-            ];
-        }
-        $grouped[$key]["technicians"][] = [
-            "employee_number"  => $row['technician_employee_id'],
-            "employee_name"    => $row['employee_name'],
-            "completed_status" => (int)$row['completed_status'],
-            "completed_at"     => fmt_date($row['completed_at'])
+
+    // Preload team + summary info
+    $team_sql = "
+        SELECT 
+            ea.enquiry_id, ea.assignment_type,
+            GROUP_CONCAT(emp.employee_name ORDER BY emp.employee_name SEPARATOR ', ') AS technician_names,
+            COUNT(*) AS total,
+            SUM(ea.completed_status) AS done
+        FROM enquiry_assignments ea
+        LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
+        GROUP BY ea.enquiry_id, ea.assignment_type
+    ";
+    $team_res = $conn->query($team_sql);
+    $team_map = [];
+    while ($t = $team_res->fetch_assoc()) {
+        $key = $t['enquiry_id'].'|'.$t['assignment_type'];
+        $team_map[$key] = [
+            "technician_names"  => $t['technician_names'],
+            "completed_summary" => $t['done']."/".$t['total']
         ];
     }
 
     $final = [];
-    foreach ($grouped as $g) {
-        $total = count($g['technicians']);
-        $done  = array_sum(array_column($g['technicians'], 'completed_status'));
-        $g['completed_summary'] = "{$done}/{$total}";
-        $g['technician_names']  = implode(", ", array_column($g['technicians'], 'employee_name'));
-        $final[] = $g;
+    while ($row = $res->fetch_assoc()) {
+        $key  = $row['enquiry_id'].'|'.$row['assignment_type'];
+        $team = $team_map[$key] ?? ["technician_names"=>"","completed_summary"=>"0/0"];
+
+        $final[] = [
+            "assignment_id"        => $row['assignment_id'],
+            "enquiry_id"           => $row['enquiry_id'],
+            "assignment_type"      => $row['assignment_type'],
+            "client_name"          => $row['client_name'],
+            "contact_no1"          => $row['contact_no1'],
+            "delivery_instructions"=> $row['delivery_instructions'],
+            "customer_location"    => $row['customer_location'],
+            "assigned_by"          => $row['assigned_by'],
+            "assigned_at"          => fmt_date($row['assigned_at']),
+            "created_at"           => fmt_date($row['created_at']),
+            "updated_at"           => fmt_date($row['updated_at']),
+            "employee_number"      => $row['technician_employee_id'],
+            "employee_name"        => $row['employee_name'],
+            "completed_status"     => (int)$row['completed_status'],
+            "completed_at"         => fmt_date($row['completed_at']),
+            "completed_summary"    => $team['completed_summary'],
+            "technician_names"     => $team['technician_names']
+        ];
     }
 
     $response['status'] = "success";
@@ -217,8 +325,10 @@ if ($mode === 'fetch') {
     $response['columns'] = [
         "client_name",
         "contact_no1",
-        "technician_names",
+        "employee_name",
+        "completed_status",
         "completed_summary",
+        "technician_names",
         "delivery_instructions",
         "customer_location",
         "assigned_at"

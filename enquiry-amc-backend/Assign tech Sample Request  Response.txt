@@ -243,3 +243,150 @@ Response
     { "employee_id": 2, "employee_number": "EMP002", "employee_name": "Mary" }
   ]
 }
+
+-----------------------------
+
+1. Insert Assignment
+Request (Insert)
+{
+  "mode": "insert",
+  "enquiry_id": "E12345",
+  "assignment_type": "ENQUIRY",
+  "technicians": ["EMP001", "EMP002"],
+  "delivery_instructions": "Deliver by weekend",
+  "customer_location": "Hyderabad",
+  "assigned_by": "Admin001"
+}
+
+Response (Insert Success)
+{
+  "status": "success",
+  "message": "Assignments created successfully",
+  "data": [
+    {
+      "assignment_id": "101",
+      "enquiry_id": "E12345",
+      "assignment_type": "ENQUIRY",
+      "technician_id": "EMP001",
+      "delivery_instructions": "Deliver by weekend",
+      "customer_location": "Hyderabad",
+      "assigned_by": "Admin001",
+      "assigned_at": "27-08-2025",
+      "completed_status": 0,
+      "remarks": ""
+    },
+    {
+      "assignment_id": "102",
+      "enquiry_id": "E12345",
+      "assignment_type": "ENQUIRY",
+      "technician_id": "EMP002",
+      "delivery_instructions": "Deliver by weekend",
+      "customer_location": "Hyderabad",
+      "assigned_by": "Admin001",
+      "assigned_at": "27-08-2025",
+      "completed_status": 0,
+      "remarks": ""
+    }
+  ]
+}
+
+📌 2. Update Assignment
+Request (Update)
+{
+  "mode": "update",
+  "assignment_id": "101",
+  "assignment_type": "ENQUIRY",
+  "completed_status": 1,
+  "completed_at": "2025-08-27",
+  "remarks": "Work completed successfully",
+  "updated_by": "technician"
+}
+
+Response (Update Success)
+{
+  "status": "success",
+  "message": "Assignment updated successfully",
+  "data": {
+    "assignment_id": "101",
+    "enquiry_id": "E12345",
+    "assignment_type": "ENQUIRY",
+    "technician_id": "EMP001",
+    "completed_status": 1,
+    "completed_at": "27-08-2025",
+    "remarks": "Work completed successfully",
+    "updated_at": "27-08-2025",
+    "last_update_source": "technician_update"
+  }
+}
+
+📌 3. Fetch Assignments (Flat Admin View)
+Request (Fetch)
+{
+  "mode": "fetch"
+}
+
+Response (Flat List with Technician Names + Completed Summary)
+{
+  "status": "success",
+  "message": "Assignments fetched successfully",
+  "columns": [
+    "client_name",
+    "contact_no1",
+    "employee_name",
+    "completed_status",
+    "completed_summary",
+    "technician_names",
+    "delivery_instructions",
+    "customer_location",
+    "assigned_at"
+  ],
+  "data": [
+    {
+      "assignment_id": "101",
+      "enquiry_id": "E12345",
+      "assignment_type": "ENQUIRY",
+      "client_name": "Ravi Kumar",
+      "contact_no1": "9876543210",
+      "delivery_instructions": "Deliver by weekend",
+      "customer_location": "Hyderabad",
+      "assigned_by": "Admin001",
+      "assigned_at": "27-08-2025",
+      "created_at": "26-08-2025",
+      "updated_at": "27-08-2025",
+      "employee_number": "EMP001",
+      "employee_name": "Suresh",
+      "completed_status": 1,
+      "completed_at": "27-08-2025",
+      "completed_summary": "1/2",
+      "technician_names": "Suresh, Ramesh"
+    },
+    {
+      "assignment_id": "102",
+      "enquiry_id": "E12345",
+      "assignment_type": "ENQUIRY",
+      "client_name": "Ravi Kumar",
+      "contact_no1": "9876543210",
+      "delivery_instructions": "Deliver by weekend",
+      "customer_location": "Hyderabad",
+      "assigned_by": "Admin001",
+      "assigned_at": "27-08-2025",
+      "created_at": "26-08-2025",
+      "updated_at": "27-08-2025",
+      "employee_number": "EMP002",
+      "employee_name": "Ramesh",
+      "completed_status": 0,
+      "completed_at": "",
+      "completed_summary": "1/2",
+      "technician_names": "Suresh, Ramesh"
+    }
+  ]
+}
+
+
+
+Insert = multiple technicians at once.
+
+Update = marks assignment complete, adds remarks.
+
+Fetch = flat view with technician list + completed summary, dates in d-m-Y.
+
