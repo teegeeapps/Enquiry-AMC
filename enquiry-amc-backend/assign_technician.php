@@ -84,19 +84,31 @@ if ($mode === 'insert') {
         $chk->bind_param("s", $enquiry_id);
         $chk->execute();
         $del = $chk->get_result()->fetch_assoc();
-        if (empty($del['delivered_date'])) {
+        if (empty($del['delivered_date']) || $del['delivered_date'] === '0000-00-00') {
             echo json_encode(["status" => "error", "message" => "$assignment_type assignment not allowed until delivered_date is set"]);
             exit();
         }
     }
 
-    // Verify all technicians are valid + active
+    // Verify all technicians are valid + active (corrected for roles table)
     $placeholders = implode(",", array_fill(0, count($technicians), "?"));
     $types = str_repeat("s", count($technicians));
-    $verify = $conn->prepare("SELECT COUNT(*) AS cnt FROM employees WHERE employee_number IN ($placeholders) AND role='Technician' AND is_active=1");
+
+    $sql = "
+        SELECT COUNT(DISTINCT e.employee_number) AS cnt
+        FROM employees e
+        JOIN employee_roles er ON e.id = er.employee_id
+        JOIN roles r ON er.role_id = r.id
+        WHERE e.employee_number IN ($placeholders)
+          AND r.role_name = 'Technician'
+          AND e.status = 1
+    ";
+
+    $verify = $conn->prepare($sql);
     $verify->bind_param($types, ...$technicians);
     $verify->execute();
     $cnt = $verify->get_result()->fetch_assoc()['cnt'];
+
     if ($cnt != count($technicians)) {
         echo json_encode(["status" => "error", "message" => "Invalid technician(s)"]);
         exit();
@@ -110,8 +122,12 @@ if ($mode === 'insert') {
         $delq->bind_param("ss", $enquiry_id, $assignment_type);
         $delq->execute();
 
-        // Insert new
-        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, 'admin', NOW())");
+        // Insert new assignments
+        $ins = $conn->prepare("
+            INSERT INTO enquiry_assignments 
+            (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW())
+        ");
         foreach ($technicians as $tech) {
             $ins->bind_param("ssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $loggedInUser);
             $ins->execute();
@@ -119,20 +135,27 @@ if ($mode === 'insert') {
 
         // Log visit history
         if ($visit_date) {
-            $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) VALUES (?, ?, ?, NOW())");
-            $vh->bind_param("sss", $enquiry_id, $assignment_type, $visit_date);
+            $vh = $conn->prepare("
+                INSERT INTO enquiry_visit_history 
+                (enquiry_id, visit_date, added_by, added_at) 
+                VALUES (?, ?, ?, NOW())
+            ");
+            $vh->bind_param("sss", $enquiry_id, $visit_date, $loggedInUser);
             $vh->execute();
         }
 
         $conn->commit();
-        echo json_encode(["status" => "success", "message" => "Assignments inserted"]);
+
+        // Format dates for response (d-m-Y)
+        $response = ["status" => "success", "message" => "Assignments inserted", "visit_date" => $visit_date ? date("d-m-Y", strtotime($visit_date)) : null];
+        echo json_encode($response);
+
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Insert failed"]);
     }
     exit();
 }
-
 // ---------------------------
 // UPDATE assignment
 // ---------------------------
