@@ -246,7 +246,7 @@ if ($mode === 'fetch_detail') {
 }
 // ---------------------------
 // FETCH (Admin view - Flat list with completed_summary + technician_names)
-// ---------------------------
+// ------------------completed_status---------
 if ($mode === 'fetch_admin') {
     $sql = "
         SELECT 
@@ -313,7 +313,7 @@ if ($mode === 'fetch_admin') {
             "updated_at"           => fmt_date($row['updated_at']),
             "employee_number"      => $row['technician_employee_id'],
             "employee_name"        => $row['employee_name'],
-            "completed_status"     => (int)$row['completed_status'],
+            "completed_status"     => (string)$row['completed_status'],
             "completed_at"         => fmt_date($row['completed_at']),
             "completed_summary"    => $team['completed_summary'],
             "technician_names"     => $team['technician_names']
@@ -327,7 +327,6 @@ if ($mode === 'fetch_admin') {
         "contact_no1",
         "employee_name",
         "completed_status",
-        "completed_summary",
         "technician_names",
         "delivery_instructions",
         "customer_location",
@@ -366,6 +365,7 @@ if ($mode === 'fetch_by_technician') {
     $grouped = [];
     while ($row = $res->fetch_assoc()) {
         $key = $row['enquiry_id'].'|'.$row['assignment_type'];
+
         if (!isset($grouped[$key])) {
             $grouped[$key] = [
                 "assignment_id"        => $row['id'], // primary key
@@ -379,19 +379,23 @@ if ($mode === 'fetch_by_technician') {
                 "assigned_at"          => fmt_date($row['assigned_at']),
                 "created_at"           => fmt_date($row['created_at']),
                 "updated_at"           => fmt_date($row['updated_at']),
-                "my_status"            => 0,
+                "my_status"            => "Pending", // default text
                 "technicians"          => []
             ];
         }
+
         $tech = [
             "employee_number"  => $row['technician_employee_id'],
             "employee_name"    => $row['employee_name'],
-            "completed_status" => (int)$row['completed_status'],
+            "completed_status" => $row['completed_status'], // keep as text ("Pending"/"Completed")
             "completed_at"     => fmt_date($row['completed_at'])
         ];
-        if ($row['technician_employee_id'] === $my_emp_no) {
-            $grouped[$key]['my_status'] = (int)$row['completed_status'];
+
+        // ✅ Set my_status as text instead of int
+        if ((string)$row['technician_employee_id'] === (string)$my_emp_no) {
+            $grouped[$key]['my_status'] = $row['completed_status'];
         }
+
         $grouped[$key]['technicians'][] = $tech;
     }
 
@@ -443,7 +447,7 @@ if ($mode === 'fetch_by_technician') {
 		"assignment_id"        => $row['id'],
                 "employee_number"       => $row['technician_employee_id'],
                 "employee_name"         => $row['employee_name'],
-                "completed_status"      => (int)$row['completed_status'],
+                "completed_status"      => $row['completed_status'],
                 "completed_at"          => fmt_date($row['completed_at']),
                 "delivery_instructions" => $row['delivery_instructions'],
                 "customer_location"     => $row['customer_location'],
