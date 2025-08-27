@@ -382,7 +382,35 @@ Response (Flat List with Technician Names + Completed Summary)
   ]
 }
 
+📌 4. Technician Update Assignment
+Request (Technician Update)
+{
+  "mode": "technician_update",
+  "assignment_id": "102",
+  "assignment_type": "ENQUIRY",
+  "technician_id": "EMP002",
+  "completed_status": 1,
+  "completed_at": "2025-08-27",
+  "remarks": "Issue resolved on-site",
+  "updated_by": "EMP002"
+}
 
+Response (Technician Update Success)
+{
+  "status": "success",
+  "message": "Technician update applied successfully",
+  "data": {
+    "assignment_id": "102",
+    "enquiry_id": "E12345",
+    "assignment_type": "ENQUIRY",
+    "technician_id": "EMP002",
+    "completed_status": 1,
+    "completed_at": "27-08-2025",
+    "remarks": "Issue resolved on-site",
+    "updated_at": "27-08-2025",
+    "last_update_source": "technician_update"
+  }
+}
 
 Insert = multiple technicians at once.
 
