@@ -87,7 +87,7 @@ if ($mode === 'insert') {
     // Verify all technicians are valid + active
     $placeholders = implode(",", array_fill(0, count($technicians), "?"));
     $types = str_repeat("s", count($technicians));
-    $verify = $conn->prepare("SELECT COUNT(*) AS cnt FROM technicians WHERE employee_number IN ($placeholders) AND role='Technician' AND is_active=1");
+    $verify = $conn->prepare("SELECT COUNT(*) AS cnt FROM employees WHERE employee_number IN ($placeholders) AND role='Technician' AND is_active=1");
     $verify->bind_param($types, ...$technicians);
     $verify->execute();
     $cnt = $verify->get_result()->fetch_assoc()['cnt'];
@@ -209,7 +209,7 @@ if ($mode === 'technician_update') {
 // ---------------------------
 // FETCH assignments (with d-m-Y date format)
 // ---------------------------
-if ($mode === 'fetch') {
+if ($mode === 'fetch_detail') {
     $enquiry_id      = $data['enquiry_id'] ?? null;
     $assignment_type = strtoupper(trim($data['assignment_type'] ?? ''));
 
@@ -219,7 +219,7 @@ if ($mode === 'fetch') {
                 ea.enquiry_id,
                 ea.assignment_type,
                 ea.technician_employee_id,
-                t.name AS technician_name,
+                t.employee_name AS technician_name,
                 ea.assigned_by,
                 ea.delivery_instructions,
                 ea.customer_location,
@@ -230,7 +230,7 @@ if ($mode === 'fetch') {
                 DATE_FORMAT(ea.updated_at, '%d-%m-%Y') AS updated_at,
                 CASE WHEN ea.updated_by='technician' THEN 'technician_update' ELSE 'admin_update' END AS last_update_source
             FROM enquiry_assignments ea
-            LEFT JOIN technicians t ON ea.technician_employee_id = t.employee_number
+            LEFT JOIN employees t ON ea.technician_employee_id = t.employee_number
             WHERE ea.enquiry_id=? AND ea.assignment_type=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $enquiry_id, $assignment_type);
@@ -247,7 +247,7 @@ if ($mode === 'fetch') {
 // ---------------------------
 // FETCH (Admin view - Flat list with completed_summary + technician_names)
 // ---------------------------
-if ($mode === 'fetch') {
+if ($mode === 'fetch_admin') {
     $sql = "
         SELECT 
             ea.id AS assignment_id,

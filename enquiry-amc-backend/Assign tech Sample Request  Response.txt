@@ -322,7 +322,7 @@ Response (Update Success)
 📌 3. Fetch Assignments (Flat Admin View)
 Request (Fetch)
 {
-  "mode": "fetch"
+  "mode": "fetch_admin"
 }
 
 Response (Flat List with Technician Names + Completed Summary)
@@ -381,6 +381,15 @@ Response (Flat List with Technician Names + Completed Summary)
     }
   ]
 }
+
+3.1 Fetch one eq details (Currently not using)
+{
+  "mode":"fetch_detail",
+   "enquiry_id": "EQ003",
+  "assignment_type": "ENQUIRY"
+}
+
+_______________________
 
 📌 4. Technician Update Assignment
 Request (Technician Update)
