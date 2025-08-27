@@ -3,13 +3,14 @@
 </div>
 
 <app-dynamic-table
-  *ngIf="displayedColumns.length && enquiryData.length"
+  *ngIf="displayedColumns.length"
   [data]="enquiryData"
   [columns]="displayedColumns"  
   [enablePagination]="true"
   [enableFilter]="true"
   [showAssignTechnician]="true"
-  [showAmcButton]="true"
+  [showAmcButton]="false"
+  [showEditButton]="true"
   (edit)="onEditEnquiry($event)"
   (assignTechnician)="onAssignTechnician($event)"
   (amc)="onAmcUpdate($event)"

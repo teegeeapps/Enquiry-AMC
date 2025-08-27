@@ -16,7 +16,6 @@ import { UserService } from '../../services/user-service/user-service';
 })
 export class LoginComponent implements OnInit{
     loginForm!: FormGroup;
-    roles = ['Admin', 'User', 'Manager'];
     submitted = false;
     hidePassword = true;
   constructor(private apiService: ApiService, private fb: FormBuilder, private router: Router, 
@@ -27,8 +26,11 @@ export class LoginComponent implements OnInit{
   ngOnInit(): void {
      localStorage.removeItem("user");
     this.loginForm = this.fb.group({
-      username: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+     mobileno: ['', [
+      Validators.required,
+      Validators.pattern(/^[0-9]{10}$/) // exactly 10 digits
+    ]],
+      password: ['', Validators.required],
       /* role: ['', Validators.required], */
      /*  rememberMe: [false] */
     });
@@ -43,7 +45,7 @@ export class LoginComponent implements OnInit{
     this.submitted = true;
     console.log("formvalue", this.loginForm.value);
     let postjson = {
-      "email": this.loginForm.value.username,
+      "contact_no": this.loginForm.value.mobileno,
       "password": this.loginForm.value.password
     }
 
@@ -79,5 +81,11 @@ export class LoginComponent implements OnInit{
 
   togglePasswordVisibility(): void {
   this.hidePassword = !this.hidePassword;
+}
+
+onlyNumbers(event: KeyboardEvent): boolean {
+  const charCode = event.charCode ? event.charCode : event.keyCode;
+  // Allow only digits (0-9)
+  return charCode >= 48 && charCode <= 57;
 }
 }

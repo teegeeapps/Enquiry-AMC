@@ -3,7 +3,7 @@
 
   <form [formGroup]="enquiryForm" (ngSubmit)="onSubmit()">
 
-    <mat-accordion multi="true">
+    <mat-accordion multi="false">
 
       <!-- Client Details -->
       <mat-expansion-panel expanded>
@@ -17,27 +17,39 @@
           <mat-form-field appearance="outline">
             <mat-label>Client / Company Name</mat-label>
             <input matInput formControlName="client_name" required />
+            <mat-error *ngIf="submitted && enquiryForm.get('client_name')?.invalid">
+              Client Name is required
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Contact Person Name</mat-label>
             <input matInput formControlName="contact_person" required />
+            <mat-error *ngIf="submitted && enquiryForm.get('contact_person')?.invalid">
+              Contact Person Name is required
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Contact No 1</mat-label>
-            <input matInput type="tel" formControlName="contact_number" required />
+            <input matInput type="tel" formControlName="contact_number" maxlength="10" required (keypress)="onlyNumbers($event)"/>
+            <mat-error *ngIf="submitted && enquiryForm.get('contact_number')?.invalid">
+              Contact Number is required
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Contact No 2</mat-label>
-            <input matInput type="tel" formControlName="alt_contact_number" />
+            <input matInput type="tel" formControlName="alt_contact_number" maxlength="10" (keypress)="onlyNumbers($event)"/>
           </mat-form-field>
 
           <!-- Email ID -->
           <mat-form-field appearance="outline">
             <mat-label>Email ID</mat-label>
             <input matInput type="email" formControlName="email" />
+            <mat-error *ngIf="submitted && enquiryForm.get('email')?.hasError('email')">
+              Invalid email format
+            </mat-error>
           </mat-form-field>
 
           <!-- Empty spacer to move textarea to next row -->
@@ -46,7 +58,10 @@
           <!-- Address (Full Width) -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Address</mat-label>
-            <textarea matInput formControlName="address" rows="4"></textarea>
+            <textarea matInput formControlName="address" rows="4" required></textarea>
+            <mat-error *ngIf="submitted && enquiryForm.get('address')?.invalid">
+              Address is required
+            </mat-error>
           </mat-form-field>
 
         </div>
@@ -61,16 +76,16 @@
         </mat-expansion-panel-header>
 
         <div class="enquiry-form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Requirement</mat-label>
-            <input matInput formControlName="requirement" required />
-          </mat-form-field>
+          
 
           <mat-form-field appearance="outline">
             <mat-label>Requirement Category</mat-label>
-            <mat-select formControlName="requirement_category">
+            <mat-select formControlName="requirement_category" required>
               <mat-option *ngFor="let status of req_cat" [value]="status.name">{{ status.name }}</mat-option>
             </mat-select>
+            <mat-error *ngIf="submitted && enquiryForm.get('requirement_category')?.invalid">
+              Requirement Category is required
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -78,6 +93,14 @@
             <mat-select formControlName="source">
               <mat-option *ngFor="let status of sourceEnq" [value]="status.name">{{ status.name }}</mat-option>
             </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Requirement</mat-label>
+            <textarea matInput formControlName="requirement" rows="4" required></textarea>
+            <mat-error *ngIf="submitted && enquiryForm.get('requirement')?.invalid">
+              Requirement is required
+            </mat-error>
           </mat-form-field>
         </div>
       </mat-expansion-panel>
@@ -93,9 +116,12 @@
         <div class="enquiry-form-grid">
           <mat-form-field appearance="outline">
             <mat-label>Enquiry Date</mat-label>
-            <input matInput [matDatepicker]="enqDatePicker" formControlName="enquiry_date" />
+            <input matInput [matDatepicker]="enqDatePicker" formControlName="enquiry_date" required/>
             <mat-datepicker-toggle matSuffix [for]="enqDatePicker"></mat-datepicker-toggle>
             <mat-datepicker #enqDatePicker></mat-datepicker>
+            <mat-error *ngIf="submitted && enquiryForm.get('enquiry_date')?.invalid">
+              Enquiry Date is required
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -107,11 +133,14 @@
 
           <mat-form-field appearance="outline" *ngIf="enquiryStatusOptions?.length">
             <mat-label>Enquiry Status</mat-label>
-            <mat-select formControlName="enquiry_status">
+            <mat-select formControlName="enquiry_status" required (selectionChange)="statusChange($event)">
               <mat-option *ngFor="let status of enquiryStatusOptions" [value]="status.id">
                 {{ status.status_name }}
               </mat-option>
             </mat-select>
+            <mat-error *ngIf="submitted && enquiryForm.get('enquiry_status')?.invalid">
+              Enquiry Status is required
+            </mat-error>
           </mat-form-field>
         </div>
       </mat-expansion-panel>
@@ -129,9 +158,12 @@
           <!-- Follow-up Date -->
           <mat-form-field appearance="outline">
             <mat-label>Follow-up Date</mat-label>
-            <input matInput [matDatepicker]="fpicker" formControlName="follow_up_dates" />
+            <input matInput [matDatepicker]="fpicker" formControlName="follow_up_dates" required/>
             <mat-datepicker-toggle matSuffix [for]="fpicker"></mat-datepicker-toggle>
             <mat-datepicker #fpicker></mat-datepicker>
+            <mat-error *ngIf="submitted && enquiryForm.get('follow_up_dates')?.invalid">
+              Follow-up Date is required
+            </mat-error>
           </mat-form-field>
 
           <!-- Empty div to push textarea to full row -->
@@ -140,7 +172,15 @@
           <!-- Follow-up Notes -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Follow-up Notes / Remarks</mat-label>
-            <textarea matInput formControlName="follow_up_notes" rows="4"></textarea>
+            <textarea matInput formControlName="follow_up_notes" rows="4" required></textarea>
+            <mat-error *ngIf="submitted && enquiryForm.get('follow_up_dates')?.invalid">
+              Follow-up Notes is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Follow-up History</mat-label>
+            <textarea matInput formControlName="follow_up_his" rows="4" ></textarea>
           </mat-form-field>
         </div>
 

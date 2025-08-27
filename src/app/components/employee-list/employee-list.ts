@@ -16,17 +16,25 @@ export class EmployeeListComponent implements OnInit{
 constructor(private apiService: ApiService, private cdr: ChangeDetectorRef, private router: Router) {}
 
   ngOnInit(): void {
-
-    this.apiService.get<any[]>('get_employees_list.php').subscribe((data) => {
-        if (data && data.length > 0) {
-          this.employeeData = data;
-        setTimeout(() => {
-        this.employeeColumns = Object.keys(this.employeeData[0]);
-        this.employeeColumns.push('Actions');   // 🔑 Extract column names
+    this.apiService.get<any[]>('get_employees_list.php').subscribe((res: any) => {
+      console.log('get employee', res);
+        if (res && res.data.length > 0) {
+        //  this.employeeData = res.data;
+          this.employeeData = res.data.map((emp: any) => ({
+                  ...emp,
+                  status: emp.status === "1" ? "Active" : "In Active"// true if "1", false if "0"
+              }));
+          console.log('this.employeeData', this.employeeData);
+       // setTimeout(() => {
+       // this.employeeColumns = Object.keys(this.employeeData[0]);
+      //  this.employeeColumns.push('Actions');   // 🔑 Extract column names
+        this.employeeColumns = [ ...res.columns, 'Actions'];
         console.log('this.employeeData', this.employeeColumns );
           this.cdr.detectChanges();
-      });
+    //  });
        
+      } else {
+        this.employeeColumns = [ ...res.columns, 'Actions'];
       }
     });
   }

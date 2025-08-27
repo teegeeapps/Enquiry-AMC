@@ -43,8 +43,25 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { TaskViewComponent } from './components/task-view/task-view';
+import { MatMomentDateModule, MomentDateAdapter } from '@angular/material-moment-adapter';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
+import * as _moment from 'moment';
 
+const moment = _moment;
 
+export const MY_FORMATS = {
+  parse: {
+    dateInput: 'DD-MM-YYYY',
+  },
+  display: {
+    dateInput: 'DD-MM-YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'DD-MM-YYYY',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @NgModule({
   declarations: [
@@ -65,7 +82,8 @@ import { MatChipsModule } from '@angular/material/chips';
     ConfirmDialogComponent,
     ViewEnquiryComponent,
     ViewEmployeeComponent,
-    FormatHeaderPipe
+    FormatHeaderPipe,
+    TaskViewComponent
   ],
   imports: [
     BrowserModule,
@@ -93,13 +111,20 @@ import { MatChipsModule } from '@angular/material/chips';
     MatExpansionModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatChipsModule
+    MatChipsModule,
+    MatCheckboxModule,
+     MatMomentDateModule
   ],
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideHttpClient(),
+    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] },
+    { provide: MAT_DATE_FORMATS, useValue: MY_FORMATS },
   ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+
+
+

@@ -43,7 +43,10 @@ export class EnquiryListComponent implements OnInit {
     this.apiService.get<any[]>('get_enquiry_list.php').subscribe((res: any) => {
       console.log('this.enqData', res);
       if (res && res.data.length > 0) {
-        this.enquiryData = res.data;
+        this.enquiryData = res.data.map((enquiry: any) => ({
+            ...enquiry,
+            technicians: enquiry.technicians.map((t: any) => t.employee_name).join(', ')
+          }));
         console.log('this.enqData', this.enquiryData);
         setTimeout(() => {
          // this.enquiryColumns = Object.keys(this.enquiryData[0]);
@@ -56,7 +59,7 @@ export class EnquiryListComponent implements OnInit {
 
       } else {
         this.enquiryData = [];
-        this.displayedColumns = ['client_name', 'contact_person_name', 'contact_no1', 'requirement_category', 'enquiry_date', 'enquiry_status_id', 'technician_name', 'status_name'];
+        this.displayedColumns = res.columns;
         console.log('this.taskList', this.enquiryData);
         console.log('this.taskColumns', this.displayedColumns);
         this.cdr.detectChanges();

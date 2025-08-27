@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, ViewChild, AfterViewInit, OnCha
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 @Component({
   selector: 'app-dynamic-table',
@@ -10,6 +11,7 @@ import { MatSort } from '@angular/material/sort';
   styleUrl: './dynamic-table.scss'
 })
 export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges{
+   isMobile = false;
   @Input() data: any[] = [];
   @Input() columns: string[] = [];
   displayedColumns: string[] = [];
@@ -18,6 +20,8 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges{
   @Input() showAssignTechnician: boolean = false;
   @Input() showCompletedDropdown: boolean = false; 
   @Input() showAmcButton: boolean = false; // ✅ default hidden
+  @Input() showViewButton: boolean = false;
+  @Input() showEditButton: boolean = false;
   @Output() view = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() assignTechnician = new EventEmitter<any>();
@@ -29,6 +33,8 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges{
   @ViewChild(MatSort) sort!: MatSort;
   // Store selected completion per row
 selectedCompletion: { [key: string]: string } = {};
+
+ constructor(private breakpointObserver: BreakpointObserver) {}
 
   ngOnInit(): void {
     console.log('Data source:', this.data);
@@ -50,6 +56,12 @@ selectedCompletion: { [key: string]: string } = {};
   console.log('this.data:', this.data);
   console.log('this.columns:', this.columns);
   console.log('this.displayedColumns:', this.displayedColumns);
+
+  this.breakpointObserver.observe([Breakpoints.Handset, '(max-width: 768px)'])
+      .subscribe(result => {
+        console.log('result', result);
+        this.isMobile = result.matches;
+      });
   }
 
   ngAfterViewInit(): void {

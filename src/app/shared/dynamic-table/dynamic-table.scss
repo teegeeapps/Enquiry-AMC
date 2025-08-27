@@ -1,68 +1,106 @@
-.dynamic-table-wrapper {
-  background: white;
-  padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid #dddd;
+.table-desktop {
+  display: block;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   max-width: 100%;
+}
+
+/* Prevent extra spacing from long table */
+.mat-table-custom {
+  width: 100%;
+  border-collapse: collapse;
 }
 
 .full-width {
   width: 100%;
 }
 
-
-.filter-wrapper {
-  margin-bottom: 1rem;
+.mat-cell, .mat-header-cell {
+  white-space: normal;
+  word-wrap: break-word; /* or word-break: break-word; */
 }
 
+::ng-deep .mat-mdc-table .sno-col {
+  width: 60px !important;      /* fixed narrow width */
+  min-width: 60px !important;
+  max-width: 60px !important;
+  text-align: center;          /* center align numbers */
+  white-space: nowrap !important;
+}
+
+/* Let table grow naturally */
+.table-desktop .mat-mdc-table {
+  width: 100%;
+  border: 0;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+/* Data cells – same wrapping */
+.mat-mdc-cell {
+  white-space: normal !important;
+  word-wrap: break-word;
+  padding: 8px 12px;
+}
+
+mat-cell.mat-mdc-cell{
+    white-space: normal !important;
+  word-wrap: break-word;
+  padding: 8px 12px;
+}
+.table-mobile {
+  display: none;
+}
 
 .table-header {
-  background-color: #e7c540!important;
+  background-color: #323a74!important;
+  color: white!important;
 }
 
-/* Full table border layout */
  .mat-table {
   border-collapse: collapse;
   width: 100%;
   border: 1px solid #ccc!important; /* Outer border */
 }
 
-
-
-
-
-th.table-header {
-  background-color: #f2f3f4;
+.mat-mdc-form-field-flex {
+    background-color: white;
+}
+.mat-mdc-form-field-has-icon-suffix .mat-mdc-text-field-wrapper {
+    padding-right: 0;
+    background-color: white!important;
 }
 
-th, td {
-  border: 1px solid #b0b0b0!important;
-  white-space: nowrap; // prevents wrapping for long content
-}
+@media (max-width: 768px) {
+  .table-desktop {
+    display: none;
+  }
+  .table-mobile {
+    display: block;
+  }
 
+  .row-card {
+    margin: 10px 0;
+    padding: 10px;
+  }
 
-/* Prevent extra spacing from long table */
-.mat-table-custom {
-  width: 100%;
-  min-width: 900px; // adjust based on number of columns
-  border-collapse: collapse;
-}
+  .row-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+  }
 
-th.table-header {
-  background-color: #f2f3f4;
-}
+  .row-item strong {
+    flex: 1;
+    color: #333;
+  }
 
-.no-data-message {
-  text-align: center;
-  padding: 2rem;
-  color: #999;
-  font-style: italic;
-}
-
-.amc-button {
-  margin-left: 6px;
-  font-size: 12px;
-  line-height: 18px;
-  padding: 0 8px;
+  .row-item.actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    border-bottom: none;
+    margin-top: 8px;
+  }
 }

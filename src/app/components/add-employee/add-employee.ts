@@ -33,10 +33,13 @@ export class AddEmployeeComponent implements OnInit{
   ngOnInit(): void {
       this.employeeForm = this.fb.group({
       employeeName: ['', Validators.required],
-      employeeNumber: ['', Validators.required],
-      contactNumber: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      status: ['', Validators.required],
+      employeeNumber: [''],
+      contactNumber: ['', [
+      Validators.required,
+      Validators.pattern(/^[0-9]{10}$/) // exactly 10 digits
+    ]],
+      email: ['', Validators.email],
+      status: [''],
       password: ['', [Validators.required, Validators.minLength(6)]],
       role: ['', Validators.required],
     });
@@ -63,20 +66,24 @@ export class AddEmployeeComponent implements OnInit{
     this.apiService.post<any>('get_individual_employee.php', postjson)
       .subscribe((data: any) => {
         console.log('employee_data', data);
+        let roleID = data.profile.role_id.toString();
         this.employeeForm.patchValue({
           employeeName: data.profile.employee_name,
           employeeNumber: data.profile.employee_number,
           contactNumber: data.profile.contact_no,
           email: data.profile.email_id,
           password: data.profile.password,
-          status: data.profile.is_active == 1,
-          role: data.profile.role_id
+          status: data.profile.status,
+          role: roleID
         });
       });
   }
 
   onSubmit() {
        this.submitted = true;
+       console.log('this.employeeForm', this.employeeForm.valid);
+       console.log('this.employeeForm value', this.employeeForm);
+       console.log('this.employeeForm value', this.employeeForm.value);
       if (this.employeeForm.valid) {
         const dialogRef = this.dialog.open(ConfirmDialogComponent, {
           width: '350px',
@@ -95,17 +102,29 @@ export class AddEmployeeComponent implements OnInit{
 
   submitDetails(): void {
     this.submitted = true;
-    let postjson = {
+    let postjson : any;
+    if(this.isEditMode == false){
+       postjson = {
       "employee_name": this.employeeForm.value.employeeName,
-      "employee_number": this.employeeForm.value.employeeNumber,
+      "contact_no" :this.employeeForm.value.contactNumber,
+      "email_id" : this.employeeForm.value.email,
+      "status" : 1,
+      "password" : this.employeeForm.value.password,
+      "role_id": this.employeeForm.value.role,
+      "created_by":  "Admin",
+    }
+    } else {
+      postjson = {
+      "employee_name": this.employeeForm.value.employeeName,
       "contact_no" :this.employeeForm.value.contactNumber,
       "email_id" : this.employeeForm.value.email,
       "status" : this.employeeForm.value.status,
       "password" : this.employeeForm.value.password,
       "role_id": this.employeeForm.value.role,
-      "created_by":  "Admin",
       "updated_by":  "Admin"
     }
+    }
+    
     console.log('this.employeeForm', this.employeeForm.value);
     console.log('postjson', postjson);
     const url = this.isEditMode
@@ -131,6 +150,12 @@ export class AddEmployeeComponent implements OnInit{
 
 togglePasswordVisibility(): void {
   this.hidePassword = !this.hidePassword;
+}
+
+onlyNumbers(event: KeyboardEvent): boolean {
+  const charCode = event.charCode ? event.charCode : event.keyCode;
+  // Allow only digits (0-9)
+  return charCode >= 48 && charCode <= 57;
 }
   }
 

@@ -1,86 +1,95 @@
-.content-container {
-       // min-height: 100vh;
-        box-sizing: border-box;
-        padding: 25px;
-      }
-
-.navbar {
-  background-color: #3f51b5;
-  color: white;
-  padding: 1rem 2rem;
-  display: flex;
-  /* justify-content: space-between; */
-  align-items: center;
+/* Sidenav container */
+.sidenav-container {
+  height: 100vh;
 }
 
-.logo {
-  font-size: 1.25rem;
-  font-weight: bold;
-  
-}
-
- .toolbar-item{
-   color: #fff;
-    font-size: 14px;
-  }
-
-.nav-links a {
-  color: white;
-  margin-left: 1.5rem;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.nav-links a.active {
-  border-bottom: 2px solid white;
-}
-.logo-img{
-    width: 50px;
-    height: 50px;
-    background-color: white;
-    border-radius: 25px;
-  }
-.example-spacer {
-    flex: 1 1 auto;
-  }
-
-  .mat-toolbar.mat-accent {
-   // background: #ED1C24;
-  // background: #00A651;
-    color: #fff;
-  }
-
-/* .mat-sidenav-content,
-.mat-toolbar,
-.mat-card{
-  background-color: #ffffff !important;
-} */
-
-
-.toolbar-item {
-    font-size: 14px;
-    color: white !important;
-}
-
+/* Top Toolbar */
 .custom-toolbar {
-  background-color: #323a74 !important;
-  color: #fff !important; /* optional: white text */
+//  background-color: #323a74;
+//  color: white;
+background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
+/* Logo Styling */
+.logo-img {
+  height: 150px;
+}
+
+/* Flex Spacer */
+.example-spacer {
+  flex: 1 1 auto;
+}
+
+/* Username */
 .username {
-  margin-right: 16px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  color: black;
   font-weight: 500;
+  margin-right: 16px;
+  font-size: 14px;
 }
 
-.sidenav{
-  background-color: #bbc3f9 !important;
-  //background-color: rgb(64, 61, 249);
-  color: white;
+/* Sidenav Styling */
+.custom-sidenav {
+  width: 240px;
+  background-color: white; /* Light background */
+  color: #333; /* Dark readable text */
+  padding-top: 8px;
+  border-right: 1px solid #ddd;
 }
 
-mat-sidenav-container {
-      height: 100%;
-    }
+/* Nav items */
+mat-nav-list a.mat-list-item {
+  color: #333;
+  font-weight: 500;
+  margin: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover and active link styles */
+mat-nav-list a.mat-list-item:hover,
+mat-nav-list a.mat-list-item.active-link {
+  background-color: white; /* Soft blue hover */
+  color: #000;
+}
+
+/* Icon color matches toolbar */
+mat-icon {
+  color: #323a74;
+  margin-right: 10px;
+}
+
+/* Divider */
+mat-divider {
+  background-color: #ccc;
+  margin: 10px 0;
+}
+
+/* Logout Button in Toolbar */
+.toolbar-logout mat-icon {
+  margin-right: 6px;
+}
+
+/* Main content */
+.content {
+  padding: 20px;
+  background: #d3d3d340;;
+  min-height: 100vh;
+}
+
+span.mdc-button__label {
+    color: black!important;
+}
+
+.mat-icon {
+    display:inline-flex;
+    vertical-align:top;
+}
+
+.sidenav-span{
+  font-size: 14px;
+}

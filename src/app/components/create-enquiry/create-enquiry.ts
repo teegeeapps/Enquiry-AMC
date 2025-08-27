@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import moment from 'moment';
 
 @Component({
   selector: 'app-create-enquiry',
@@ -30,26 +31,6 @@ export class CreateEnquiryComponent implements OnInit {
     this.isEditMode = !!this.enquiryId;
     console.log('state enquiry', state);
     console.log('this.isEditMode', this.isEditMode);
-
-    this.enquiryForm = this.fb.group({
-      client_name: [''],
-      contact_person: [''],
-      contact_number: [''],
-      alt_contact_number: [''],
-      email: [''],
-      address: [''],
-      requirement: [''],
-      requirement_category: [''],
-      source: [''],
-      enquiry_date: [''],
-      requested_delivery_date: [''],
-      delivered_date: [''],
-      enquiry_status: [''],
-      no_of_years: [1],
-      amc_date: [''],
-      follow_up_dates: [''],
-      follow_up_notes: ['']
-    });
   }
 
   ngOnInit(): void {
@@ -59,46 +40,18 @@ export class CreateEnquiryComponent implements OnInit {
     }
 
     this.req_cat = [
-      {
-        "id": 1,
-        "name": "-- Select --"
-      },
-      {
-        "id": 2,
-        "name": "CCTV"
-      },
-      {
-        "id": 3,
-        "name": "New Fire Extinguisher"
-      },
-      {
-        "id": 4,
-        "name": "Refilling"
-      }
+      {"id": 1, "name": "-- Select --"},
+      {"id": 2,"name": "CCTV"},
+      {"id": 3,"name": "New Fire Extinguisher"},
+      {"id": 4,"name": "Refilling"}
     ];
 
     this.sourceEnq = [
-      {
-        "id": 1,
-        "name": "-- Select --"
-      },
-      {
-        "id": 2,
-        "name": "Existing Customer"
-      },
-      {
-        "id": 3,
-        "name": "JustDial"
-      },
-      {
-        "id": 4,
-        "name": "Reference"
-      },
-      {
-        "id": 5,
-        "name": "Social Media"
-      },
-
+      { "id": 1, "name": "-- Select --" },
+      { "id": 2,"name": "Existing Customer"},
+      { "id": 3,"name": "JustDial"},
+      { "id": 4,"name": "Reference"},
+      {"id": 5, "name": "Social Media" },
     ]
   }
 
@@ -106,9 +59,12 @@ export class CreateEnquiryComponent implements OnInit {
     this.enquiryForm = this.fb.group({
       client_name: ['', Validators.required],
       contact_person: ['', Validators.required],
-      contact_number: ['', Validators.required],
-      alt_contact_number: [''],
-      email: [''],
+      contact_number: ['', [
+      Validators.required,
+      Validators.pattern(/^[0-9]{10}$/) // exactly 10 digits
+    ]],
+      alt_contact_number: ['', Validators.pattern(/^[0-9]{10}$/)],
+      email: ['', Validators.email],
       address: [''],
       requirement: ['', Validators.required],
       requirement_category: [''],
@@ -120,8 +76,32 @@ export class CreateEnquiryComponent implements OnInit {
       enquiry_status: [''],
       amc_date: [''],
       follow_up_dates: [''],
-      follow_up_notes: ['']
+      follow_up_notes: ['', Validators.required],
+      follow_up_his: ['']
     });
+
+    this.enquiryForm.get('enquiry_status')?.valueChanges.subscribe(status => {
+      console.log('status', status);
+    const deliveredDateControl = this.enquiryForm.get('delivered_date');
+    const followUpNotesControl = this.enquiryForm.get('follow_up_notes');
+       if (status === 5) {
+      deliveredDateControl?.setValidators([Validators.required]);
+    } else {
+      deliveredDateControl?.clearValidators();
+    }
+    deliveredDateControl?.updateValueAndValidity();
+
+
+    // Condition for Follow-up Notes
+/*     const statusesWhereNotesAreNotRequired = ['Order Confirmed', 'Order Delivered', 'Closed'];
+    if (!statusesWhereNotesAreNotRequired.includes(status)) {
+      followUpNotesControl?.setValidators([Validators.required]);
+    } else {
+      followUpNotesControl?.clearValidators();
+    }
+    followUpNotesControl?.updateValueAndValidity(); */
+  });
+
     this.loadEnquiryStatusOptions();
     if (this.isEditMode && this.enquiryId) {
       this.loadEnquiryDetails(this.enquiryId);
@@ -158,7 +138,7 @@ export class CreateEnquiryComponent implements OnInit {
           requirement: result.requirement,
           requirement_category: result.requirement_category,
           source: result.source_of_enquiry,
-          enquiry_date: result.enquiry_date,
+          enquiry_date: moment(result.enquiry_date, 'DD-MM-YYYY'),
           requested_delivery_date: result.requested_delivery_date,
           delivered_date: result.delivered_date,
           enquiry_status: result.enquiry_status_id,
@@ -173,9 +153,22 @@ export class CreateEnquiryComponent implements OnInit {
     });
   }
 
+  statusChange(event: any){
+    console.log('status change event', event);
+    const deliveredDateControl = this.enquiryForm.get('delivered_date');
+     // Condition for Delivered Date
+  /*   if (status === 'Order Delivered') {
+      deliveredDateControl?.setValidators([Validators.required]);
+    } else {
+      deliveredDateControl?.clearValidators();
+    }
+    deliveredDateControl?.updateValueAndValidity(); */
+  }
+
 
   onSubmit() {
     this.submitted = true;
+    console.log('this.enquiryForm', this.enquiryForm);
     if (this.enquiryForm.valid) {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
         width: '350px',
@@ -231,6 +224,7 @@ export class CreateEnquiryComponent implements OnInit {
       "delivered_date": this.enquiryForm.value.delivered_date,
       "amc_date": this.enquiryForm.value.amc_date,
       "amc_period": this.enquiryForm.value.no_of_years,
+      "enquiry_status_id": parseInt(this.enquiryForm.value.enquiry_status),
       "amc_status": "Active",
       "user": "Admin"
     }
@@ -269,7 +263,7 @@ export class CreateEnquiryComponent implements OnInit {
   }
 
   calculateAmcDate() {
-    const deliveredDate: Date = this.enquiryForm.get('requested_delivery_date')?.value;
+    const deliveredDate: Date = this.enquiryForm.get('delivered_date')?.value;
     const noOfYears: number = +this.enquiryForm.get('no_of_years')?.value;
 
     if (deliveredDate && noOfYears) {
@@ -278,5 +272,11 @@ export class CreateEnquiryComponent implements OnInit {
       this.enquiryForm.get('amc_date')?.setValue(amcDate);
     }
   }
+
+  onlyNumbers(event: KeyboardEvent): boolean {
+  const charCode = event.charCode ? event.charCode : event.keyCode;
+  // Allow only digits (0-9)
+  return charCode >= 48 && charCode <= 57;
+}
 
 }

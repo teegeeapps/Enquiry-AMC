@@ -4,15 +4,32 @@
 </h2>
 </div>
 
+
+  <app-dynamic-table
+  *ngIf="taskColumns.length"
+  [data]="taskList"
+  [columns]="taskColumns"
+  [enablePagination]="true"
+  [enableFilter]="true"
+  [showEditButton]="true"
+  (edit)="onViewtask($event)"
+ >
+</app-dynamic-table>
+
+
+<!-- <div *ngIf="user.role_name == 'Technician'">
 <app-dynamic-table
   *ngIf="taskColumns.length"
   [data]="taskList"
   [columns]="taskColumns"
   [enablePagination]="true"
   [enableFilter]="true"
-  [showCompletedDropdown]="true"
+  [showEditButton]="true"
   (edit)="onEdittask($event)">
 </app-dynamic-table>
+</div> -->
+
+
 <!-- 
   <div class="save-btn-wrapper">
     <button (click)="saveTasks()">Save</button>

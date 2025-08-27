@@ -28,7 +28,6 @@ export class AmcUpdateComponent implements OnInit {
     this.isEditMode = state?.editMode || false;
     console.log('this.enquiryId', this.enquiryId);
     console.log('Edit Mode:', this.isEditMode);
-    this.loadEnquiryDetails(this.enquiryId);
   }
 
   ngOnInit(): void {
@@ -44,33 +43,29 @@ export class AmcUpdateComponent implements OnInit {
 
     // If in edit mode, patch the form with existing data
     if (this.isEditMode) {
-      this.loadAmcData();
+      this.loadAMC();
     }
   }
 
-  loadAmcData() {
-    const amcData = {
-      client_name: 'ABC Corp',
-      contact_person: 'John Doe',
-      contact_number: '9876543210',
-      delivered_date: '2025-08-01',
-      no_of_years: 2,
-      amc_date: '2027-08-01',
-      current_amc_status: 'Active'
-    };
-    this.amcForm.patchValue(amcData);
-  }
 
-
-  loadEnquiryDetails(enquiryId: any) {
-    this.apiService.post('get_enquiry_list.php', { enquiry_id: enquiryId }).subscribe({
+  loadAMC() {
+    let postjson = {
+      "mode": "single",
+      "enquiry_id": this.enquiryId
+    }
+    console.log('postjson', postjson);
+    this.apiService.post('get_amc_detail.php', postjson).subscribe({
       next: (res: any) => {
-        console.log('signle enquiry', res);
+        console.log('signle amc', res);
         let result = res.data;
         this.amcForm.patchValue({
           client_name: result.client_name,
           contact_person: result.contact_person_name,
-          contact_number: result.contact_no1
+          contact_number: result.contact_no1,
+          delivered_date: result.delivered_date,
+          amc_date: result.amc_date,
+          no_of_years: parseInt(result.amc_period),
+          current_amc_status: result.amc_status
         });
       },
       error: err => {
@@ -128,15 +123,14 @@ export class AmcUpdateComponent implements OnInit {
         "client_name": this.amcForm.value.client_name,
         "contact_person_name": this.amcForm.value.contact_person,
         "contact_no1": this.amcForm.value.contact_number,
-        "requirement_category": "AMC Renewal",
         "delivered_date": this.amcForm.value.delivered_date,
         "amc_date": this.amcForm.value.amc_date,
-        "amc_period": this.amcForm.value.no_of_years,
-        "amc_status": "Active",
+        "amc_period": this.amcForm.value.no_of_years.toString(),
+        "amc_status": this.amcForm.value.current_amc_status,
         "user": "Admin"
       }
 
-      this.apiService.post('amc_submit.php', postjson).subscribe({
+      this.apiService.post('amc_update.php', postjson).subscribe({
         next: (res: any) => {
           console.log('amc submit res', res);
           this.snackBar.open(res.message, 'Close', {

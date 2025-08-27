@@ -1,54 +1,72 @@
-<mat-toolbar class="navbar custom-toolbar" *ngIf="router.url !== '/login'">
-  <!-- <mat-toolbar-row> -->
+<!-- Top Toolbar -->
+<mat-toolbar color="primary" class="custom-toolbar" *ngIf="router.url !== '/login'">
   <button mat-icon-button (click)="toggleSidebar()">
     <mat-icon>menu</mat-icon>
   </button>
-  <button mat-button class="toolbar-item" [routerLink]="'/home'" routerLinkActive="active-link">
-    <img src="logo.png" class="logo-img" />
-  </button>
- 
+
+<!--   <a [routerLink]="['/home']">
+    <img src="logo.png" class="logo-img" alt="Logo" />
+  </a> -->
+   <a>
+    <img src="logo.png" class="logo-img" alt="Logo" />
+  </a>
+
+<!--   <button mat-button class="toolbar-logo" [routerLink]="'/home'" routerLinkActive="active-link">
+  </button> -->
+
   <span class="example-spacer"></span>
-   <!-- ✅ Username display -->
+
   <span class="username" *ngIf="username">
-    <mat-icon>person</mat-icon> {{username}}
+    <mat-icon>person</mat-icon> {{ username }}
   </span>
-  <button mat-button class="toolbar-item" (click)="onSubmit()">Logout</button>
-  <!-- </mat-toolbar-row> -->
+
+  <button mat-button class="toolbar-logout" (click)="onSubmit()">
+    <mat-icon>logout</mat-icon> Logout
+  </button>
 </mat-toolbar>
 
+<!-- Sidenav Container -->
 <mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav mode="side" opened class="custom-sidenav" *ngIf="router.url !== '/login'">
 
-  <mat-sidenav #sidenav mode="side" opened class="sidenav" *ngIf="router.url !== '/login'">
-    
-    <!-- Admin: Show Enquiry & Employee -->
+    <!-- Admin Menu -->
     <mat-nav-list *ngIf="userRole === 'Admin'">
-
-      <a mat-list-item routerLink="/employee-list">
+      <a mat-list-item routerLink="/employee-list" routerLinkActive="active-link">
         <mat-icon matListIcon>group</mat-icon>
-        Employee Master
+        <span class="sidenav-span">Employee Master</span>
       </a>
 
-      <a mat-list-item routerLink="/enquiry-list">
+      <a mat-list-item routerLink="/enquiry-list" routerLinkActive="active-link">
         <mat-icon matListIcon>dashboard</mat-icon>
-        Enquiry Dashboard
+        <span class="sidenav-span">Enquiry Dashboard</span>
       </a>
 
-    </mat-nav-list>
+      <a mat-list-item routerLink="/amc-list" routerLinkActive="active-link">
+        <mat-icon matListIcon>settings</mat-icon>
+        <span class="sidenav-span">AMC</span>
+      </a>
 
-    <!-- Technician: Show Task List -->
-    <mat-nav-list *ngIf="userRole === 'Technician'">
-      <a mat-list-item routerLink="/task-list">
+      <a mat-list-item routerLink="/task-list" routerLinkActive="active-link">
         <mat-icon matListIcon>assignment_turned_in</mat-icon>
-        Technician View
+        <span class="sidenav-span">Technician View</span>
       </a>
     </mat-nav-list>
 
-    <!-- Common Logout Link -->
+    <!-- Technician Menu -->
+    <mat-nav-list *ngIf="userRole === 'Technician'">
+      <a mat-list-item routerLink="/task-list" routerLinkActive="active-link">
+        <mat-icon matListIcon>assignment_turned_in</mat-icon>
+        <span class="sidenav-span">Technician View</span>
+      </a>
+    </mat-nav-list>
+
+    <mat-divider></mat-divider>
+
+    <!-- Logout -->
     <a mat-list-item (click)="logout()">
       <mat-icon matListIcon>logout</mat-icon>
-      Log Out
+      <span class="sidenav-span">Log Out</span>
     </a>
-
   </mat-sidenav>
 
   <mat-sidenav-content>
@@ -56,5 +74,4 @@
       <router-outlet></router-outlet>
     </div>
   </mat-sidenav-content>
-  
 </mat-sidenav-container>

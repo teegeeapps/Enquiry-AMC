@@ -2,12 +2,13 @@
   <h2>📋 Employee Master</h2>
 </div>
 
-<app-dynamic-table *ngIf="employeeColumns.length"
+<app-dynamic-table *ngIf="employeeColumns.length && employeeData.length"
   [data]="employeeData"
   [columns]="employeeColumns"
   [enablePagination]="true"
   [enableFilter]="true"
-  [showAssignTechnician]="false" 
+  [showAssignTechnician]="false"
+  [showEditButton]="true" 
   (edit)="onEditEmployee($event)"
   >
 </app-dynamic-table>

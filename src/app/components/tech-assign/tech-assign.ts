@@ -17,6 +17,7 @@ export class TechAssignComponent {
    employeeData: any;
    assignment: any;
    visit_history: any;
+   enquiry: any;
 
   constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService, private snackBar: MatSnackBar) {
     const nav = this.router.getCurrentNavigation();
@@ -24,17 +25,17 @@ export class TechAssignComponent {
         this.enquiryId = state?.enquiryId || null;
         console.log('state enquiry', state);
 
-   this.assignForm = this.fb.group({
-  client_name: ['', Validators.required],
-  contact_person: ['', Validators.required],
-  contact_number: ['', Validators.required],
-  address: [''],
-  delivery_instructions: [''],
-  customer_location: [''],
-  visit_date: ['', Validators.required],
-  assigned_for: ['', Validators.required],
-  assigned_to: [[], Validators.required], // multi-select
-});
+        this.assignForm = this.fb.group({
+        client_name: ['', Validators.required],
+        contact_person: ['', Validators.required],
+        contact_number: ['', Validators.required],
+        address: [''],
+        delivery_instructions: [''],
+        customer_location: [''],
+        visit_date: ['', Validators.required],
+        assigned_for: ['', Validators.required],
+        assigned_to: [[], Validators.required], // multi-select
+      });
 
      if (this.enquiryId) {
       this.loadEnquiryDetails(this.enquiryId);
@@ -42,24 +43,37 @@ export class TechAssignComponent {
   }
 
   loadEnquiryDetails(enquiryId: string) {
-    this.apiService.post('assign_technician.php', { enquiry_id: enquiryId }).subscribe({
+    let postjso ={
+      "mode": "get_enquiry",
+      "enquiry_id": enquiryId
+    }
+    this.apiService.post('assign_technician.php', postjso).subscribe({
       next: (res: any) => {
         console.log('signle enquiry', res);
-        this.employeeData = res.technician_list;
-        this.assignment = res.assignment_details;
-        this.visit_history = res.visit_history;
+        this.employeeData = res.data.technician_list;
+        console.log('this.employeeData', this.employeeData);
+        this.enquiry = res.data.enquiry;
+        console.log('this.enquiry', this.enquiry);
+        if(res.data.assignments!== undefined && res.data.assignments.length > 0){
+           this.assignment = res.data.assignments[0];
+        console.log('this.assignment', this.assignment);
+        this.visit_history = res.data.visit_history;
         if(this.assignment!== " " && this.assignment!== null){
         this.assignForm.patchValue({
             delivery_instructions: this.assignment.delivery_instructions,
             customer_location: this.assignment.customer_location,
-            assigned_to: this.assignment.technician_employee_id
+            assigned_to: res.data.assignments.map((a: any) => a.employee_number),
+            assigned_for: this.assignment.ass_type,
+            visit_date: this.visit_history[0].visit_date
          });
         }
+        }
+       
         this.assignForm.patchValue({
-          client_name: res.enquiry_details.client_name,
-          contact_person: res.enquiry_details.contact_person_name,
-          contact_number: res.enquiry_details.contact_no1,
-          address: res.enquiry_details.address
+          client_name: this.enquiry.client_name,
+          contact_person: this.enquiry.contact_person_name,
+          contact_number: this.enquiry.contact_no1,
+          address: this.enquiry.address
         });
       },
       error: err => {
@@ -74,15 +88,19 @@ export class TechAssignComponent {
     if (this.assignForm.valid) {
       console.log('Assignment Data:', this.assignForm.value);
       let postjson = {
+        "mode": "insert",
         "enquiry_id": this.enquiryId,
-        "technician_employee_id": this.assignForm.value.assigned_to,
+        "assignment_type": this.assignForm.value.assigned_for,
+        "technicians": this.assignForm.value.assigned_to,
         "delivery_instructions": this.assignForm.value.delivery_instructions,
         "customer_location": this.assignForm.value.customer_location,
         "assigned_by": "Admin",
         "visit_date": this.assignForm.value.visit_date
       }
+
+      console.log("postjson", postjson);
       this.apiService.post('assign_technician.php', postjson).subscribe((res: any)=>{
-        this.snackBar.open("Technician assigned successfully", 'Close', {
+        this.snackBar.open(res.message, 'Close', {
         duration: 3000,
         verticalPosition: 'top',
         horizontalPosition: 'right',

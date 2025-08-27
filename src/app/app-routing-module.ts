@@ -15,6 +15,7 @@ import { AssignRoleComponent } from './components/assign-role/assign-role';
 import { ConfigComponent } from './components/config/config';
 import { ViewEnquiryComponent } from './components/view-enquiry/view-enquiry';
 import { ViewEmployeeComponent } from './components/view-employee/view-employee';
+import { TaskViewComponent } from './components/task-view/task-view';
 
 const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
@@ -33,6 +34,7 @@ const routes: Routes = [
    { path: 'config', component: ConfigComponent },
     { path: 'view-employee', component: ViewEmployeeComponent },
    { path: 'view-enquiry', component: ViewEnquiryComponent },
+   { path: 'task-view', component: TaskViewComponent },
   { path: '**', redirectTo: '/dashboard' } // fallback
 ];
 
