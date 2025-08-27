@@ -48,10 +48,10 @@ $sql = "SELECT
             contact_person_name,
             contact_no1 AS contact_no_1,
             requirement_category,
-            delivered_date AS delivery_date,
+            delivered_date,
             amc_date,
-		amc_period,
-		amc_status
+            amc_period,
+            amc_status
         FROM amc_list";
 
 // Apply mode
@@ -64,6 +64,17 @@ $result = $conn->query($sql);
 $data = array();
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        // Format dates safely
+        $row['delivery_date'] = (!empty($row['delivered_date']) && $row['delivered_date'] !== "0000-00-00")
+            ? date("d-m-Y", strtotime($row['delivered_date']))
+            : null;
+
+        $row['amc_date'] = (!empty($row['amc_date']) && $row['amc_date'] !== "0000-00-00")
+            ? date("d-m-Y", strtotime($row['amc_date']))
+            : null;
+
+        unset($row['delivered_date']); // remove raw db field (optional)
+
         $data[] = $row;
     }
     $response = array(

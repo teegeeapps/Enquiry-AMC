@@ -27,8 +27,14 @@ function to_bool_int($v) {
     if ($v === 1 || $v === '1' || $v === true || $v === 'true' || $v === 'TRUE') return 1;
     return 0;
 }
+//function fmt_date($dt) {
+  //  return $dt ? date("H:i:s d-m-Y", strtotime($dt)) : null;
+//}
 function fmt_date($dt) {
-    return $dt ? date("H:i:s d-m-Y", strtotime($dt)) : null;
+    if (!$dt || $dt == "0000-00-00" || $dt == "0000-00-00 00:00:00") {
+        return null; // keep null instead of bad dates
+    }
+    return date("d-m-Y", strtotime($dt));
 }
 function is_valid_date($date) {
     $d = DateTime::createFromFormat("Y-m-d", $date);
@@ -547,3 +553,4 @@ if ($mode === "task_details") {
     echo json_encode($response);
     exit();
 }
+
