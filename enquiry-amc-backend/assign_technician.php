@@ -45,218 +45,94 @@ try {
     $inTransaction = false;
 
     // ---------------------------
-<?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-require 'db.php';
+// ---------------------------
+// INSERT assignment
+// ---------------------------
+if ($mode === 'insert') {
+    $enquiry_id            = $data['enquiry_id'] ?? null;
+    $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
+    $technicians           = $data['technicians'] ?? [];
+    $delivery_instructions = trim($data['delivery_instructions'] ?? '');
+    $customer_location     = trim($data['customer_location'] ?? '');
+    $visit_date            = trim($data['visit_date'] ?? '');
 
-$data = json_decode(file_get_contents("php://input"), true);
-
-$enquiryId    = $data['enquiry_id'] ?? null;
-$technicianId = $data['technician_id'] ?? null;
-$statusId     = $data['status_id'] ?? null;
-$fromDate     = $data['from_date'] ?? null;
-$toDate       = $data['to_date'] ?? null;
-
-/**
- * Utility: format date d-m-Y (safe)
- */
-function fmt_date($date) {
-    return (!empty($date) && $date !== "0000-00-00" && $date !== "0000-00-00 00:00:00")
-        ? date("d-m-Y", strtotime($date))
-        : null;
-}
-
-/**
- * Utility: fetch assigned technicians for an enquiry
- */
-function getTechniciansForEnquiry($conn, $enquiryId) {
-    $sql = "SELECT 
-                etm.technician_employee_id AS employee_id,
-                emp.employee_name,
-                etm.completed_status,
-                etm.assigned_by,
-                etm.assigned_at,
-                etm.completed_at
-            FROM enquiry_assignments etm
-            INNER JOIN employees emp 
-                ON etm.technician_employee_id = emp.employee_number
-            WHERE etm.enquiry_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $enquiryId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $techs = [];
-    while ($row = $result->fetch_assoc()) {
-        $row['assigned_at']  = fmt_date($row['assigned_at']);
-        $row['completed_at'] = fmt_date($row['completed_at']);
-        $techs[] = $row;
+    // --- Validations ---
+    if (!$enquiry_id) {
+        echo json_encode(["status" => "error", "message" => "Missing enquiry_id"]);
+        exit();
     }
-    return $techs;
-}
 
-if ($enquiryId && !$technicianId) {
-    // 🔹 Case 1: Enquiry details + follow-up + technician list
-    $sql = "SELECT e.*, s.status_name
-            FROM enquiries e
-            LEFT JOIN enquiry_status s ON e.enquiry_status_id = s.id
-            WHERE e.enquiry_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $enquiryId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $validTypes = ["ENQUIRY", "AMC", "SERVICE"];
+    if (!in_array($assignment_type, $validTypes)) {
+        echo json_encode(["status" => "error", "message" => "Invalid assignment_type"]);
+        exit();
+    }
 
-    if ($result->num_rows > 0) {
-        $enquiry = $result->fetch_assoc();
+    if (!is_array($technicians) || empty($technicians)) {
+        echo json_encode(["status" => "error", "message" => "Technician list required"]);
+        exit();
+    }
 
-        // Format enquiry_date
-        $enquiry['enquiry_date'] = fmt_date($enquiry['enquiry_date']);
+    if ($visit_date && !preg_match("/^\d{4}-\d{2}-\d{2}$/", $visit_date)) {
+        echo json_encode(["status" => "error", "message" => "Invalid visit_date format (Y-m-d)"]);
+        exit();
+    }
 
-        // Fetch follow-ups
-        $fSql = "SELECT follow_up_date, follow_up_notes, created_at
-                 FROM enquiry_followups
-                 WHERE enquiry_id = (SELECT id FROM enquiries WHERE enquiry_id = ?)
-                 ORDER BY created_at ASC";
-        $fStmt = $conn->prepare($fSql);
-        $fStmt->bind_param("s", $enquiryId);
-        $fStmt->execute();
-        $fResult = $fStmt->get_result();
+    // Restrict AMC/SERVICE unless delivered_date exists
+    if (in_array($assignment_type, ["AMC", "SERVICE"])) {
+        $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id=? LIMIT 1");
+        $chk->bind_param("s", $enquiry_id);
+        $chk->execute();
+        $del = $chk->get_result()->fetch_assoc();
+        if (empty($del['delivered_date'])) {
+            echo json_encode(["status" => "error", "message" => "$assignment_type assignment not allowed until delivered_date is set"]);
+            exit();
+        }
+    }
 
-        $followups = [];
-        while ($row = $fResult->fetch_assoc()) {
-            $row['follow_up_date'] = fmt_date($row['follow_up_date']);
-            $row['created_at']     = fmt_date($row['created_at']);
-            $followups[] = $row;
+    // Verify all technicians are valid + active
+    $placeholders = implode(",", array_fill(0, count($technicians), "?"));
+    $types = str_repeat("s", count($technicians));
+    $verify = $conn->prepare("SELECT COUNT(*) AS cnt FROM employees WHERE employee_number IN ($placeholders) AND role='Technician' AND is_active=1");
+    $verify->bind_param($types, ...$technicians);
+    $verify->execute();
+    $cnt = $verify->get_result()->fetch_assoc()['cnt'];
+    if ($cnt != count($technicians)) {
+        echo json_encode(["status" => "error", "message" => "Invalid technician(s)"]);
+        exit();
+    }
+
+    // Transaction start
+    $conn->begin_transaction();
+    try {
+        // Remove existing uncompleted assignments
+        $delq = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id=? AND assignment_type=? AND completed_status IS NULL");
+        $delq->bind_param("ss", $enquiry_id, $assignment_type);
+        $delq->execute();
+
+        // Insert new
+        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, 'admin', NOW())");
+        foreach ($technicians as $tech) {
+            $ins->bind_param("ssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $loggedInUser);
+            $ins->execute();
         }
 
-        // Fetch technicians list with per-tech status
-        $technicians = getTechniciansForEnquiry($conn, $enquiryId);
+        // Log visit history
+        if ($visit_date) {
+            $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) VALUES (?, ?, ?, NOW())");
+            $vh->bind_param("sss", $enquiry_id, $assignment_type, $visit_date);
+            $vh->execute();
+        }
 
-        $enquiry['followups']   = $followups;
-        $enquiry['technicians'] = $technicians;
-
-        echo json_encode([
-            "status" => "success",
-            "mode"   => "followup_history",
-            "data"   => $enquiry
-        ]);
-    } else {
-        echo json_encode(["status" => "error", "message" => "Enquiry not found."]);
+        $conn->commit();
+        echo json_encode(["status" => "success", "message" => "Assignments inserted"]);
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(["status" => "error", "message" => "Insert failed"]);
     }
-
-} elseif ($technicianId && !$enquiryId) {
-    // 🔹 Case 2: Technician-specific list
-    $sql = "SELECT 
-                e.enquiry_id, 
-                e.client_name, 
-                e.contact_person_name, 
-                e.contact_no1,
-                e.requirement_category,
-                e.enquiry_date, 
-                s.status_name
-            FROM enquiries e
-            INNER JOIN enquiry_assignments etm 
-                ON e.enquiry_id = etm.enquiry_id AND etm.technician_employee_id = ?
-            LEFT JOIN enquiry_status s ON e.enquiry_status_id = s.id
-            WHERE e.is_active = 1";
-
-    $params = [$technicianId];
-    $types  = "s";
-
-    if ($statusId) {
-        $sql .= " AND e.enquiry_status_id = ?";
-        $params[] = $statusId;
-        $types   .= "i";
-    }
-    if ($fromDate && $toDate) {
-        $sql .= " AND DATE(e.enquiry_date) BETWEEN ? AND ?";
-        $params[] = $fromDate;
-        $params[] = $toDate;
-        $types   .= "ss";
-    }
-
-    $sql .= " ORDER BY e.created_at DESC";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $rows = [];
-    while ($row = $result->fetch_assoc()) {
-        $row['enquiry_date'] = fmt_date($row['enquiry_date']);
-        $row['technicians']  = getTechniciansForEnquiry($conn, $row['enquiry_id']);
-        $rows[] = $row;
-    }
-
-    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians'];
-
-    echo json_encode([
-        "status"        => "success",
-        "mode"          => "technician_enquiries",
-        "technician_id" => $technicianId,
-        "filters"       => $data,
-        "columns"       => $columns,
-        "data"          => $rows
-    ]);
-
-} else {
-    // 🔹 Case 3: All enquiries with filters
-    $sql = "SELECT 
-                e.enquiry_id,
-                e.client_name,
-                e.contact_person_name,
-                e.contact_no1,
-                e.requirement_category,
-                e.enquiry_date,
-                s.status_name
-            FROM enquiries e
-            LEFT JOIN enquiry_status s ON e.enquiry_status_id = s.id
-            WHERE e.is_active = 1";
-
-    $params = [];
-    $types  = "";
-
-    if ($statusId) {
-        $sql .= " AND e.enquiry_status_id = ?";
-        $params[] = $statusId;
-        $types   .= "i";
-    }
-    if ($fromDate && $toDate) {
-        $sql .= " AND DATE(e.enquiry_date) BETWEEN ? AND ?";
-        $params[] = $fromDate;
-        $params[] = $toDate;
-        $types   .= "ss";
-    }
-
-    $sql .= " ORDER BY e.created_at DESC";
-    $stmt = $conn->prepare($sql);
-    if ($types) {
-        $stmt->bind_param($types, ...$params);
-    }
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $rows = [];
-    while ($row = $result->fetch_assoc()) {
-        $row['enquiry_date'] = fmt_date($row['enquiry_date']);
-        $row['technicians']  = getTechniciansForEnquiry($conn, $row['enquiry_id']);
-        $rows[] = $row;
-    }
-
-    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians'];
-
-    echo json_encode([
-        "status"  => "success",
-        "mode"    => "all_enquiries",
-        "columns" => $columns,
-        "data"    => $rows
-    ]);
+    exit();
 }
 
-$conn->close();
-?>
 // ---------------------------
 // UPDATE assignment
 // ---------------------------
