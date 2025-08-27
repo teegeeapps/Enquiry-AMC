@@ -440,6 +440,7 @@ if ($mode === 'fetch_by_technician') {
         $assignments = [];
         while ($row = $ar->fetch_assoc()) {
             $assignments[] = [
+		"assignment_id"        => $row['id'],
                 "employee_number"       => $row['technician_employee_id'],
                 "employee_name"         => $row['employee_name'],
                 "completed_status"      => (int)$row['completed_status'],
