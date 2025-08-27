@@ -13,6 +13,15 @@ $fromDate     = $data['from_date'] ?? null;
 $toDate       = $data['to_date'] ?? null;
 
 /**
+ * Utility: format date d-m-Y (safe)
+ */
+function fmt_date($date) {
+    return (!empty($date) && $date !== "0000-00-00" && $date !== "0000-00-00 00:00:00")
+        ? date("d-m-Y", strtotime($date))
+        : null;
+}
+
+/**
  * Utility: fetch assigned technicians for an enquiry
  */
 function getTechniciansForEnquiry($conn, $enquiryId) {
@@ -21,7 +30,8 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
                 emp.employee_name,
                 etm.completed_status,
                 etm.assigned_by,
-                etm.assigned_at
+                etm.assigned_at,
+                etm.completed_at
             FROM enquiry_assignments etm
             INNER JOIN employees emp 
                 ON etm.technician_employee_id = emp.employee_number
@@ -33,6 +43,8 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
 
     $techs = [];
     while ($row = $result->fetch_assoc()) {
+        $row['assigned_at']  = fmt_date($row['assigned_at']);
+        $row['completed_at'] = fmt_date($row['completed_at']);
         $techs[] = $row;
     }
     return $techs;
@@ -52,6 +64,9 @@ if ($enquiryId && !$technicianId) {
     if ($result->num_rows > 0) {
         $enquiry = $result->fetch_assoc();
 
+        // Format enquiry_date
+        $enquiry['enquiry_date'] = fmt_date($enquiry['enquiry_date']);
+
         // Fetch follow-ups
         $fSql = "SELECT follow_up_date, follow_up_notes, created_at
                  FROM enquiry_followups
@@ -64,6 +79,8 @@ if ($enquiryId && !$technicianId) {
 
         $followups = [];
         while ($row = $fResult->fetch_assoc()) {
+            $row['follow_up_date'] = fmt_date($row['follow_up_date']);
+            $row['created_at']     = fmt_date($row['created_at']);
             $followups[] = $row;
         }
 
@@ -121,7 +138,8 @@ if ($enquiryId && !$technicianId) {
 
     $rows = [];
     while ($row = $result->fetch_assoc()) {
-        $row['technicians'] = getTechniciansForEnquiry($conn, $row['enquiry_id']);
+        $row['enquiry_date'] = fmt_date($row['enquiry_date']);
+        $row['technicians']  = getTechniciansForEnquiry($conn, $row['enquiry_id']);
         $rows[] = $row;
     }
 
@@ -175,7 +193,8 @@ if ($enquiryId && !$technicianId) {
 
     $rows = [];
     while ($row = $result->fetch_assoc()) {
-        $row['technicians'] = getTechniciansForEnquiry($conn, $row['enquiry_id']);
+        $row['enquiry_date'] = fmt_date($row['enquiry_date']);
+        $row['technicians']  = getTechniciansForEnquiry($conn, $row['enquiry_id']);
         $rows[] = $row;
     }
 
