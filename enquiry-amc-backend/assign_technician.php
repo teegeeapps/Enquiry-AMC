@@ -113,7 +113,7 @@ if ($mode === 'insert') {
         $delq->execute();
 
         // Insert new assignments
-        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW())");
+        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at, completed_status) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW(),1)");
         foreach ($technicians as $tech) {
             $ins->bind_param("sssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $assigned_by, $assigned_by);
             $ins->execute();

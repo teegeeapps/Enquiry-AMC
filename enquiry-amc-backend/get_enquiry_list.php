@@ -50,8 +50,30 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
     return $techs;
 }
 
+/**
+ * Utility: get follow-up history as concatenated string
+ */
+function getFollowupHistory($conn, $enquiryId) {
+    $sql = "SELECT 
+                CONCAT('[', DATE(f.followup_date), ' | ', f.created_by, ']: ', f.remarks) AS entry
+            FROM enquiry_followups f
+            INNER JOIN enquiries e ON f.enquiry_id = e.id
+            WHERE e.enquiry_id = ?
+            ORDER BY f.followup_date DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $enquiryId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $history = [];
+    while ($row = $result->fetch_assoc()) {
+        $history[] = $row['entry'];
+    }
+    return implode("\n", $history); // 🔹 Single string
+}
+
 if ($enquiryId && !$technicianId) {
-    // 🔹 Case 1: Enquiry details + follow-up + technician list
+    // 🔹 Case 1: Enquiry details
     $sql = "SELECT e.*, s.status_name
             FROM enquiries e
             LEFT JOIN enquiry_status s ON e.enquiry_status_id = s.id
@@ -63,32 +85,9 @@ if ($enquiryId && !$technicianId) {
 
     if ($result->num_rows > 0) {
         $enquiry = $result->fetch_assoc();
-
-        // Format enquiry_date
-        $enquiry['enquiry_date'] = fmt_date($enquiry['enquiry_date']);
-
-        // Fetch follow-ups
-        $fSql = "SELECT follow_up_date, follow_up_notes, created_at
-                 FROM enquiry_followups
-                 WHERE enquiry_id = (SELECT id FROM enquiries WHERE enquiry_id = ?)
-                 ORDER BY created_at ASC";
-        $fStmt = $conn->prepare($fSql);
-        $fStmt->bind_param("s", $enquiryId);
-        $fStmt->execute();
-        $fResult = $fStmt->get_result();
-
-        $followups = [];
-        while ($row = $fResult->fetch_assoc()) {
-            $row['follow_up_date'] = fmt_date($row['follow_up_date']);
-            $row['created_at']     = fmt_date($row['created_at']);
-            $followups[] = $row;
-        }
-
-        // Fetch technicians list with per-tech status
-        $technicians = getTechniciansForEnquiry($conn, $enquiryId);
-
-        $enquiry['followups']   = $followups;
-        $enquiry['technicians'] = $technicians;
+        $enquiry['enquiry_date']     = fmt_date($enquiry['enquiry_date']);
+        $enquiry['technicians']      = getTechniciansForEnquiry($conn, $enquiryId);
+        $enquiry['followup_history'] = getFollowupHistory($conn, $enquiryId);
 
         echo json_encode([
             "status" => "success",
@@ -100,7 +99,7 @@ if ($enquiryId && !$technicianId) {
     }
 
 } elseif ($technicianId && !$enquiryId) {
-    // 🔹 Case 2: Technician-specific list
+    // 🔹 Case 2: Technician enquiries
     $sql = "SELECT 
                 e.enquiry_id, 
                 e.client_name, 
@@ -138,12 +137,13 @@ if ($enquiryId && !$technicianId) {
 
     $rows = [];
     while ($row = $result->fetch_assoc()) {
-        $row['enquiry_date'] = fmt_date($row['enquiry_date']);
-        $row['technicians']  = getTechniciansForEnquiry($conn, $row['enquiry_id']);
+        $row['enquiry_date']     = fmt_date($row['enquiry_date']);
+        $row['technicians']      = getTechniciansForEnquiry($conn, $row['enquiry_id']);
+        $row['followup_history'] = getFollowupHistory($conn, $row['enquiry_id']);
         $rows[] = $row;
     }
 
-    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians'];
+    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians','followup_history'];
 
     echo json_encode([
         "status"        => "success",
@@ -155,7 +155,7 @@ if ($enquiryId && !$technicianId) {
     ]);
 
 } else {
-    // 🔹 Case 3: All enquiries with filters
+    // 🔹 Case 3: All enquiries
     $sql = "SELECT 
                 e.enquiry_id,
                 e.client_name,
@@ -185,20 +185,19 @@ if ($enquiryId && !$technicianId) {
 
     $sql .= " ORDER BY e.created_at DESC";
     $stmt = $conn->prepare($sql);
-    if ($types) {
-        $stmt->bind_param($types, ...$params);
-    }
+    if ($types) $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
 
     $rows = [];
     while ($row = $result->fetch_assoc()) {
-        $row['enquiry_date'] = fmt_date($row['enquiry_date']);
-        $row['technicians']  = getTechniciansForEnquiry($conn, $row['enquiry_id']);
+        $row['enquiry_date']     = fmt_date($row['enquiry_date']);
+        $row['technicians']      = getTechniciansForEnquiry($conn, $row['enquiry_id']);
+        $row['followup_history'] = getFollowupHistory($conn, $row['enquiry_id']);
         $rows[] = $row;
     }
 
-    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians'];
+    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians','followup_history'];
 
     echo json_encode([
         "status"  => "success",
