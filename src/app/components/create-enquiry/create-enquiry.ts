@@ -228,8 +228,8 @@ export class CreateEnquiryComponent implements OnInit {
       "amc_status": "Active",
       "user": "Admin"
     }
-
-    if (this.enquiryForm.value.delivered_date == null) {
+console.log("DD", this.enquiryForm.value.delivered_date);
+    if (this.enquiryForm.value.delivered_date == null || this.enquiryForm.value.delivered_date == "" ) {
       this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
         console.log(res, "res");
         this.snackBar.open(res.message, 'Close', {

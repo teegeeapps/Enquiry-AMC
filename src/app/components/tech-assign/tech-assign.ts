@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api-service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import moment from 'moment';
+import { formatDate, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-tech-assign',
@@ -95,7 +97,7 @@ export class TechAssignComponent {
         "delivery_instructions": this.assignForm.value.delivery_instructions,
         "customer_location": this.assignForm.value.customer_location,
         "assigned_by": "Admin",
-        "visit_date": this.assignForm.value.visit_date
+        "visit_date":  formatDate(this.assignForm.value.visit_date, 'yyyy-MM-dd', 'en-IN')
       }
 
       console.log("postjson", postjson);
