@@ -106,7 +106,7 @@ if ($is_update) {
             // ✅ Get internal enquiry ID for follow-up insertion
             $result = $conn->query("SELECT id FROM enquiries WHERE enquiry_id = '$enquiry_id'");
             $row = $result->fetch_assoc();
-            $internal_enquiry_id = $row['id'];
+            $internal_enquiry_id = $enquiry_id;
 
             // ✅ Insert into follow-up table if needed
             if (!empty($follow_up_date) || !empty($follow_up_notes)) {

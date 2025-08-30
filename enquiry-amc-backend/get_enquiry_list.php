@@ -150,7 +150,7 @@ if ($enquiryId && !$technicianId) {
         $rows[] = $row;
     }
 
-    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians','followup_history'];
+    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians'];
 
     echo json_encode([
         "status"        => "success",
@@ -204,7 +204,7 @@ if ($enquiryId && !$technicianId) {
         $rows[] = $row;
     }
 
-    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians','followup_history'];
+    $columns = ['enquiry_id','client_name','contact_person_name','contact_no1','requirement_category','enquiry_date','status_name','technicians'];
 
     echo json_encode([
         "status"  => "success",
