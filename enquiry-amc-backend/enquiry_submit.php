@@ -110,8 +110,8 @@ if ($is_update) {
 
             // ✅ Insert into follow-up table if needed
             if (!empty($follow_up_date) || !empty($follow_up_notes)) {
-                $stmt2 = $conn->prepare("INSERT INTO enquiry_followups (enquiry_id, follow_up_date, follow_up_notes) VALUES (?, ?, ?)");
-                $stmt2->bind_param("iss", $internal_enquiry_id, $follow_up_date, $follow_up_notes);
+                $stmt2 = $conn->prepare("INSERT INTO enquiry_followups (enquiry_id, follow_up_date, follow_up_notes, created_by) VALUES (?, ?, ?,?)");
+                $stmt2->bind_param("ssss", $internal_enquiry_id, $follow_up_date, $follow_up_notes, $created_by);
                 $stmt2->execute();
                 $stmt2->close();
             }
