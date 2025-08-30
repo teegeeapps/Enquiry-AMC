@@ -54,12 +54,18 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
  * Utility: get follow-up history as concatenated string
  */
 function getFollowupHistory($conn, $enquiryId) {
-    $sql = "SELECT 
-                CONCAT('[', DATE(f.followup_date), ' | ', f.created_by, ']: ', f.remarks) AS entry
-            FROM enquiry_followups f
-            INNER JOIN enquiries e ON f.enquiry_id = e.id
-            WHERE e.enquiry_id = ?
-            ORDER BY f.followup_date DESC";
+    $sql = "
+        SELECT 
+            CONCAT(
+                '[', DATE_FORMAT(f.follow_up_date, '%d-%m-%Y %H:%i'), 
+                ' | ', COALESCE(f.created_by, 'Unknown'), 
+                ']: ', COALESCE(f.follow_up_notes, '')
+            ) AS entry
+        FROM enquiry_followups f
+        WHERE f.enquiry_id = ?
+        ORDER BY f.follow_up_date DESC
+    ";
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $enquiryId);
     $stmt->execute();
@@ -67,9 +73,10 @@ function getFollowupHistory($conn, $enquiryId) {
 
     $history = [];
     while ($row = $result->fetch_assoc()) {
-        $history[] = $row['entry'];
+        $history[] = $row['entry']; // ✅ Corrected: use 'entry'
     }
-    return implode("\n", $history); // 🔹 Single string
+
+    return implode("\n", $history); // 🔹 Single concatenated string
 }
 
 if ($enquiryId && !$technicianId) {
