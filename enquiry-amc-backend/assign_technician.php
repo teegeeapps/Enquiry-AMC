@@ -49,12 +49,13 @@ try {
 // INSERT assignment
 // ---------------------------
 if ($mode === 'insert') {
-    $enquiry_id            = $data['enquiry_id'] ?? null;
+    $enquiry_id            = trim($data['enquiry_id'] ?? '');
     $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians           = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
     $customer_location     = trim($data['customer_location'] ?? '');
     $visit_date            = trim($data['visit_date'] ?? '');
+    $assigned_by           = trim($data['assigned_by'] ?? 'admin');
 
     // --- Validations ---
     if (!$enquiry_id) {
@@ -90,10 +91,11 @@ if ($mode === 'insert') {
         }
     }
 
-    // Verify all technicians are valid + active
+    // Verify all technicians are valid + active using role_id=3
     $placeholders = implode(",", array_fill(0, count($technicians), "?"));
     $types = str_repeat("s", count($technicians));
-    $verify = $conn->prepare("SELECT COUNT(*) AS cnt FROM employees WHERE employee_number IN ($placeholders) AND role='Technician' AND is_active=1");
+    $verify_sql = "SELECT COUNT(*) AS cnt FROM employees WHERE employee_number IN ($placeholders) AND status=1 AND role_id=3";
+    $verify = $conn->prepare($verify_sql);
     $verify->bind_param($types, ...$technicians);
     $verify->execute();
     $cnt = $verify->get_result()->fetch_assoc()['cnt'];
@@ -105,22 +107,22 @@ if ($mode === 'insert') {
     // Transaction start
     $conn->begin_transaction();
     try {
-        // Remove existing uncompleted assignments
+        // Remove existing uncompleted assignments of same type
         $delq = $conn->prepare("DELETE FROM enquiry_assignments WHERE enquiry_id=? AND assignment_type=? AND completed_status IS NULL");
         $delq->bind_param("ss", $enquiry_id, $assignment_type);
         $delq->execute();
 
-        // Insert new
-        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, 'admin', NOW())");
+        // Insert new assignments
+        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW())");
         foreach ($technicians as $tech) {
-            $ins->bind_param("ssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $loggedInUser);
+            $ins->bind_param("sssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $assigned_by, $assigned_by);
             $ins->execute();
         }
 
-        // Log visit history
+        // Log visit history if provided
         if ($visit_date) {
-            $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) VALUES (?, ?, ?, NOW())");
-            $vh->bind_param("sss", $enquiry_id, $assignment_type, $visit_date);
+            $vh = $conn->prepare("INSERT INTO enquiry_visit_history (enquiry_id, visit_date, added_by, added_at) VALUES (?, ?, ?, NOW())");
+            $vh->bind_param("sss", $enquiry_id, $visit_date, $assigned_by);
             $vh->execute();
         }
 
@@ -128,11 +130,10 @@ if ($mode === 'insert') {
         echo json_encode(["status" => "success", "message" => "Assignments inserted"]);
     } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(["status" => "error", "message" => "Insert failed"]);
+        echo json_encode(["status" => "error", "message" => "Insert failed: ".$e->getMessage()]);
     }
     exit();
 }
-
 // ---------------------------
 // UPDATE assignment
 // ---------------------------
