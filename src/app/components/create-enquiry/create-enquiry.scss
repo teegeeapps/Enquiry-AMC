@@ -13,6 +13,14 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+.readonly-input[readonly] {
+  background-color: #f5f5f5;  /* light grey background */
+  color: #666;                /* dark grey text */
+  cursor: not-allowed;        /* show disabled cursor */
+  border: 1px solid #ccc;     /* subtle border */
+}
+
+
 /* Accordion Panels */
 mat-expansion-panel {
   background-color: #fafafa; /* Slightly off-white */

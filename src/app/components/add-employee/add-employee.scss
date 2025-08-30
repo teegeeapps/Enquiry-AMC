@@ -7,6 +7,14 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+.mat-drawer-container{
+  overflow: hidden!important;
+}
+
+.mat-drawer-content {
+overflow: hidden!important;
+}
+
 h2 {
     text-align: center;
     margin-bottom: 25px;

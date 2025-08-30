@@ -144,7 +144,8 @@ export class CreateEnquiryComponent implements OnInit {
           enquiry_status: result.enquiry_status_id,
           amc_date: result.amc_date,
           follow_up_dates: result.follow_up_date,
-          follow_up_notes: result.follow_up_notes
+          follow_up_notes: result.follow_up_notes,
+          follow_up_his: result.followup_history
         });
       },
       error: err => {
@@ -245,9 +246,11 @@ console.log("DD", this.enquiryForm.value.delivered_date);
       console.log("this.enquiryForm.value.delivered_date", this.enquiryForm.value.delivered_date);
       this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
         console.log(res, "res");
-        this.apiService.post('amc_submit.php', amcpost).subscribe((res: any) => {
+        if(!this.isEditMode){
+          this.apiService.post('amc_submit.php', amcpost).subscribe((res: any) => {
           console.log('amc_submit.', res);
         });
+        }
         this.snackBar.open(res.message, 'Close', {
           duration: 3000,
           verticalPosition: 'top',

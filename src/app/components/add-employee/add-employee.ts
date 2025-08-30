@@ -116,11 +116,13 @@ export class AddEmployeeComponent implements OnInit{
     } else {
       postjson = {
       "employee_name": this.employeeForm.value.employeeName,
+      "employee_number": this.employeeForm.value.employeeNumber,
       "contact_no" :this.employeeForm.value.contactNumber,
       "email_id" : this.employeeForm.value.email,
       "status" : this.employeeForm.value.status,
       "password" : this.employeeForm.value.password,
       "role_id": this.employeeForm.value.role,
+      "created_by":  "Admin",
       "updated_by":  "Admin"
     }
     }

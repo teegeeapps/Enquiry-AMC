@@ -107,9 +107,9 @@ this.loadTask();
     console.log('empNo', empNo);
     let completed_status: any;
     if(this.assignForm.value.completed_status == "Pending"){
-      completed_status = 0;
-    } else {
       completed_status = 1;
+    } else {
+      completed_status = 2;
     }
     let postjson = {
       "mode": "update",

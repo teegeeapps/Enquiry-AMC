@@ -43,7 +43,7 @@
         </button>
 
           <!-- Assign Technician button -> only if row.status_name === 'Order Confirmed' -->
-          <button *ngIf="showAssignTechnician && row.status_name === 'Order confirmed'" mat-icon-button color="warn"
+          <button *ngIf="showAssignTechnician && (row.status_name === 'Order Confirmed' || row.status_name === 'Order Delivered')" mat-icon-button color="warn"
             (click)="onAssignTechnician(row)">
             <mat-icon>person</mat-icon>
           </button>
@@ -86,7 +86,7 @@
           </button> -->
 
           <!-- Assign Technician only if status_name = Order Confirmed -->
-          <button *ngIf="showAssignTechnician && row.status_name == 'Order confirmed'" mat-icon-button color="warn"
+          <button *ngIf="showAssignTechnician && (row.status_name === 'Order Confirmed' || row.status_name === 'Order Delivered')" mat-icon-button color="warn"
             (click)="onAssignTechnician(row)">
             <mat-icon>person</mat-icon>
           </button>
