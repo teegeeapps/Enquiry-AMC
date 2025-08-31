@@ -31,9 +31,7 @@ if ($result && $result->num_rows > 0) {
 // Define the column headers for UI
 $columns = [
     "employee_name",
-    "employee_number",
     "contact_no",
-    "email_id",
     "status",
     "role_name"
 ];

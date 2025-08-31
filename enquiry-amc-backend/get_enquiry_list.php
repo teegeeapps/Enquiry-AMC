@@ -56,14 +56,22 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
 function getFollowupHistory($conn, $enquiryId) {
     $sql = "
         SELECT 
-            CONCAT(
-                '[', DATE_FORMAT(f.follow_up_date, '%d-%m-%Y %H:%i'), 
-                ' | ', COALESCE(f.created_by, 'Unknown'), 
-                ']: ', COALESCE(f.follow_up_notes, '')
-            ) AS entry
+            IFNULL(
+                GROUP_CONCAT(
+                    CONCAT(
+                        DATE_FORMAT(f.follow_up_date, '%d-%m-%Y %H:%i'),
+                        ' - ',
+                        IFNULL(s.status_name, 'Unknown'),
+                        ': ',
+                        IFNULL(f.follow_up_notes, '')
+                    )
+                    ORDER BY f.follow_up_date DESC SEPARATOR '\n'
+                ),
+                ''
+            ) AS followup_history
         FROM enquiry_followups f
+        LEFT JOIN enquiry_status s ON f.enquiry_status_id = s.id
         WHERE f.enquiry_id = ?
-        ORDER BY f.follow_up_date DESC
     ";
 
     $stmt = $conn->prepare($sql);
@@ -71,14 +79,11 @@ function getFollowupHistory($conn, $enquiryId) {
     $stmt->execute();
     $result = $stmt->get_result();
 
-    $history = [];
-    while ($row = $result->fetch_assoc()) {
-        $history[] = $row['entry']; // ✅ Corrected: use 'entry'
+    if ($row = $result->fetch_assoc()) {
+        return $row['followup_history']; // ✅ Correct alias
     }
-
-    return implode("\n", $history); // 🔹 Single concatenated string
+    return '';
 }
-
 if ($enquiryId && !$technicianId) {
     // 🔹 Case 1: Enquiry details
     $sql = "SELECT e.*, s.status_name
