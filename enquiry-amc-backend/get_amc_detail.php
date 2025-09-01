@@ -34,7 +34,9 @@ $columns = [
     "amc_status",
     "amc_date",
     "amc_period",
-    "requirement_category"
+    "requirement_category",
+    "latest_followup_date",
+    "latest_followup_notes"
 ];
 
 if ($result->num_rows > 0) {
@@ -44,7 +46,7 @@ if ($result->num_rows > 0) {
     $followup_sql = "SELECT followup_date, followup_notes, created_by, created_at
                      FROM amc_followups 
                      WHERE enquiry_id = ?
-                     ORDER BY followup_date DESC, created_at DESC";
+                     ORDER BY created_at DESC";
     $followup_stmt = $conn->prepare($followup_sql);
     $followup_stmt->bind_param("s", $enquiry_id);
     $followup_stmt->execute();
@@ -55,25 +57,32 @@ if ($result->num_rows > 0) {
     $latest_followup_date = null;
     $latest_followup_notes = null;
 
-    while ($row = $followup_result->fetch_assoc()) {
-        // Capture latest follow-up on the first record
-        if ($latest_followup_date === null) {
-            $latest_followup_date = $row['followup_date'];
-            $latest_followup_notes = $row['followup_notes'];
-        }
+    if ($row = $followup_result->fetch_assoc()) {
+        // First row is the latest because of DESC order
+        $latest_followup_date = $row['followup_date'];
+        $latest_followup_notes = $row['followup_notes'];
 
+        // Add first record
         $followups[] = $row;
         $followup_concat .= $row['followup_date'] . " - " . $row['followup_notes'] . " (" . $row['created_by'] . ")\n";
+
+        // Add rest of the followups
+        while ($row = $followup_result->fetch_assoc()) {
+            $followups[] = $row;
+            $followup_concat .= $row['followup_date'] . " - " . $row['followup_notes'] . " (" . $row['created_by'] . ")\n";
+        }
     }
+
+    // ✅ Add latest follow-up info to $data
+    $data['latest_followup_date'] = $latest_followup_date;
+    $data['latest_followup_notes'] = $latest_followup_notes;
 
     $response = [
         "status" => "success",
         "columns" => $columns,
-        "data" => $data,
-        "followup_history" => $followups,            // Structured history
-        "followup_text" => trim($followup_concat),   // Concatenated history
-        "latest_followup_date" => $latest_followup_date,
-        "latest_followup_notes" => $latest_followup_notes
+        "data" => $data,                        // Includes latest follow-up info
+        "followup_history" => $followups,       // Structured history
+        "followup_text" => trim($followup_concat) // Concatenated history
     ];
 } else {
     $response = [
