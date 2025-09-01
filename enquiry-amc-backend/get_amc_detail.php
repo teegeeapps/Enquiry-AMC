@@ -41,10 +41,10 @@ if ($result->num_rows > 0) {
     $data = $result->fetch_assoc();
 
     // ✅ Fetch AMC Follow-Up History
-    $followup_sql = "SELECT followup_date, followup_remarks, created_by, created_at
+    $followup_sql = "SELECT followup_date, followup_notes, created_by, created_at
                      FROM amc_followups 
                      WHERE enquiry_id = ?
-                     ORDER BY created_at DESC";
+                     ORDER BY followup_date DESC, created_at DESC";
     $followup_stmt = $conn->prepare($followup_sql);
     $followup_stmt->bind_param("s", $enquiry_id);
     $followup_stmt->execute();
@@ -52,18 +52,28 @@ if ($result->num_rows > 0) {
 
     $followups = [];
     $followup_concat = "";
+    $latest_followup_date = null;
+    $latest_followup_notes = null;
 
     while ($row = $followup_result->fetch_assoc()) {
+        // Capture latest follow-up on the first record
+        if ($latest_followup_date === null) {
+            $latest_followup_date = $row['followup_date'];
+            $latest_followup_notes = $row['followup_notes'];
+        }
+
         $followups[] = $row;
-        $followup_concat .= $row['followup_date'] . " - " . $row['followup_remarks'] . " (" . $row['created_by'] . ")\n";
+        $followup_concat .= $row['followup_date'] . " - " . $row['followup_notes'] . " (" . $row['created_by'] . ")\n";
     }
 
     $response = [
         "status" => "success",
         "columns" => $columns,
         "data" => $data,
-        "followup_history" => $followups,     // Structured history
-        "followup_text" => trim($followup_concat) // Concatenated history
+        "followup_history" => $followups,            // Structured history
+        "followup_text" => trim($followup_concat),   // Concatenated history
+        "latest_followup_date" => $latest_followup_date,
+        "latest_followup_notes" => $latest_followup_notes
     ];
 } else {
     $response = [
