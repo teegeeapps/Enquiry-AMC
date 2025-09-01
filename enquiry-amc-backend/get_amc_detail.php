@@ -64,12 +64,12 @@ if ($result->num_rows > 0) {
 
         // Add first record
         $followups[] = $row;
-        $followup_concat .= $row['followup_date'] . " - " . $row['followup_notes'] . " (" . $row['created_by'] . ")\n";
+        $followup_concat .= $row['followup_date'] . " - " . $row['followup_notes'] . "\n";
 
         // Add rest of the followups
         while ($row = $followup_result->fetch_assoc()) {
             $followups[] = $row;
-            $followup_concat .= $row['followup_date'] . " - " . $row['followup_notes'] . " (" . $row['created_by'] . ")\n";
+            $followup_concat .= $row['followup_date'] . " - " . $row['followup_notes'] . "\n";
         }
     }
 
