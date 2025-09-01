@@ -13,6 +13,7 @@ $contact_no = $data->contact_no;
 $email_id = $data->email_id;
 $status = $data->status;
 $password = $data->password;
+$role_id = $data->role_id;
 $created_by = $data->created_by;
 $updated_by = $data->updated_by;
 
@@ -24,7 +25,8 @@ $sql = "UPDATE employees SET
     status = '$status',
     password = '$password',
     updated_at = NOW(),
-    updated_by = '$updated_by'
+    updated_by = '$updated_by',
+role_id = '$role_id'
     WHERE employee_number = '$employee_number'";  // ✔️ Closing quote here, no semicolon inside the string
 
 if ($conn->query($sql) === TRUE) {
