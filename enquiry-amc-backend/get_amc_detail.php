@@ -42,7 +42,7 @@ if ($result->num_rows > 0) {
 
     // ✅ Fetch AMC Follow-Up History
     $followup_sql = "SELECT followup_date, followup_remarks, created_by, created_at
-                     FROM amc_followup 
+                     FROM amc_followups 
                      WHERE enquiry_id = ?
                      ORDER BY created_at DESC";
     $followup_stmt = $conn->prepare($followup_sql);
