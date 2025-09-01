@@ -1,63 +1,104 @@
 <div class="amc-form-wrapper">
   <h2>{{ isEditMode ? 'Update AMC' : 'Create AMC' }}</h2>
 
-  <form [formGroup]="amcForm" (ngSubmit)="onSubmit()" class="amc-form-grid">
+  <form [formGroup]="amcForm" (ngSubmit)="onSubmit()">
 
-    <mat-form-field appearance="outline">
-      <mat-label>Client (Company Name)</mat-label>
-      <input matInput formControlName="client_name" required />
-    </mat-form-field>
+    <mat-expansion-panel expanded>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>event</mat-icon> Enquiry Status & Dates
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="amc-form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Client (Company Name)</mat-label>
+          <input matInput formControlName="client_name" required />
+        </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Contact Person Name</mat-label>
-      <input matInput formControlName="contact_person" required />
-    </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Contact Person Name</mat-label>
+          <input matInput formControlName="contact_person" required />
+        </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Contact No 1</mat-label>
-      <input matInput type="tel" formControlName="contact_number" required />
-    </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Contact No 1</mat-label>
+          <input matInput type="tel" formControlName="contact_number" required />
+        </mat-form-field>
 
-    <!-- Delivered Date with Datepicker -->
-    <mat-form-field appearance="outline">
-      <mat-label>Delivered Date</mat-label>
-      <input 
-        matInput 
-        [matDatepicker]="deliveredPicker" 
-        formControlName="delivered_date" 
-        (dateChange)="calculateAmcDate()" 
-        required 
-      />
-      <mat-datepicker-toggle matSuffix [for]="deliveredPicker"></mat-datepicker-toggle>
-      <mat-datepicker #deliveredPicker></mat-datepicker>
-    </mat-form-field>
+        <!-- Delivered Date with Datepicker -->
+        <mat-form-field appearance="outline">
+          <mat-label>Delivered Date</mat-label>
+          <input matInput [matDatepicker]="deliveredPicker" formControlName="delivered_date"
+            (dateChange)="calculateAmcDate()" required />
+          <mat-datepicker-toggle matSuffix [for]="deliveredPicker"></mat-datepicker-toggle>
+          <mat-datepicker #deliveredPicker></mat-datepicker>
+        </mat-form-field>
 
-    <!-- No. of Years Dropdown -->
-    <mat-form-field appearance="outline">
-      <mat-label>No. of Years</mat-label>
-      <mat-select formControlName="no_of_years" (selectionChange)="calculateAmcDate()" required>
-        <mat-option *ngFor="let year of yearsList" [value]="year">{{ year }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+        <!-- No. of Years Dropdown -->
+        <mat-form-field appearance="outline">
+          <mat-label>No. of Years</mat-label>
+          <mat-select formControlName="no_of_years" (selectionChange)="calculateAmcDate()" required>
+            <mat-option *ngFor="let year of yearsList" [value]="year">{{ year }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-    <!-- AMC Date with Datepicker (User can override) -->
-    <mat-form-field appearance="outline">
-      <mat-label>AMC Date</mat-label>
-      <input matInput [matDatepicker]="amcPicker" formControlName="amc_date" required />
-      <mat-datepicker-toggle matSuffix [for]="amcPicker"></mat-datepicker-toggle>
-      <mat-datepicker #amcPicker></mat-datepicker>
-    </mat-form-field>
+        <!-- AMC Date with Datepicker (User can override) -->
+        <mat-form-field appearance="outline">
+          <mat-label>AMC Date</mat-label>
+          <input matInput [matDatepicker]="amcPicker" formControlName="amc_date" required />
+          <mat-datepicker-toggle matSuffix [for]="amcPicker"></mat-datepicker-toggle>
+          <mat-datepicker #amcPicker></mat-datepicker>
+        </mat-form-field>
 
-    <!-- Current Year AMC Status only in Update Mode -->
-    <mat-form-field *ngIf="isEditMode" appearance="outline">
-      <mat-label>Current Year AMC Status</mat-label>
-      <mat-select formControlName="current_amc_status" required>
-        <mat-option value="">Select</mat-option>
-        <mat-option value="Active">Active</mat-option>
-        <mat-option value="AMC Pending">AMC Pending</mat-option>
-        <mat-option value="AMC Closed">AMC Closed</mat-option>
-      </mat-select>
-    </mat-form-field>
+        <!-- Current Year AMC Status only in Update Mode -->
+        <mat-form-field *ngIf="isEditMode" appearance="outline">
+          <mat-label>Current Year AMC Status</mat-label>
+          <mat-select formControlName="current_amc_status" required>
+            <mat-option value="">Select</mat-option>
+            <mat-option value="Active">Active</mat-option>
+            <mat-option value="AMC Pending">AMC Pending</mat-option>
+            <mat-option value="AMC Closed">AMC Closed</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-expansion-panel>
+
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>chat</mat-icon> Follow Up
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="amc-form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Follow-up Date</mat-label>
+          <input matInput [matDatepicker]="fpicker" formControlName="follow_up_dates" required />
+          <mat-datepicker-toggle matSuffix [for]="fpicker"></mat-datepicker-toggle>
+          <mat-datepicker #fpicker></mat-datepicker>
+          <mat-error *ngIf="submitted && amcForm.get('follow_up_dates')?.invalid">
+            Follow-up Date is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Empty div to push textarea to full row -->
+        <div class="grid-spacer"></div>
+
+        <!-- Follow-up Notes -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Follow-up Notes / Remarks</mat-label>
+          <textarea matInput formControlName="follow_up_notes" rows="4" required></textarea>
+          <mat-error *ngIf="submitted && amcForm.get('follow_up_dates')?.invalid">
+            Follow-up Notes is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Follow-up History</mat-label>
+          <textarea matInput formControlName="follow_up_his" rows="4" readonly class="readonly-input"></textarea>
+        </mat-form-field>
+      </div>
+    </mat-expansion-panel>
 
     <!-- Submit Button -->
     <div class="submit-row full-width">

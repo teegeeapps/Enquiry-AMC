@@ -38,7 +38,10 @@ export class AmcUpdateComponent implements OnInit {
       delivered_date: ['', Validators.required],
       no_of_years: ['', Validators.required],
       amc_date: [''],
-      current_amc_status: ['']
+      current_amc_status: [''],
+      follow_up_dates: [''],
+      follow_up_notes: ['', Validators.required],
+      follow_up_his: ['']
     });
 
     // If in edit mode, patch the form with existing data
@@ -65,7 +68,10 @@ export class AmcUpdateComponent implements OnInit {
           delivered_date: result.delivered_date,
           amc_date: result.amc_date,
           no_of_years: parseInt(result.amc_period),
-          current_amc_status: result.amc_status
+          current_amc_status: result.amc_status,
+          follow_up_dates: result.latest_followup_date,
+          follow_up_notes: result.latest_followup_notes,
+          follow_up_his: res.followup_text
         });
       },
       error: err => {
@@ -127,6 +133,8 @@ export class AmcUpdateComponent implements OnInit {
         "amc_date": this.amcForm.value.amc_date,
         "amc_period": this.amcForm.value.no_of_years.toString(),
         "amc_status": this.amcForm.value.current_amc_status,
+        "followup_date": this.amcForm.value.follow_up_dates,
+        "followup_notes": this.amcForm.value.follow_up_notes,
         "user": "Admin"
       }
 

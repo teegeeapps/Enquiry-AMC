@@ -1,6 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ApiService } from '../../services/api-service';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface Task {
   client_name: string;
@@ -23,7 +26,8 @@ export class TaskListComponent {
   user: any;
   taskList: any[] = [];
   taskColumns: string[] = [];
-  constructor(private apiService: ApiService, private cdr: ChangeDetectorRef, private router: Router) { }
+  constructor(private apiService: ApiService, private cdr: ChangeDetectorRef, private router: Router,
+     private dialog: MatDialog, private snackBar: MatSnackBar) { }
   saveTasks() {
     console.log('Tasks Updated:', this.taskList);
     let user: any;
@@ -117,4 +121,35 @@ export class TaskListComponent {
     // this.router.navigate(['/task-view']);
   }
 
+  onDeletetask(task: any){
+     console.log('row value onDeletetask', task);
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+              width: '350px',
+              data: { message: 'Are you sure you want to delete this task?' }
+            });
+      
+            dialogRef.afterClosed().subscribe(result => {
+              if (result) {
+                this.deleteTask(task);
+              }
+            });
+  }
+
+
+deleteTask(task: any){
+ this.apiService.post<any[]>('assignment_delete.php', {assignment_id: task.assignment_id}).subscribe((res: any) => {
+  this.snackBar.open(res.message, 'Close', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'right',
+          });
+         
+//  this.router.navigate(['/task-list']);
+const currentUrl = this.router.url;
+  this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+    this.router.navigate([currentUrl]);
+  });
+   this.cdr.detectChanges();
+ })
+}
 }

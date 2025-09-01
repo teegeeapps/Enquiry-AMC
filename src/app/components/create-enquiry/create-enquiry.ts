@@ -22,6 +22,7 @@ export class CreateEnquiryComponent implements OnInit {
   isEditMode = false;
   req_cat: any;
   sourceEnq: any;
+  enqData: any;
   yearsList: number[] = Array.from({ length: 10 }, (_, i) => i + 1);
   constructor(private fb: FormBuilder, private apiService: ApiService, private router: Router,
     private http: HttpClient, private dialog: MatDialog, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {
@@ -30,6 +31,7 @@ export class CreateEnquiryComponent implements OnInit {
     this.enquiryId = state?.enquiryId || null;
     this.isEditMode = !!this.enquiryId;
     console.log('state enquiry', state);
+    console.log('this.enquiryId', this.enquiryId);
     console.log('this.isEditMode', this.isEditMode);
   }
 
@@ -40,18 +42,18 @@ export class CreateEnquiryComponent implements OnInit {
     }
 
     this.req_cat = [
-      {"id": 1, "name": "-- Select --"},
-      {"id": 2,"name": "CCTV"},
-      {"id": 3,"name": "New Fire Extinguisher"},
-      {"id": 4,"name": "Refilling"}
+      { "id": 1, "name": "-- Select --" },
+      { "id": 2, "name": "CCTV" },
+      { "id": 3, "name": "New Fire Extinguisher" },
+      { "id": 4, "name": "Refilling" }
     ];
 
     this.sourceEnq = [
       { "id": 1, "name": "-- Select --" },
-      { "id": 2,"name": "Existing Customer"},
-      { "id": 3,"name": "JustDial"},
-      { "id": 4,"name": "Reference"},
-      {"id": 5, "name": "Social Media" },
+      { "id": 2, "name": "Existing Customer" },
+      { "id": 3, "name": "JustDial" },
+      { "id": 4, "name": "Reference" },
+      { "id": 5, "name": "Social Media" },
     ]
   }
 
@@ -60,9 +62,9 @@ export class CreateEnquiryComponent implements OnInit {
       client_name: ['', Validators.required],
       contact_person: ['', Validators.required],
       contact_number: ['', [
-      Validators.required,
-      Validators.pattern(/^[0-9]{10}$/) // exactly 10 digits
-    ]],
+        Validators.required,
+        Validators.pattern(/^[0-9]{10}$/) // exactly 10 digits
+      ]],
       alt_contact_number: ['', Validators.pattern(/^[0-9]{10}$/)],
       email: ['', Validators.email],
       address: [''],
@@ -82,25 +84,25 @@ export class CreateEnquiryComponent implements OnInit {
 
     this.enquiryForm.get('enquiry_status')?.valueChanges.subscribe(status => {
       console.log('status', status);
-    const deliveredDateControl = this.enquiryForm.get('delivered_date');
-    const followUpNotesControl = this.enquiryForm.get('follow_up_notes');
-       if (status === 5) {
-      deliveredDateControl?.setValidators([Validators.required]);
-    } else {
-      deliveredDateControl?.clearValidators();
-    }
-    deliveredDateControl?.updateValueAndValidity();
+      const deliveredDateControl = this.enquiryForm.get('delivered_date');
+      const followUpNotesControl = this.enquiryForm.get('follow_up_notes');
+      if (status === 5) {
+        deliveredDateControl?.setValidators([Validators.required]);
+      } else {
+        deliveredDateControl?.clearValidators();
+      }
+      deliveredDateControl?.updateValueAndValidity();
 
 
-    // Condition for Follow-up Notes
-/*     const statusesWhereNotesAreNotRequired = ['Order Confirmed', 'Order Delivered', 'Closed'];
-    if (!statusesWhereNotesAreNotRequired.includes(status)) {
-      followUpNotesControl?.setValidators([Validators.required]);
-    } else {
-      followUpNotesControl?.clearValidators();
-    }
-    followUpNotesControl?.updateValueAndValidity(); */
-  });
+      // Condition for Follow-up Notes
+      /*     const statusesWhereNotesAreNotRequired = ['Order Confirmed', 'Order Delivered', 'Closed'];
+          if (!statusesWhereNotesAreNotRequired.includes(status)) {
+            followUpNotesControl?.setValidators([Validators.required]);
+          } else {
+            followUpNotesControl?.clearValidators();
+          }
+          followUpNotesControl?.updateValueAndValidity(); */
+    });
 
     this.loadEnquiryStatusOptions();
     if (this.isEditMode && this.enquiryId) {
@@ -128,6 +130,7 @@ export class CreateEnquiryComponent implements OnInit {
       next: (res: any) => {
         console.log('signle enquiry', res);
         let result = res.data;
+        this.enqData = res.data;
         this.enquiryForm.patchValue({
           client_name: result.client_name,
           contact_person: result.contact_person_name,
@@ -154,16 +157,16 @@ export class CreateEnquiryComponent implements OnInit {
     });
   }
 
-  statusChange(event: any){
+  statusChange(event: any) {
     console.log('status change event', event);
     const deliveredDateControl = this.enquiryForm.get('delivered_date');
-     // Condition for Delivered Date
-  /*   if (status === 'Order Delivered') {
-      deliveredDateControl?.setValidators([Validators.required]);
-    } else {
-      deliveredDateControl?.clearValidators();
-    }
-    deliveredDateControl?.updateValueAndValidity(); */
+    // Condition for Delivered Date
+    /*   if (status === 'Order Delivered') {
+        deliveredDateControl?.setValidators([Validators.required]);
+      } else {
+        deliveredDateControl?.clearValidators();
+      }
+      deliveredDateControl?.updateValueAndValidity(); */
   }
 
 
@@ -229,39 +232,67 @@ export class CreateEnquiryComponent implements OnInit {
       "amc_status": "Active",
       "user": "Admin"
     }
-console.log("DD", this.enquiryForm.value.delivered_date);
-    if (this.enquiryForm.value.delivered_date == null || this.enquiryForm.value.delivered_date == "" ) {
-      this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
-        console.log(res, "res");
-        this.snackBar.open(res.message, 'Close', {
-          duration: 3000,
-          verticalPosition: 'top',
-          horizontalPosition: 'right',
-        });
-        this.router.navigate(['/enquiry-list']);
-      });
+    console.log("DD", this.enquiryForm.value.delivered_date);
 
-      // send to API or handle logic here
-    } else {
-      console.log("this.enquiryForm.value.delivered_date", this.enquiryForm.value.delivered_date);
-      this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
-        console.log(res, "res");
-        if(!this.isEditMode){
+    if (!this.enquiryId) {
+      // CREATE
+      if (this.enquiryForm.value.delivered_date) {
+        // enquiry + amc
+        this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
+          console.log(res, "res");
           this.apiService.post('amc_submit.php', amcpost).subscribe((res: any) => {
-          console.log('amc_submit.', res);
+            console.log('amc_submit.', res);
+          });
+
+          this.snackBar.open(res.message, 'Close', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'right',
+          });
+          this.router.navigate(['/enquiry-list']);
         });
-        }
-        this.snackBar.open(res.message, 'Close', {
-          duration: 3000,
-          verticalPosition: 'top',
-          horizontalPosition: 'right',
+      } else {
+        // only enquiry
+        this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
+          console.log(res, "res");
+          this.snackBar.open(res.message, 'Close', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'right',
+          });
+          this.router.navigate(['/enquiry-list']);
         });
-        this.router.navigate(['/enquiry-list']);
-      });
+      }
+    } else {
+      // UPDATE
+      if (!this.enqData.delivered_date && this.enquiryForm.value.delivered_date) {
+        // enquiry + amc (delivery date added first time)
+        this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
+          console.log(res, "res");
+          this.apiService.post('amc_submit.php', amcpost).subscribe((res: any) => {
+            console.log('amc_submit.', res);
+          });
+
+          this.snackBar.open(res.message, 'Close', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'right',
+          });
+          this.router.navigate(['/enquiry-list']);
+        });
+      } else {
+        // only enquiry
+        this.apiService.post('enquiry_submit.php', postjson).subscribe((res: any) => {
+          console.log(res, "res");
+          this.snackBar.open(res.message, 'Close', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'right',
+          });
+          this.router.navigate(['/enquiry-list']);
+        });
+      }
     }
-
-
-
     // send to API or handle logic here
   }
 
@@ -277,9 +308,9 @@ console.log("DD", this.enquiryForm.value.delivered_date);
   }
 
   onlyNumbers(event: KeyboardEvent): boolean {
-  const charCode = event.charCode ? event.charCode : event.keyCode;
-  // Allow only digits (0-9)
-  return charCode >= 48 && charCode <= 57;
-}
+    const charCode = event.charCode ? event.charCode : event.keyCode;
+    // Allow only digits (0-9)
+    return charCode >= 48 && charCode <= 57;
+  }
 
 }
