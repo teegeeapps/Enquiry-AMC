@@ -17,29 +17,34 @@ Sample JSON to send:
     "delivered_date": "2025-08-20",
     "amc_status": "Renewed",
     "amc_date": "2025-08-21",
+    "amc_period": "1 Year",
+    "followup_date": "2025-09-10",
+    "followup_notes": "Customer wants callback next week",
     "user": "Admin"
 }
 */
 
 // Mandatory fields
-$enquiry_id = $input['enquiry_id'];
-$client_name = $input['client_name'];
-$contact_person_name = $input['contact_person_name'];
-$contact_no1 = $input['contact_no1'];
-$delivered_date = $input['delivered_date'] ?? null; // optional
-$amc_status = $input['amc_status'];
-$amc_date = $input['amc_date'];
-$amc_period = $input['amc_period'];
-$user = $input['user'];
+$enquiry_id          = $input['enquiry_id'] ?? null;
+$client_name         = $input['client_name'] ?? null;
+$contact_person_name = $input['contact_person_name'] ?? null;
+$contact_no1         = $input['contact_no1'] ?? null;
+$delivered_date      = $input['delivered_date'] ?? null;
+$amc_status          = $input['amc_status'] ?? null;
+$amc_date            = $input['amc_date'] ?? null;
+$amc_period          = $input['amc_period'] ?? null;
+$followup_date       = $input['followup_date'] ?? null;
+$followup_notes      = $input['followup_notes'] ?? null;
+$user                = $input['user'] ?? null;
 
-// Check if enquiry exists
+// Check if AMC exists
 $checkStmt = $conn->prepare("SELECT id FROM amc_list WHERE enquiry_id = ?");
 $checkStmt->bind_param("s", $enquiry_id);
 $checkStmt->execute();
 $result = $checkStmt->get_result();
 
 if ($result->num_rows > 0) {
-    // Update only allowed fields
+    // Update AMC details
     $updateStmt = $conn->prepare("
         UPDATE amc_list 
         SET client_name = ?, 
@@ -69,7 +74,17 @@ if ($result->num_rows > 0) {
     $success = $updateStmt->execute();
 
     if ($success) {
-        echo json_encode(["status" => "success", "message" => "AMC record updated"]);
+        // Insert follow-up if provided
+        if (!empty($followup_date) || !empty($followup_notes)) {
+            $insertFollowup = $conn->prepare("
+                INSERT INTO amc_followups (enquiry_id, followup_date, followup_notes, created_by)
+                VALUES (?, ?, ?, ?)
+            ");
+            $insertFollowup->bind_param("ssss", $enquiry_id, $followup_date, $followup_notes, $user);
+            $insertFollowup->execute();
+        }
+
+        echo json_encode(["status" => "success", "message" => "AMC updated successfully"]);
     } else {
         echo json_encode(["status" => "error", "message" => $conn->error]);
     }

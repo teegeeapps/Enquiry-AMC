@@ -110,7 +110,7 @@ if ($is_update) {
 
             // ✅ Insert into follow-up table if needed
             if (!empty($follow_up_date) || !empty($follow_up_notes)) {
-                $stmt2 = $conn->prepare("INSERT INTO enquiry_followups (enquiry_id, follow_up_date, follow_up_notes, created_by, enquiry_status_id) VALUES (?, ?, ?,?, ?)");
+                $stmt2 = $conn->prepare("INSERT INTO enquiry_followups (enquiry_id, follow_up_date, follow_up_notes, created_by, enquiry_status_id) VALUES (?, ?, ?,?,?)");
                 $stmt2->bind_param("ssssi", $internal_enquiry_id, $follow_up_date, $follow_up_notes, $created_by, $enquiry_status_id);
                 $stmt2->execute();
                 $stmt2->close();
@@ -166,8 +166,8 @@ if ($is_update) {
 
         // ✅ Insert into follow-up table if applicable
         if (!empty($follow_up_date) || !empty($follow_up_notes)) {
-            $stmt2 = $conn->prepare("INSERT INTO enquiry_followups (generated_enquiry_id, follow_up_date, follow_up_notes, enquiry_status_id) VALUES (?, ?, ?, ?)");
-            $stmt2->bind_param("issi", $last_id, $follow_up_date, $follow_up_notes, $enquiry_status_id);
+            $stmt2 = $conn->prepare("INSERT INTO enquiry_followups (enquiry_id, follow_up_date, follow_up_notes, created_by, enquiry_status_id) VALUES (?, ?, ?,?,?)");
+            $stmt2->bind_param("ssssi", $generated_enquiry_id, $follow_up_date, $follow_up_notes, $created_by, $enquiry_status_id);
             $stmt2->execute();
             $stmt2->close();
         }
