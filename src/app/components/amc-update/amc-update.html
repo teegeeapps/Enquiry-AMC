@@ -51,7 +51,7 @@
         </mat-form-field>
 
         <!-- Current Year AMC Status only in Update Mode -->
-        <mat-form-field *ngIf="isEditMode" appearance="outline">
+<!--         <mat-form-field *ngIf="isEditMode" appearance="outline">
           <mat-label>Current Year AMC Status</mat-label>
           <mat-select formControlName="current_amc_status" required>
             <mat-option value="">Select</mat-option>
@@ -59,7 +59,19 @@
             <mat-option value="AMC Pending">AMC Pending</mat-option>
             <mat-option value="AMC Closed">AMC Closed</mat-option>
           </mat-select>
-        </mat-form-field>
+        </mat-form-field> -->
+
+        <mat-form-field appearance="outline" *ngIf="isEditMode && enquiryStatusOptions?.length">
+            <mat-label>Current Year AMC Status</mat-label>
+            <mat-select formControlName="current_amc_status" required>
+              <mat-option *ngFor="let status of enquiryStatusOptions" [value]="status.id">
+                {{ status.status_name }}
+              </mat-option>
+            </mat-select>
+            <!-- <mat-error *ngIf="submitted && enquiryForm.get('enquiry_status')?.invalid">
+              Status is required
+            </mat-error> -->
+          </mat-form-field>
       </div>
     </mat-expansion-panel>
 

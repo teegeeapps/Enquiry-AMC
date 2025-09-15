@@ -54,4 +54,9 @@ export class AmcListComponent implements OnInit{
     console.log('editamc', row);
      this.router.navigate(['/amc-update'], { state: { enquiryId: row.enquiry_id, editMode: true } });
   }
+
+   onAssignTech(enquiry: any) {
+    console.log('enquiry', enquiry);
+    this.router.navigate(['/tech-assign'], { state: { enquiryId: enquiry.enquiry_id } });
+  }
 }

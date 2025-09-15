@@ -23,6 +23,7 @@ export class CreateEnquiryComponent implements OnInit {
   req_cat: any;
   sourceEnq: any;
   enqData: any;
+  isdeliverysec= false;
   yearsList: number[] = Array.from({ length: 10 }, (_, i) => i + 1);
   constructor(private fb: FormBuilder, private apiService: ApiService, private router: Router,
     private http: HttpClient, private dialog: MatDialog, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {
@@ -87,8 +88,10 @@ export class CreateEnquiryComponent implements OnInit {
       const deliveredDateControl = this.enquiryForm.get('delivered_date');
       const followUpNotesControl = this.enquiryForm.get('follow_up_notes');
       if (status === 5) {
+        this.isdeliverysec = true;
         deliveredDateControl?.setValidators([Validators.required]);
       } else {
+        this.isdeliverysec = false;
         deliveredDateControl?.clearValidators();
       }
       deliveredDateControl?.updateValueAndValidity();

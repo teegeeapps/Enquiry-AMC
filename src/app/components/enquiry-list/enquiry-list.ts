@@ -96,7 +96,9 @@ export class EnquiryListComponent implements OnInit {
 
   onAmcUpdate(row: any) {
     console.log('AMC clicked for:', row);
-    this.router.navigate(['/amc-list'], { state: { enquiryId: row.enquiry_id } });
+   // this.router.navigate(['/amc-list'], { state: { enquiryId: row.enquiry_id } });
+   // this.router.navigate(['/amc-list']);
+    this.router.navigate(['/amc-update'], { state: { enquiryId: row.enquiry_id, editMode: true } });
     // open dialog or handle AMC update here
   }
 

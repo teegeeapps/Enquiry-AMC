@@ -27,7 +27,20 @@
           <mat-header-cell *matHeaderCellDef mat-sort-header class="table-header">
             {{ column | formatHeader }}
           </mat-header-cell>
-          <mat-cell *matCellDef="let row">{{ row[column] }}</mat-cell>
+          <mat-cell *matCellDef="let row">
+           <!--  {{ row[column] }} -->
+              <!-- If column is map_location, render as clickable link -->
+      <ng-container *ngIf="column === 'customer_location'; else normalCell">
+        <a [href]="row[column]" target="_blank" rel="noopener noreferrer">
+          View Location
+        </a>
+      </ng-container>
+
+      <!-- Default cell -->
+      <ng-template #normalCell>
+        {{ row[column] }}
+      </ng-template>
+          </mat-cell>
         </ng-container>
       </ng-container>
 
@@ -53,7 +66,12 @@
             <mat-icon>person</mat-icon>
           </button>
 
-          <button *ngIf="showAmcButton" mat-stroked-button color="primary" (click)="onAmc(row)">
+          <button *ngIf="showTechAssignAMC" mat-icon-button color="warn"
+            (click)="onAssignTech(row)">
+            <mat-icon>person</mat-icon>
+          </button>
+
+          <button *ngIf="showAmcButton && row.status_name === 'Order Delivered'" color="primary" (click)="onAmc(row)"  mat-icon-button color="blue">
             <mat-icon>settings</mat-icon>
           </button>
         </mat-cell>
@@ -78,7 +96,18 @@
         <div class="row-item"><strong>S.No:</strong> {{ getSerialNumber(i) }}</div>
 
         <div *ngFor="let column of columns" class="row-item">
-          <strong>{{ column | formatHeader }}:</strong> {{ row[column] }}
+          <strong>{{ column | formatHeader }}:</strong> 
+          
+          <!-- {{ row[column] }} -->
+            <ng-container *ngIf="column === 'customer_location'; else normalCardCell">
+            <a [href]="row[column]" target="_blank" rel="noopener noreferrer">
+              View Location
+            </a>
+          </ng-container>
+
+          <ng-template #normalCardCell>
+            {{ row[column] }}
+          </ng-template>
         </div>
 
         <!-- Actions -->
@@ -93,6 +122,10 @@
           <!-- Assign Technician only if status_name = Order Confirmed -->
           <button *ngIf="showAssignTechnician && (row.status_name === 'Order Confirmed' || row.status_name === 'Order Delivered')" mat-icon-button color="warn"
             (click)="onAssignTechnician(row)">
+            <mat-icon>person</mat-icon>
+          </button>
+          <button *ngIf="showTechAssignAMC" mat-icon-button color="warn"
+            (click)="onAssignTech(row)">
             <mat-icon>person</mat-icon>
           </button>
           <button *ngIf="showAmcButton" mat-stroked-button color="primary" (click)="onAmc(row)">

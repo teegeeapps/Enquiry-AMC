@@ -6,6 +6,7 @@ import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-amc-update',
@@ -17,11 +18,12 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class AmcUpdateComponent implements OnInit {
   amcForm!: FormGroup;
   submitted = false;
+   enquiryStatusOptions: any;
   enquiryId: string | null = null;
   isEditMode = false; // Set to true if updating
   yearsList: number[] = Array.from({ length: 10 }, (_, i) => i + 1);
   constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService,
-    private datePipe: DatePipe, private dialog: MatDialog, private snackBar: MatSnackBar) {
+    private datePipe: DatePipe, private dialog: MatDialog, private snackBar: MatSnackBar, private http: HttpClient,) {
     const nav = this.router.getCurrentNavigation();
     const state = nav?.extras?.state as { enquiryId?: string, editMode?: boolean };
     this.enquiryId = state?.enquiryId || null;
@@ -45,6 +47,7 @@ export class AmcUpdateComponent implements OnInit {
     });
 
     // If in edit mode, patch the form with existing data
+    this.loadEnquiryStatusOptions();
     if (this.isEditMode) {
       this.loadAMC();
     }
@@ -79,6 +82,21 @@ export class AmcUpdateComponent implements OnInit {
       }
     });
   }
+
+   loadEnquiryStatusOptions() {
+    this.http.get<string[]>('data/enquiry_status.json')
+      .subscribe({
+        next: (response) => {
+          console.log('response enq status', response);
+          this.enquiryStatusOptions = response;
+        },
+        error: (err) => {
+          console.error('Failed to load enquiry statuses', err);
+        }
+      });
+  }
+
+
 
   calculateAmcDate(): void {
     const deliveredDate = this.amcForm.get('delivered_date')?.value;

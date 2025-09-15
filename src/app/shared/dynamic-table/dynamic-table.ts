@@ -18,7 +18,7 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Input() enableFilter: boolean = true;
   @Input() enablePagination: boolean = true;
   @Input() showAssignTechnician: boolean = false;
-  @Input() showCompletedDropdown: boolean = false;
+  @Input() showTechAssignAMC: boolean = false;
   @Input() showAmcButton: boolean = false; // ✅ default hidden
   @Input() showViewButton: boolean = false;
   @Input() showEditButton: boolean = false;
@@ -27,6 +27,7 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Output() edit = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
   @Output() assignTechnician = new EventEmitter<any>();
+  @Output() assignTech = new EventEmitter<any>();
   @Output() amc = new EventEmitter<any>(); // ✅ emits when AMC button clicked
   @Output() completedSave = new EventEmitter<{ row: any, value: string }>();
   dataSource = new MatTableDataSource<any>();
@@ -103,6 +104,10 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
 
   onAssignTechnician(row: any) {
     this.assignTechnician.emit(row);
+  }
+
+  onAssignTech(row: any) {
+    this.assignTech.emit(row);
   }
 
   get columnCount(): number {

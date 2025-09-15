@@ -1,8 +1,15 @@
 .table-desktop {
   display: block;
-  overflow-x: auto;
+  overflow-x: auto!important;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
+}
+
+.table-desktop .mat-mdc-table {
+  width: max-content!important; /* table grows based on content */
+  min-width: 100%!important;    /* always at least 100% wide */
+  table-layout: auto!important; /* let columns size naturally */
+  border-collapse: collapse;
 }
 
 /* Prevent extra spacing from long table */
@@ -16,8 +23,8 @@
 }
 
 .mat-cell, .mat-header-cell {
-  white-space: normal;
-  word-wrap: break-word; /* or word-break: break-word; */
+  white-space: nowrap!important;
+  padding: 8px 12px!important;
 }
 
 ::ng-deep .mat-mdc-table .sno-col {
@@ -25,6 +32,13 @@
   min-width: 60px !important;
   max-width: 60px !important;
   text-align: center;          /* center align numbers */
+  white-space: nowrap !important;
+}
+
+/* Actions column fix */
+::ng-deep .mat-mdc-table .cdk-column-Actions {
+  min-width: 150px !important;  /* adjust depending on how many buttons */
+  text-align: center;
   white-space: nowrap !important;
 }
 
