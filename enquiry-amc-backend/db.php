@@ -1,8 +1,8 @@
 <?php
-$host = 'sql311.infinityfree.com';
-$user = 'if0_39624272';
-$pass = 'QKtRJvOfQwwt';
-$db = 'if0_39624272_enquiry_amc';
+$host = 'localhost';
+$user = 'root';
+$pass = '';
+$db = 'enquiry_amc';
 
 $conn = new mysqli($host, $user, $pass, $db);
 
