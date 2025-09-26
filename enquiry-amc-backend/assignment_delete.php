@@ -21,7 +21,7 @@ if (!$assignment_id) {
 }
 
 // ✅ Check if record exists
-$check_sql = "SELECT * FROM enquiry_assignment WHERE id = ?";
+$check_sql = "SELECT * FROM enquiry_assignments WHERE id = ?";
 $stmt = $conn->prepare($check_sql);
 $stmt->bind_param("i", $assignment_id);
 $stmt->execute();

@@ -16,7 +16,8 @@ $columns = array(
     "contact_no_1",
     "requirement_category",
     "delivery_date",
-    "amc_date"
+    "amc_date",
+"amc_status"
 );
 
 // Default params
