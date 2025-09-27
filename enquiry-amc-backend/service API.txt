@@ -1,0 +1,139 @@
+✅ API Endpoint
+
+service_api.php
+
+✅ Request/Response Samples
+1. Insert a new service
+
+Request (JSON):
+
+{
+  "mode": "INSERT",
+  "enquiry_id": "ENQ001",
+  "amc_id": "AMC001",
+  "client_name": "ABC Pvt Ltd",
+  "contact_person_name": "John Doe",
+  "contact_no1": "9876543210",
+  "requirement_category": "AC Maintenance",
+  "delivered_date": "2025-09-25",
+  "service_status": "Open",
+  "service_date": "2025-09-30",
+  "created_by": "admin"
+}
+
+
+Response:
+
+{
+  "status": "success",
+  "message": "Service inserted successfully",
+  "id": 15
+}
+
+2. Update an existing service
+
+Request (JSON):
+
+{
+  "mode": "UPDATE",
+  "id": 15,
+  "client_name": "XYZ Enterprises",
+  "contact_person_name": "Jane Smith",
+  "contact_no1": "9998887777",
+  "requirement_category": "Generator Service",
+  "service_status": "In Progress",
+  "service_date": "2025-10-05",
+  "modified_by": "manager1"
+}
+
+
+Response:
+
+{
+  "status": "success",
+  "message": "Service updated successfully"
+}
+
+3. Fetch all services
+
+Request (JSON):
+
+{
+  "mode": "FETCH_ALL"
+}
+
+
+Response:
+
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 15,
+      "enquiry_id": "ENQ001",
+      "amc_id": "AMC001",
+      "client_name": "ABC Pvt Ltd",
+      "contact_person_name": "John Doe",
+      "contact_no1": "9876543210",
+      "requirement_category": "AC Maintenance",
+      "delivered_date": "2025-09-25",
+      "service_status": "Open",
+      "service_date": "2025-09-30",
+      "created_by": "admin",
+      "created_at": "2025-09-27 10:12:30",
+      "modified_by": null,
+      "modified_at": "2025-09-27 10:12:30",
+      "service_isActive": 1
+    },
+    {
+      "id": 16,
+      "enquiry_id": "ENQ002",
+      "amc_id": "AMC002",
+      "client_name": "XYZ Enterprises",
+      "contact_person_name": "Jane Smith",
+      "contact_no1": "9998887777",
+      "requirement_category": "Generator Service",
+      "delivered_date": "2025-09-26",
+      "service_status": "Completed",
+      "service_date": "2025-09-28",
+      "created_by": "manager1",
+      "created_at": "2025-09-27 11:20:00",
+      "modified_by": "manager1",
+      "modified_at": "2025-09-27 11:30:00",
+      "service_isActive": 1
+    }
+  ]
+}
+
+4. Fetch single service by ID
+
+Request (JSON):
+
+{
+  "mode": "FETCH_ONE",
+  "id": 15
+}
+
+
+Response:
+
+{
+  "status": "success",
+  "data": {
+    "id": 15,
+    "enquiry_id": "ENQ001",
+    "amc_id": "AMC001",
+    "client_name": "ABC Pvt Ltd",
+    "contact_person_name": "John Doe",
+    "contact_no1": "9876543210",
+    "requirement_category": "AC Maintenance",
+    "delivered_date": "2025-09-25",
+    "service_status": "Open",
+    "service_date": "2025-09-30",
+    "created_by": "admin",
+    "created_at": "2025-09-27 10:12:30",
+    "modified_by": null,
+    "modified_at": "2025-09-27 10:12:30",
+    "service_isActive": 1
+  }
+}

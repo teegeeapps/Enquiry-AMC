@@ -1,0 +1,129 @@
+<?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+include 'db.php';
+
+if ($conn->connect_error) {
+    echo json_encode(["status" => "error", "message" => "DB Connection failed"]);
+    exit();
+}
+
+// Read JSON input
+$input = json_decode(file_get_contents("php://input"), true);
+
+if (!isset($input['mode'])) {
+    echo json_encode(["status" => "error", "message" => "Mode is required"]);
+    exit();
+}
+
+$mode = strtoupper($input['mode']);
+$ui_columns = [
+    "client_name",
+    "contact_no1",
+    "employee_name",
+    "completed_status",
+    "technician_names",
+    "assignment_type",
+    "customer_location",
+    "assigned_at"
+];
+
+switch ($mode) {
+
+    // ----------------- INSERT -----------------
+    case "INSERT":
+        $stmt = $conn->prepare("INSERT INTO service_list 
+            (enquiry_id, amc_id, client_name, contact_person_name, contact_no1, requirement_category, delivered_date, service_status, service_date, created_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param(
+            "ssssssssss",
+            $input['enquiry_id'],
+            $input['amc_id'],
+            $input['client_name'],
+            $input['contact_person_name'],
+            $input['contact_no1'],
+            $input['requirement_category'],
+            $input['delivered_date'],
+            $input['service_status'],
+            $input['service_date'],
+            $input['created_by']
+        );
+        if ($stmt->execute()) {
+            echo json_encode(["status" => "success", "message" => "Service inserted successfully", "id" => $stmt->insert_id]);
+        } else {
+            echo json_encode(["status" => "error", "message" => $stmt->error]);
+        }
+        $stmt->close();
+        break;
+
+    // ----------------- UPDATE -----------------
+    case "UPDATE":
+        if (!isset($input['id'])) {
+            echo json_encode(["status" => "error", "message" => "Service ID required for update"]);
+            exit();
+        }
+
+        $stmt = $conn->prepare("UPDATE service_list SET 
+            client_name=?, contact_person_name=?, contact_no1=?, requirement_category=?, service_status=?, service_date=?, modified_by=? 
+            WHERE id=?");
+        $stmt->bind_param(
+            "sssssssi",
+            $input['client_name'],
+            $input['contact_person_name'],
+            $input['contact_no1'],
+            $input['requirement_category'],
+            $input['service_status'],
+            $input['service_date'],
+            $input['modified_by'],
+            $input['id']
+        );
+        if ($stmt->execute()) {
+            echo json_encode(["status" => "success", "message" => "Service updated successfully"]);
+        } else {
+            echo json_encode(["status" => "error", "message" => $stmt->error]);
+        }
+        $stmt->close();
+        break;
+
+    // ----------------- FETCH ALL -----------------
+    case "FETCH_ALL":
+        $sql = "SELECT * FROM service_list ORDER BY id DESC";
+        $result = $conn->query($sql);
+
+        $data = [];
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+        }
+          echo json_encode([
+        "status" => "success",
+        "columns" => $ui_columns,   // ✅ fixed UI schema
+        "data" => $rows
+    ]);
+        break;
+
+    // ----------------- FETCH ONE -----------------
+    case "FETCH_ONE":
+        if (!isset($input['id'])) {
+            echo json_encode(["status" => "error", "message" => "Service ID required for fetch"]);
+            exit();
+        }
+        $stmt = $conn->prepare("SELECT * FROM service_list WHERE id=?");
+        $stmt->bind_param("i", $input['id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        if ($row) {
+            echo json_encode(["status" => "success", "data" => $row]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Service not found"]);
+        }
+        $stmt->close();
+        break;
+
+    default:
+        echo json_encode(["status" => "error", "message" => "Invalid mode"]);
+}
+
+$conn->close();
