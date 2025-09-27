@@ -347,7 +347,7 @@ if ($mode === 'fetch_admin') {
         "employee_name",
         "completed_status",
         "technician_names",
-        "delivery_instructions",
+        "assignment_type",
         "customer_location",
         "assigned_at"
     ];
@@ -424,7 +424,7 @@ if ($mode === 'fetch_by_technician') {
         "client_name",
         "contact_no1",
         "my_status",
-        "delivery_instructions",
+        "assignment_type",
         "customer_location",
         "assigned_at"
     ];
