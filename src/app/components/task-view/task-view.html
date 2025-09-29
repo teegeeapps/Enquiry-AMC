@@ -47,22 +47,36 @@
       <input matInput formControlName="customer_location" />
     </mat-form-field>
 
-      <mat-form-field appearance="outline">
+   <!--    <mat-form-field appearance="outline">
       <mat-label>Assigned For</mat-label>
       <mat-select formControlName="assigned_for" required>
         <mat-option value="AMC">AMC</mat-option>
         <mat-option value="NEW SUPPLY">New Supply</mat-option>
         <mat-option value="SERVICE">Service</mat-option>
       </mat-select>
+    </mat-form-field> -->
+
+     <mat-form-field appearance="outline">
+      <mat-label>Assigned For</mat-label>
+      <input matInput formControlName="assigned_for" required readonly/>
     </mat-form-field>
+
 
     <!-- Assigned For Dropdown -->
     <mat-form-field appearance="outline">
       <mat-label>Completed Status</mat-label>
       <mat-select formControlName="completed_status" required>
+        <mat-option value="Assign For Service">Assign For Service</mat-option>
         <mat-option value="Pending">Pending</mat-option>
         <mat-option value="Completed">Completed</mat-option>
       </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" *ngIf="isServicesec">
+          <mat-label>Service Date</mat-label>
+          <input matInput [matDatepicker]="amcPicker" formControlName="service_date" required />
+          <mat-datepicker-toggle matSuffix [for]="amcPicker"></mat-datepicker-toggle>
+          <mat-datepicker #amcPicker></mat-datepicker>
     </mat-form-field>
 
      <!-- Assigned For Dropdown -->

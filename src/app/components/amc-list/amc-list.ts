@@ -16,31 +16,23 @@ export class AmcListComponent implements OnInit{
   amcColumns: string[] = [];
   userColumns = ['s.no', 'client_name', 'contact_person_name', 'contact_no', 'requirement_category', 'delivery_date', 'latest_amc_date'];
 
-  constructor(private router: Router, private apiService: ApiService, private cdr: ChangeDetectorRef,) {
+  constructor(private router: Router, private apiService: ApiService, private cdr: ChangeDetectorRef) {
     //  this.isEditMode = !!this.enquiryId;
 
   }
 
   ngOnInit(): void {
-    this.apiService.get<any[]>('get_all_amc_list.php').subscribe((res: any) => {
-      console.log("res amc", res);        
+    this.apiService.get<any[]>('get_all_amc_list.php').subscribe((res: any) => {      
     if(res && res.data.length > 0){
-         console.log('inside else if');
         this.amcData = res.data;
         console.log('this.amcData', this.amcData);
         setTimeout(() => {
-         // this.amcColumns = Object.keys(this.amcData[0]);
-         // this.amcColumns.push('Actions');   // 🔑 Extract column names
          this.amcColumns = [ ...res.columns, 'Actions'];
-          console.log('this.amcData', this.amcData );
-          console.log('this.amcColumns', this.amcColumns);
           this.cdr.detectChanges();
         });
       } else{
          console.log('inside if');
        this.amcColumns = [ ...res.columns, 'Actions'];
-        console.log('this.taskList', this.amcColumns);
-        console.log('this.taskColumns', this.amcColumns);
         this.cdr.detectChanges();
       }
     });
@@ -57,6 +49,6 @@ export class AmcListComponent implements OnInit{
 
    onAssignTech(enquiry: any) {
     console.log('enquiry', enquiry);
-    this.router.navigate(['/tech-assign'], { state: { enquiryId: enquiry.enquiry_id } });
+    this.router.navigate(['/tech-assign'], { state: { enquiryId: enquiry.enquiry_id, assignType: "REFILLING" } });
   }
 }

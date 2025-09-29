@@ -115,11 +115,12 @@ export class CreateEnquiryComponent implements OnInit {
 
 
   loadEnquiryStatusOptions() {
-    this.http.get<string[]>('data/enquiry_status.json')
+
+    this.apiService.post('get_status_list.php', {"mode": "enquiry"})
       .subscribe({
-        next: (response) => {
+        next: (response: any) => {
           console.log('response enq status', response);
-          this.enquiryStatusOptions = response;
+          this.enquiryStatusOptions = response.data;
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -147,7 +148,7 @@ export class CreateEnquiryComponent implements OnInit {
           enquiry_date: moment(result.enquiry_date, 'DD-MM-YYYY'),
           requested_delivery_date: result.requested_delivery_date,
           delivered_date: result.delivered_date,
-          enquiry_status: result.enquiry_status_id,
+          enquiry_status: result.enquiry_status_id.toString(),
           amc_date: result.amc_date,
           follow_up_dates: result.follow_up_date,
           follow_up_notes: result.follow_up_notes,

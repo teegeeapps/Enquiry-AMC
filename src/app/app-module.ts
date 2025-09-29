@@ -48,6 +48,9 @@ import { TaskViewComponent } from './components/task-view/task-view';
 import { MatMomentDateModule, MomentDateAdapter } from '@angular/material-moment-adapter';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import * as _moment from 'moment';
+import { ServiceListComponent } from './components/service-list/service-list';
+import { ServiceUpdateComponent } from './components/service-update/service-update';
+
 
 const moment = _moment;
 
@@ -83,7 +86,10 @@ export const MY_FORMATS = {
     ViewEnquiryComponent,
     ViewEmployeeComponent,
     FormatHeaderPipe,
-    TaskViewComponent
+    TaskViewComponent,
+    ServiceListComponent,
+    ServiceUpdateComponent
+
   ],
   imports: [
     BrowserModule,

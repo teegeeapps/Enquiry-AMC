@@ -84,11 +84,11 @@ export class AmcUpdateComponent implements OnInit {
   }
 
    loadEnquiryStatusOptions() {
-    this.http.get<string[]>('data/enquiry_status.json')
+    this.apiService.post('get_status_list.php', {"mode": "amc"})
       .subscribe({
-        next: (response) => {
+        next: (response: any) => {
           console.log('response enq status', response);
-          this.enquiryStatusOptions = response;
+          this.enquiryStatusOptions = response.data;
         },
         error: (err) => {
           console.error('Failed to load enquiry statuses', err);
@@ -169,6 +169,26 @@ export class AmcUpdateComponent implements OnInit {
 
       });
     }
+  }
+
+  createAMC(){
+      let amcpost = {
+      "enquiry_id": this.enquiryId,
+      "client_name": this.amcForm.value.client_name,
+      "contact_person_name": this.amcForm.value.contact_person,
+      "contact_no1": this.amcForm.value.contact_number,
+      "requirement_category": this.amcForm.value.requirement_category,
+      "delivered_date": this.amcForm.value.delivered_date,
+      "amc_date": this.amcForm.value.amc_date,
+      "amc_period": this.amcForm.value.no_of_years,
+      "enquiry_status_id": parseInt(this.amcForm.value.enquiry_status),
+      "amc_status": "Active",
+      "user": "Admin"
+    }
+
+    this.apiService.post('amc_submit.php', amcpost).subscribe((res: any) => {
+            console.log('amc_submit.', res);
+     });
   }
 
 }

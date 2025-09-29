@@ -20,11 +20,13 @@ export class TechAssignComponent {
    assignment: any;
    visit_history: any;
    enquiry: any;
+   assignType: string | null = null;
 
   constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService, private snackBar: MatSnackBar) {
     const nav = this.router.getCurrentNavigation();
-        const state = nav?.extras?.state as { enquiryId?: string };
+        const state = nav?.extras?.state as { enquiryId?: string, assignType?: string };
         this.enquiryId = state?.enquiryId || null;
+        this.assignType = state?.assignType || null;
         console.log('state enquiry', state);
 
         this.assignForm = this.fb.group({
@@ -35,7 +37,7 @@ export class TechAssignComponent {
         delivery_instructions: [''],
         customer_location: [''],
         visit_date: ['', Validators.required],
-        assigned_for: ['', Validators.required],
+        assigned_for: [''],
         assigned_to: [[], Validators.required], // multi-select
       });
 
@@ -56,6 +58,7 @@ export class TechAssignComponent {
         console.log('this.employeeData', this.employeeData);
         this.enquiry = res.data.enquiry;
         console.log('this.enquiry', this.enquiry);
+         console.log('this.assignment', this.assignment);
         if(res.data.assignments!== undefined && res.data.assignments.length > 0){
            this.assignment = res.data.assignments[0];
         console.log('this.assignment', this.assignment);
@@ -68,7 +71,11 @@ export class TechAssignComponent {
             assigned_for: this.assignment.ass_type,
             visit_date: this.visit_history[0].visit_date
          });
-        }
+        } 
+        } else {
+          this.assignForm.patchValue({
+            assigned_for: this.assignType
+         });
         }
        
         this.assignForm.patchValue({

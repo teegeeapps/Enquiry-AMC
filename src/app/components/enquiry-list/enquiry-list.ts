@@ -108,7 +108,7 @@ export class EnquiryListComponent implements OnInit {
 
   onAssignTechnician(enquiry: any) {
     console.log('enquiry', enquiry);
-    this.router.navigate(['/tech-assign'], { state: { enquiryId: enquiry.enquiry_id } });
+    this.router.navigate(['/tech-assign'], { state: { enquiryId: enquiry.enquiry_id, assignType: "ENQUIRY" } });
   }
 
   getSerialNumber(index: number): number {

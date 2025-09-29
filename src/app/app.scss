@@ -17,13 +17,18 @@ background-color: white;
 
 /* Logo Styling */
 .logo-img {
-  height: 150px;
+ // height: 150px;
+    height: 60px;
 }
 
 /* Flex Spacer */
 .example-spacer {
   flex: 1 1 auto;
 }
+
+/* .mat-drawer-content {
+ overflow: hidden;
+} */
 
 /* Username */
 .username {
@@ -80,9 +85,10 @@ mat-divider {
 
 /* Main content */
 .content {
-  padding: 20px;
-  background: #d3d3d340;;
+//  padding: 20px;
+ // background: #d3d3d340;;
   min-height: 100vh;
+  padding: 10px;
 }
 
 span.mdc-button__label {

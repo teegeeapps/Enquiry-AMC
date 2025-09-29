@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api-service';
@@ -10,7 +11,8 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
   selector: 'app-task-view',
   standalone: false,
   templateUrl: './task-view.html',
-  styleUrl: './task-view.scss'
+  styleUrl: './task-view.scss',
+  providers: [DatePipe]
 })
 export class TaskViewComponent implements OnInit{
  assignForm!: FormGroup;
@@ -18,9 +20,11 @@ export class TaskViewComponent implements OnInit{
  taskId: string | null = null;
  submitted = false;
  assignment : any;
+ enqData: any;
+ isServicesec = false;
   isEditMode = false; // Set to true if updating
   constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService,
-     private snackBar: MatSnackBar, private dialog: MatDialog){
+     private snackBar: MatSnackBar, private dialog: MatDialog, private datePipe: DatePipe){
     const nav = this.router.getCurrentNavigation();
     const state = nav?.extras?.state as { enquiryId?: string, editMode?: boolean, taskId?: string };
     this.enquiryId = state?.enquiryId || null;
@@ -40,10 +44,23 @@ ngOnInit(): void {
   delivery_instructions: [''],
   customer_location: [''],
   visit_date: [''],
+  service_date: [''],
   assigned_for: [''],
   completed_status: [[], Validators.required], // multi-select
 });
-this.loadTask();
+
+this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
+      console.log('status', status);
+      const serviceDateControl = this.assignForm.get('service_date');
+      if (status == "Assign For Service") {
+        this.isServicesec = true;
+        serviceDateControl?.setValidators([Validators.required]);
+      } else {
+        this.isServicesec = false;
+        serviceDateControl?.clearValidators();
+      }
+      serviceDateControl?.updateValueAndValidity();})
+      this.loadTask();
   }
 
   loadTask(){
@@ -56,6 +73,7 @@ this.loadTask();
       next: (res: any) => {
         console.log('signle enquiry', res);
         let result = res.data.enquiry;
+        this.enqData = res.data.enquiry;
         this.assignment = res.data.assignments.find((a: any) => a.assignment_id == this.taskId);
         console.log('assignment', this.assignment);
         this.assignForm.patchValue({
@@ -108,8 +126,10 @@ this.loadTask();
     let completed_status: any;
     if(this.assignForm.value.completed_status == "Pending"){
       completed_status = 1;
-    } else {
+    } else if(this.assignForm.value.completed_status == "Completed") {
       completed_status = 2;
+    } else {
+      completed_status = 3;
     }
     let postjson = {
       "mode": "update",
@@ -127,6 +147,9 @@ this.loadTask();
 
       this.apiService.post('assign_technician.php', postjson).subscribe((res: any) => {
         console.log(res, "res");
+        if(this.assignForm.value.completed_status == "Assign For Service"){
+          this.createService();
+        }
         this.snackBar.open(res.message, 'Close', {
           duration: 3000,
           verticalPosition: 'top',
@@ -137,6 +160,26 @@ this.loadTask();
 
       // send to API or handle logic here
     } 
+
+    createService(){
+      const today = new Date();
+      let formattedDate = this.datePipe.transform(today, 'dd-MM-yyyy') || '';
+      let postjson = {
+        "mode": "INSERT",
+        "enquiry_id": this.enquiryId,
+        "assignment_id": this.assignment.assignment_id, 
+        "client_name": this.enqData.client_name,
+        "contact_person_name":  this.enqData.contact_person_name,
+        "contact_no1": this.enqData.contact_no1,
+        "service_status": "Pending",
+        "service_date": formattedDate,
+        "created_by": "admin"
+      }
+
+      this.apiService.post('service_list.php', postjson).subscribe((res: any) => {
+        console.log('create service', res);
+      });
+    }
 
   
 

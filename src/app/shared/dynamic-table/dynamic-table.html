@@ -66,14 +66,14 @@
             <mat-icon>person</mat-icon>
           </button>
 
-          <button *ngIf="showTechAssignAMC" mat-icon-button color="warn"
+          <button *ngIf="showTechAssignAMC && row.amc_status == 'Order Confirmed'" mat-icon-button color="warn"
             (click)="onAssignTech(row)">
             <mat-icon>person</mat-icon>
           </button>
 
-          <button *ngIf="showAmcButton && row.status_name === 'Order Delivered'" color="primary" (click)="onAmc(row)"  mat-icon-button color="blue">
+          <!-- <button *ngIf="showAmcButton && row.status_name === 'Order Delivered'" color="primary" (click)="onAmc(row)"  mat-icon-button color="blue">
             <mat-icon>settings</mat-icon>
-          </button>
+          </button> -->
         </mat-cell>
       </ng-container>
 
@@ -124,13 +124,13 @@
             (click)="onAssignTechnician(row)">
             <mat-icon>person</mat-icon>
           </button>
-          <button *ngIf="showTechAssignAMC" mat-icon-button color="warn"
+          <button *ngIf="showTechAssignAMC && row.amc_status == 'Order Confirmed'" mat-icon-button color="warn"
             (click)="onAssignTech(row)">
             <mat-icon>person</mat-icon>
           </button>
-          <button *ngIf="showAmcButton" mat-stroked-button color="primary" (click)="onAmc(row)">
+          <!-- <button *ngIf="showAmcButton" mat-stroked-button color="primary" (click)="onAmc(row)">
             <mat-icon>settings</mat-icon>
-          </button>
+          </button> -->
         </div>
       </mat-card-content>
     </mat-card>

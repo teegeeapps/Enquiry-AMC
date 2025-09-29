@@ -64,7 +64,7 @@
         <mat-form-field appearance="outline" *ngIf="isEditMode && enquiryStatusOptions?.length">
             <mat-label>Current Year AMC Status</mat-label>
             <mat-select formControlName="current_amc_status" required>
-              <mat-option *ngFor="let status of enquiryStatusOptions" [value]="status.id">
+              <mat-option *ngFor="let status of enquiryStatusOptions" [value]="status.status_name">
                 {{ status.status_name }}
               </mat-option>
             </mat-select>

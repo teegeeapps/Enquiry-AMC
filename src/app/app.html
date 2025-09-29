@@ -20,7 +20,7 @@
     <mat-icon>person</mat-icon> {{ username }}
   </span>
 
-  <button mat-button class="toolbar-logout" (click)="onSubmit()">
+  <button mat-icon-button class="toolbar-logout" (click)="onSubmit()">
     <mat-icon>logout</mat-icon> Logout
   </button>
 </mat-toolbar>
@@ -43,7 +43,12 @@
 
       <a mat-list-item routerLink="/amc-list" routerLinkActive="active-link">
         <mat-icon matListIcon>settings</mat-icon>
-        <span class="sidenav-span">AMC</span>
+        <span class="sidenav-span">Refilling Dashboard</span>
+      </a>
+
+      <a mat-list-item routerLink="/service-list" routerLinkActive="active-link">
+        <mat-icon matListIcon>settings</mat-icon>
+        <span class="sidenav-span">Service Dashboard</span>
       </a>
 
       <a mat-list-item routerLink="/task-list" routerLinkActive="active-link">
@@ -63,15 +68,17 @@
     <mat-divider></mat-divider>
 
     <!-- Logout -->
-    <a mat-list-item (click)="logout()">
+    <a mat-list-item (click)="onSubmit()">
       <mat-icon matListIcon>logout</mat-icon>
       <span class="sidenav-span">Log Out</span>
     </a>
   </mat-sidenav>
 
-  <mat-sidenav-content>
+  <!-- <mat-sidenav-content>
     <div class="content">
-      <router-outlet></router-outlet>
+      
     </div>
   </mat-sidenav-content>
-</mat-sidenav-container>
+</mat-sidenav-container> -->
+
+<router-outlet></router-outlet>

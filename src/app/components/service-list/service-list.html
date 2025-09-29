@@ -1,0 +1,16 @@
+<div class="enquiry-header">
+  <h2>📋 Service Dashboard</h2>
+</div>
+
+<app-dynamic-table *ngIf="serviceColumns.length"
+  [data]="serviceData" 
+  [columns]="serviceColumns" 
+  [enableFilter]="true" 
+  [enablePagination]="true"
+  [showEditButton]="true"
+  [showAssignTechnician]="true"
+  [showTechAssignAMC]="true"
+  (edit)="editService($event)"
+  (assignTech)="onAssignTech($event)"
+  >
+</app-dynamic-table>
