@@ -20,13 +20,12 @@ if (!isset($input['mode'])) {
 $mode = strtoupper($input['mode']);
 $ui_columns = [
     "client_name",
+    "contact_person_name",
     "contact_no1",
-    "employee_name",
-    "completed_status",
-    "technician_names",
-    "assignment_type",
-    "customer_location",
-    "assigned_at"
+    "requirement_category",
+    "delivered_date",
+    "service_date",
+    "service_status"
 ];
 
 switch ($mode) {
@@ -34,17 +33,15 @@ switch ($mode) {
     // ----------------- INSERT -----------------
     case "INSERT":
         $stmt = $conn->prepare("INSERT INTO service_list 
-            (enquiry_id, amc_id, client_name, contact_person_name, contact_no1, requirement_category, delivered_date, service_status, service_date, created_by) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            (enquiry_id, assignment_id, client_name, contact_person_name, contact_no1, service_status, service_date, created_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param(
-            "ssssssssss",
+            "ssssssss",
             $input['enquiry_id'],
             $input['amc_id'],
             $input['client_name'],
             $input['contact_person_name'],
             $input['contact_no1'],
-            $input['requirement_category'],
-            $input['delivered_date'],
             $input['service_status'],
             $input['service_date'],
             $input['created_by']
@@ -91,14 +88,14 @@ switch ($mode) {
         $sql = "SELECT * FROM service_list ORDER BY id DESC";
         $result = $conn->query($sql);
 
-        $data = [];
+        $data = array();
         while ($row = $result->fetch_assoc()) {
             $data[] = $row;
         }
           echo json_encode([
         "status" => "success",
         "columns" => $ui_columns,   // ✅ fixed UI schema
-        "data" => $rows
+        "data" => $data
     ]);
         break;
 
