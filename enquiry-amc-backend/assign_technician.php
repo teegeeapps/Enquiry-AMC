@@ -63,7 +63,7 @@ if ($mode === 'insert') {
         exit();
     }
 
-    $validTypes = ["ENQUIRY", "AMC", "SERVICE"];
+    $validTypes = ["ENQUIRY", "REFILLING", "SERVICE"];
     if (!in_array($assignment_type, $validTypes)) {
         echo json_encode(["status" => "error", "message" => "Invalid assignment_type"]);
         exit();
@@ -80,7 +80,7 @@ if ($mode === 'insert') {
     }
 
     // Restrict AMC/SERVICE unless delivered_date exists
-    if (in_array($assignment_type, ["AMC", "SERVICE"])) {
+    if (in_array($assignment_type, ["REFILLING", "SERVICE"])) {
         $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id=? LIMIT 1");
         $chk->bind_param("s", $enquiry_id);
         $chk->execute();
