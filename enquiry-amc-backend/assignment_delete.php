@@ -33,7 +33,7 @@ if ($result->num_rows === 0) {
 }
 
 // ✅ Delete the record
-$delete_sql = "DELETE FROM enquiry_assignment WHERE id = ?";
+$delete_sql = "DELETE FROM enquiry_assignments WHERE id = ?";
 $delete_stmt = $conn->prepare($delete_sql);
 $delete_stmt->bind_param("i", $assignment_id);
 
