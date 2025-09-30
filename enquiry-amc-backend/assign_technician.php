@@ -49,13 +49,18 @@ try {
 // INSERT assignment
 // ---------------------------
 if ($mode === 'insert') {
-    $enquiry_id            = trim($data['enquiry_id'] ?? '');
-    $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
-    $technicians           = $data['technicians'] ?? [];
+    $enquiry_id        = trim($data['enquiry_id'] ?? '');
+    $assignment_type   = strtoupper(trim($data['assignment_type'] ?? ''));
+    $technicians       = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
-    $customer_location     = trim($data['customer_location'] ?? '');
-    $visit_date            = trim($data['visit_date'] ?? '');
-    $assigned_by           = trim($data['assigned_by'] ?? 'admin');
+    $customer_location = trim($data['customer_location'] ?? '');
+    $visit_date        = trim($data['visit_date'] ?? '');
+    $assigned_by       = trim($data['assigned_by'] ?? 'admin');
+
+    // Task IDs passed from request
+    $enq_task_id       = $data['enq_task_id'] ?? null;
+    $amc_task_id       = $data['amc_task_id'] ?? null;
+    $service_task_id   = $data['service_task_id'] ?? null;
 
     // --- Validations ---
     if (!$enquiry_id) {
@@ -63,7 +68,7 @@ if ($mode === 'insert') {
         exit();
     }
 
-    $validTypes = ["ENQUIRY", "REFILLING", "SERVICE"];
+    $validTypes = ["ENQUIRY", "AMC", "SERVICE"];
     if (!in_array($assignment_type, $validTypes)) {
         echo json_encode(["status" => "error", "message" => "Invalid assignment_type"]);
         exit();
@@ -80,7 +85,7 @@ if ($mode === 'insert') {
     }
 
     // Restrict AMC/SERVICE unless delivered_date exists
-    if (in_array($assignment_type, ["REFILLING", "SERVICE"])) {
+    if (in_array($assignment_type, ["AMC", "SERVICE"])) {
         $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id=? LIMIT 1");
         $chk->bind_param("s", $enquiry_id);
         $chk->execute();
@@ -104,6 +109,32 @@ if ($mode === 'insert') {
         exit();
     }
 
+    // Generate task IDs depending on type
+    if ($assignment_type === "ENQUIRY") {
+        // Generate new ET id
+        $res = $conn->query("SELECT enq_task_id FROM enquiry_assignments WHERE enq_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
+        $last = $res->fetch_assoc();
+        $nextNum = $last ? (intval(substr($last['enq_task_id'], 2)) + 1) : 1;
+        $enq_task_id = "ET" . $nextNum;
+        $amc_task_id = null;
+        $service_task_id = null;
+    } elseif ($assignment_type === "AMC") {
+        // Generate new AMC id
+        $res = $conn->query("SELECT amc_task_id FROM enquiry_assignments WHERE amc_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
+        $last = $res->fetch_assoc();
+        $nextNum = $last ? (intval(substr($last['amc_task_id'], 3)) + 1) : 1;
+        $amc_task_id = "AMC" . $nextNum;
+        // Keep enq_task_id from request
+        $service_task_id = null;
+    } elseif ($assignment_type === "SERVICE") {
+        // Generate new ST id
+        $res = $conn->query("SELECT service_task_id FROM enquiry_assignments WHERE service_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
+        $last = $res->fetch_assoc();
+        $nextNum = $last ? (intval(substr($last['service_task_id'], 2)) + 1) : 1;
+        $service_task_id = "ST" . $nextNum;
+        // Keep enq_task_id & amc_task_id from request
+    }
+
     // Transaction start
     $conn->begin_transaction();
     try {
@@ -112,69 +143,42 @@ if ($mode === 'insert') {
         $delq->bind_param("ss", $enquiry_id, $assignment_type);
         $delq->execute();
 
-        // --- Generate next task_id ---
         // Insert new assignments
-$ins = $conn->prepare("
-    INSERT INTO enquiry_assignments (
-        enquiry_id, 
-        assignment_type, 
-        technician_employee_id, 
-        delivery_instructions, 
-        customer_location, 
-        assigned_by, 
-        assigned_at, 
-        is_active, 
-        updated_by, 
-        updated_at, 
-        completed_status,
-        enq_task_id,
-        amc_task_id,
-        service_task_id
-    ) 
-    VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW(), 1, ?, ?, ?)
-");
+        $ins = $conn->prepare("
+            INSERT INTO enquiry_assignments (
+                enquiry_id,
+                assignment_type,
+                technician_employee_id,
+                delivery_instructions,
+                customer_location,
+                assigned_by,
+                assigned_at,
+                is_active,
+                updated_by,
+                updated_at,
+                completed_status,
+                enq_task_id,
+                amc_task_id,
+                service_task_id
+            ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW(), 1, ?, ?, ?)
+        ");
 
-foreach ($technicians as $tech) {
-    $enq_task_id = null;
-    $amc_task_id = null;
-    $service_task_id = null;
-
-    if ($assignment_type === "ENQUIRY") {
-        $res = $conn->query("SELECT enq_task_id FROM enquiry_assignments WHERE enq_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
-        $last = $res->fetch_assoc();
-        $nextNum = $last ? (intval(substr($last['enq_task_id'], 2)) + 1) : 1;
-        $enq_task_id = "ET" . $nextNum;
-    } elseif ($assignment_type === "REFILLING") {
-        $res = $conn->query("SELECT amc_task_id FROM enquiry_assignments WHERE amc_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
-        $last = $res->fetch_assoc();
-        $nextNum = $last ? (intval(substr($last['amc_task_id'], 2)) + 1) : 1;
-        $amc_task_id = "AT" . $nextNum;
-    } elseif ($assignment_type === "SERVICE") {
-        $res = $conn->query("SELECT service_task_id FROM enquiry_assignments WHERE service_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
-        $last = $res->fetch_assoc();
-        $nextNum = $last ? (intval(substr($last['service_task_id'], 2)) + 1) : 1;
-        $service_task_id = "ST" . $nextNum;
-    }
-
-    $ins->bind_param(
-        "sssssssssss",
-        $enquiry_id,
-        $assignment_type,
-        $tech,
-        $delivery_instructions,
-        $customer_location,
-        $assigned_by,
-        $assigned_by,
-        $enq_task_id,
-        $amc_task_id,
-        $service_task_id,
-        // completed_status hardcoded = 1 in VALUES
-        // so no extra bind needed here
-    );
-
-    $ins->execute();
-}
-
+        foreach ($technicians as $tech) {
+            $ins->bind_param(
+                "ssssssssss", // 10 params
+                $enquiry_id,
+                $assignment_type,
+                $tech,
+                $delivery_instructions,
+                $customer_location,
+                $assigned_by,
+                $assigned_by,   // updated_by
+                $enq_task_id,
+                $amc_task_id,
+                $service_task_id
+            );
+            $ins->execute();
+        }
 
         // Log visit history if provided
         if ($visit_date) {
@@ -184,13 +188,7 @@ foreach ($technicians as $tech) {
         }
 
         $conn->commit();
-        echo json_encode([
-            "status" => "success", 
-            "message" => "Assignments inserted",
-            "enq_task_id" => $enq_task_id,
-            "amc_task_id" => $amc_task_id,
-            "service_task_id" => $service_task_id
-        ]);
+        echo json_encode(["status" => "success", "message" => "Assignments inserted", "enq_task_id" => $enq_task_id, "amc_task_id" => $amc_task_id, "service_task_id" => $service_task_id]);
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Insert failed: ".$e->getMessage()]);
