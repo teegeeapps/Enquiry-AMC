@@ -236,6 +236,9 @@ if ($mode === 'fetch_detail') {
     $sql = "SELECT 
                 ea.id AS assignment_id,
                 ea.enquiry_id,
+		ea.enq_task_id,
+	    	ea.amc_task_id,
+	    	ea.service_task_id,
                 ea.assignment_type,
                 ea.technician_employee_id,
                 t.employee_name AS technician_name,
@@ -271,6 +274,9 @@ if ($mode === 'fetch_admin') {
         SELECT 
             ea.id AS assignment_id,
             ea.enquiry_id,
+	    ea.enq_task_id,
+	    ea.amc_task_id,
+	    ea.service_task_id,
             ea.assignment_type,
             ea.delivery_instructions,
             ea.customer_location,
@@ -322,6 +328,9 @@ if ($mode === 'fetch_admin') {
             "assignment_id"        => $row['assignment_id'],
             "enquiry_id"           => $row['enquiry_id'],
             "assignment_type"      => $row['assignment_type'],
+	"enq_task_id"      => $row['enq_task_id'],
+	"amc_task_id"      => $row['amc_task_id'],
+	"service_task_id"      => $row['service_task_id'],
             "client_name"          => $row['client_name'],
             "contact_no1"          => $row['contact_no1'],
             "delivery_instructions"=> $row['delivery_instructions'],
@@ -372,6 +381,9 @@ if ($mode === 'fetch_by_technician') {
             SELECT 1 FROM enquiry_assignments x
             WHERE x.enquiry_id = ea.enquiry_id
               AND x.assignment_type = ea.assignment_type
+AND x.enq_task_id = ea.enq_task_id
+AND x.amc_task_id = ea.amc_task_id
+AND x.service_task_id = ea.service_task_id
               AND x.technician_employee_id = ?
         )
         ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
@@ -390,6 +402,10 @@ if ($mode === 'fetch_by_technician') {
                 "assignment_id"        => $row['id'], // primary key
                 "enquiry_id"           => $row['enquiry_id'],
                 "assignment_type"      => $row['assignment_type'],
+		"enq_task_id"      => $row['enq_task_id'],
+		"amc_task_id"      => $row['amc_task_id'],
+		"service_task_id"      => $row['service_task_id'],
+
                 "client_name"          => $row['client_name'],
                 "contact_no1"          => $row['contact_no1'],
                 "delivery_instructions"=> $row['delivery_instructions'],
@@ -464,6 +480,10 @@ if ($mode === 'fetch_by_technician') {
         while ($row = $ar->fetch_assoc()) {
             $assignments[] = [
 		"assignment_id"        => $row['id'],
+		"enq_task_id"      => $row['enq_task_id'],
+		"amc_task_id"      => $row['amc_task_id'],
+		"service_task_id"      => $row['service_task_id'],
+
                 "employee_number"       => $row['technician_employee_id'],
                 "employee_name"         => $row['employee_name'],
                 "completed_status"      => $row['completed_status'],
