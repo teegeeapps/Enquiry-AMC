@@ -112,10 +112,51 @@ if ($mode === 'insert') {
         $delq->bind_param("ss", $enquiry_id, $assignment_type);
         $delq->execute();
 
+        // --- Generate next task_id ---
+        $enq_task_id = null;
+        $amc_task_id = null;
+        $service_task_id = null;
+
+        if ($assignment_type === "ENQUIRY") {
+            $res = $conn->query("SELECT MAX(CAST(SUBSTRING(enq_task_id,3) AS UNSIGNED)) AS maxid FROM enquiry_assignments WHERE enq_task_id IS NOT NULL");
+            $row = $res->fetch_assoc();
+            $next = intval($row['maxid'] ?? 0) + 1;
+            $enq_task_id = "ET".$next;
+        }
+        elseif ($assignment_type === "REFILLING") {
+            $res = $conn->query("SELECT MAX(CAST(SUBSTRING(amc_task_id,3) AS UNSIGNED)) AS maxid FROM enquiry_assignments WHERE amc_task_id IS NOT NULL");
+            $row = $res->fetch_assoc();
+            $next = intval($row['maxid'] ?? 0) + 1;
+            $amc_task_id = "AT".$next;
+        }
+        elseif ($assignment_type === "SERVICE") {
+            $res = $conn->query("SELECT MAX(CAST(SUBSTRING(service_task_id,3) AS UNSIGNED)) AS maxid FROM enquiry_assignments WHERE service_task_id IS NOT NULL");
+            $row = $res->fetch_assoc();
+            $next = intval($row['maxid'] ?? 0) + 1;
+            $service_task_id = "ST".$next;
+        }
+
         // Insert new assignments
-        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at, completed_status) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW(),1)");
+        $ins = $conn->prepare("
+            INSERT INTO enquiry_assignments 
+            (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at, completed_status, enq_task_id, amc_task_id, service_task_id) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW(), 1, ?, ?, ?)
+        ");
+
         foreach ($technicians as $tech) {
-            $ins->bind_param("sssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $assigned_by, $assigned_by);
+            $ins->bind_param(
+                "sssssssssss",
+                $enquiry_id,
+                $assignment_type,
+                $tech,
+                $delivery_instructions,
+                $customer_location,
+                $assigned_by,
+                $assigned_by,
+                $enq_task_id,
+                $amc_task_id,
+                $service_task_id
+            );
             $ins->execute();
         }
 
@@ -127,7 +168,13 @@ if ($mode === 'insert') {
         }
 
         $conn->commit();
-        echo json_encode(["status" => "success", "message" => "Assignments inserted"]);
+        echo json_encode([
+            "status" => "success", 
+            "message" => "Assignments inserted",
+            "enq_task_id" => $enq_task_id,
+            "amc_task_id" => $amc_task_id,
+            "service_task_id" => $service_task_id
+        ]);
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Insert failed: ".$e->getMessage()]);
@@ -381,9 +428,6 @@ if ($mode === 'fetch_by_technician') {
             SELECT 1 FROM enquiry_assignments x
             WHERE x.enquiry_id = ea.enquiry_id
               AND x.assignment_type = ea.assignment_type
-AND x.enq_task_id = ea.enq_task_id
-AND x.amc_task_id = ea.amc_task_id
-AND x.service_task_id = ea.service_task_id
               AND x.technician_employee_id = ?
         )
         ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
