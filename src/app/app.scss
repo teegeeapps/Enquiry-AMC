@@ -3,6 +3,10 @@
   height: 100vh;
 }
 
+html {
+  overflow-x: hidden!important;
+}
+
 .mat-drawer-container{
   overflow: hidden!important;
 }

@@ -18,6 +18,7 @@ import { HttpClient } from '@angular/common/http';
 export class AmcUpdateComponent implements OnInit {
   amcForm!: FormGroup;
   submitted = false;
+  singleAmc: any;
    enquiryStatusOptions: any;
   enquiryId: string | null = null;
   isEditMode = false; // Set to true if updating
@@ -64,6 +65,7 @@ export class AmcUpdateComponent implements OnInit {
       next: (res: any) => {
         console.log('signle amc', res);
         let result = res.data;
+        this.singleAmc = res.data;
         this.amcForm.patchValue({
           client_name: result.client_name,
           contact_person: result.contact_person_name,
@@ -159,6 +161,9 @@ export class AmcUpdateComponent implements OnInit {
       this.apiService.post('amc_update.php', postjson).subscribe({
         next: (res: any) => {
           console.log('amc submit res', res);
+          if(this.amcForm.value.current_amc_status == "Order Delivered"){
+            this.createAMC();
+          }
           this.snackBar.open(res.message, 'Close', {
             duration: 3000,
             verticalPosition: 'top',
@@ -177,18 +182,33 @@ export class AmcUpdateComponent implements OnInit {
       "client_name": this.amcForm.value.client_name,
       "contact_person_name": this.amcForm.value.contact_person,
       "contact_no1": this.amcForm.value.contact_number,
-      "requirement_category": this.amcForm.value.requirement_category,
+      "requirement_category": this.singleAmc.requirement_category,
       "delivered_date": this.amcForm.value.delivered_date,
-      "amc_date": this.amcForm.value.amc_date,
+      "amc_date": this.getFutureDate(this.amcForm.value.no_of_years),
       "amc_period": this.amcForm.value.no_of_years,
-      "enquiry_status_id": parseInt(this.amcForm.value.enquiry_status),
-      "amc_status": "Active",
+      "amc_status": "Refilling Order Received",
       "user": "Admin"
     }
+
+    console.log('amc submit', amcpost);
 
     this.apiService.post('amc_submit.php', amcpost).subscribe((res: any) => {
             console.log('amc_submit.', res);
      });
   }
+
+
+  getFutureDate(yearsToAdd: number): string {
+  const today = new Date();
+  const futureDate = new Date(today.setFullYear(today.getFullYear() + yearsToAdd));
+
+  // Format as dd-MM-yyyy
+  const formatted = `${futureDate.getDate().toString().padStart(2, '0')}-${(futureDate.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}-${futureDate.getFullYear()}`;
+
+  return formatted;
+}
+
 
 }

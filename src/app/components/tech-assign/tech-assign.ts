@@ -60,14 +60,14 @@ export class TechAssignComponent {
         console.log('this.enquiry', this.enquiry);
          console.log('this.assignment', this.assignment);
         if(res.data.assignments!== undefined && res.data.assignments.length > 0){
-           this.assignment = res.data.assignments[0];
+           this.assignment = res.data.assignments.filter((a: any) => a.ass_type == this.assignType)[0];
         console.log('this.assignment', this.assignment);
         this.visit_history = res.data.visit_history;
         if(this.assignment!== " " && this.assignment!== null){
         this.assignForm.patchValue({
             delivery_instructions: this.assignment.delivery_instructions,
             customer_location: this.assignment.customer_location,
-            assigned_to: res.data.assignments.map((a: any) => a.employee_number),
+            assigned_to: res.data.assignments.filter((a: any) => a.ass_type == this.assignType).map((a: any) => a.employee_number),
             assigned_for: this.assignment.ass_type,
             visit_date: this.visit_history[0].visit_date
          });

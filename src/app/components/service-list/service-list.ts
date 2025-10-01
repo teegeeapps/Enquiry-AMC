@@ -42,7 +42,7 @@ export class ServiceListComponent {
      this.router.navigate(['/service-update'], { state: { service_Id: row.id, amc_id: row.amc_id } });
   }
 
-   onAssignTech(service: any) {
+   onAssignService_Tech(service: any) {
     console.log('service', service);
     this.router.navigate(['/tech-assign'], { state: { enquiryId: service.enquiry_id, assignType: "SERVICE" } });
   }

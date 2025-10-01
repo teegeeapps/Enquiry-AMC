@@ -232,8 +232,7 @@ export class CreateEnquiryComponent implements OnInit {
       "delivered_date": this.enquiryForm.value.delivered_date,
       "amc_date": this.enquiryForm.value.amc_date,
       "amc_period": this.enquiryForm.value.no_of_years,
-      "enquiry_status_id": parseInt(this.enquiryForm.value.enquiry_status),
-      "amc_status": "Active",
+      "amc_status": "Refilling Order Received",
       "user": "Admin"
     }
     console.log("DD", this.enquiryForm.value.delivered_date);

@@ -52,7 +52,7 @@
             <mat-icon>edit</mat-icon>
           </button>
 
-          <button *ngIf="showDeleteButton" mat-icon-button color="accent" (click)="onDelete(row)">
+          <button *ngIf="showDeleteButton && userRole == 'Admin'" mat-icon-button color="accent" (click)="onDelete(row)">
             <mat-icon>delete</mat-icon>
           </button>
 
@@ -68,6 +68,11 @@
 
           <button *ngIf="showTechAssignAMC && row.amc_status == 'Order Confirmed'" mat-icon-button color="warn"
             (click)="onAssignTech(row)">
+            <mat-icon>person</mat-icon>
+          </button>
+
+          <button *ngIf="showTechAssignService" mat-icon-button color="warn"
+            (click)="onAssignService_Tech(row)">
             <mat-icon>person</mat-icon>
           </button>
 
@@ -118,6 +123,9 @@
           <!--   <button *ngIf="showAssignTechnician" mat-icon-button color="warn" (click)="onAssignTechnician(row)">
             <mat-icon>person</mat-icon>
           </button> -->
+          <button *ngIf="showDeleteButton && userRole == 'Admin'" mat-icon-button color="accent" (click)="onDelete(row)">
+            <mat-icon>delete</mat-icon>
+          </button>
 
           <!-- Assign Technician only if status_name = Order Confirmed -->
           <button *ngIf="showAssignTechnician && (row.status_name === 'Order Confirmed' || row.status_name === 'Order Delivered')" mat-icon-button color="warn"
@@ -126,6 +134,10 @@
           </button>
           <button *ngIf="showTechAssignAMC && row.amc_status == 'Order Confirmed'" mat-icon-button color="warn"
             (click)="onAssignTech(row)">
+            <mat-icon>person</mat-icon>
+          </button>
+          <button *ngIf="showTechAssignService" mat-icon-button color="warn"
+            (click)="onAssignService_Tech(row)">
             <mat-icon>person</mat-icon>
           </button>
           <!-- <button *ngIf="showAmcButton" mat-stroked-button color="primary" (click)="onAmc(row)">

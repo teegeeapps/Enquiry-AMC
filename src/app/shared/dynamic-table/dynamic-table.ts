@@ -3,6 +3,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { UserService } from '../../services/user-service/user-service';
 
 @Component({
   selector: 'app-dynamic-table',
@@ -19,6 +20,7 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Input() enablePagination: boolean = true;
   @Input() showAssignTechnician: boolean = false;
   @Input() showTechAssignAMC: boolean = false;
+  @Input() showTechAssignService: boolean = false;
   @Input() showAmcButton: boolean = false; // ✅ default hidden
   @Input() showViewButton: boolean = false;
   @Input() showEditButton: boolean = false;
@@ -28,6 +30,7 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Output() delete = new EventEmitter<any>();
   @Output() assignTechnician = new EventEmitter<any>();
   @Output() assignTech = new EventEmitter<any>();
+  @Output() assignServiceTech = new EventEmitter<any>();
   @Output() amc = new EventEmitter<any>(); // ✅ emits when AMC button clicked
   @Output() completedSave = new EventEmitter<{ row: any, value: string }>();
   dataSource = new MatTableDataSource<any>();
@@ -36,14 +39,18 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
   @ViewChild(MatSort) sort!: MatSort;
   // Store selected completion per row
   selectedCompletion: { [key: string]: string } = {};
+  userRole: any;
 
-  constructor(private breakpointObserver: BreakpointObserver) { }
+  constructor(private breakpointObserver: BreakpointObserver, private userService: UserService) { }
 
   ngOnInit(): void {
     console.log('Data source:', this.data);
     this.dataSource.data = this.data; // ✅ Initial setup
     //   console.log('Data source length:', this.dataSource.data.length);
     console.log('this.column:', this.columns);
+     this.userService.userRole$.subscribe(role => {
+      this.userRole = role;
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -108,6 +115,10 @@ export class DynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
 
   onAssignTech(row: any) {
     this.assignTech.emit(row);
+  }
+
+  onAssignService_Tech(row: any){
+    this.assignServiceTech.emit(row);
   }
 
   get columnCount(): number {
