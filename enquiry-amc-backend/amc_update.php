@@ -10,7 +10,7 @@ $input = json_decode(file_get_contents("php://input"), true);
 /*
 Sample JSON to send:
 {
-    "enquiry_id": "EQ005",
+    "amc_id": "AMC1",
     "client_name": "XYZ Ltd",
     "contact_person_name": "Suresh",
     "contact_no1": "9876501234",
@@ -25,7 +25,7 @@ Sample JSON to send:
 */
 
 // Mandatory fields
-$enquiry_id          = $input['enquiry_id'] ?? null;
+$amc_id          = $input['amc_id'] ?? null;
 $client_name         = $input['client_name'] ?? null;
 $contact_person_name = $input['contact_person_name'] ?? null;
 $contact_no1         = $input['contact_no1'] ?? null;
@@ -38,8 +38,8 @@ $followup_notes      = $input['followup_notes'] ?? null;
 $user                = $input['user'] ?? null;
 
 // Check if AMC exists
-$checkStmt = $conn->prepare("SELECT id FROM amc_list WHERE enquiry_id = ?");
-$checkStmt->bind_param("s", $enquiry_id);
+$checkStmt = $conn->prepare("SELECT id FROM amc_list WHERE amc_id = ?");
+$checkStmt->bind_param("s", $amc_id);
 $checkStmt->execute();
 $result = $checkStmt->get_result();
 
