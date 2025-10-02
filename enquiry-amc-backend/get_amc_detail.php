@@ -7,10 +7,10 @@ require 'db.php';
 
 // Read enquiry_id from request (JSON body or GET param)
 $input = json_decode(file_get_contents("php://input"), true);
-$enquiry_id = $input['enquiry_id'] ?? ($_GET['enquiry_id'] ?? null);
+$enquiry_id = $input['amc_id'] ?? ($_GET['amc_id'] ?? null);
 
 if (!$enquiry_id) {
-    echo json_encode(["status" => "error", "message" => "enquiry_id is required"]);
+    echo json_encode(["status" => "error", "message" => "amc_id is required"]);
     exit();
 }
 
@@ -18,7 +18,7 @@ if (!$enquiry_id) {
 $sql = "SELECT enquiry_id,amc_id, client_name, contact_person_name, contact_no1, 
                delivered_date, amc_status, amc_date, amc_period, requirement_category 
         FROM amc_list 
-        WHERE enquiry_id = ?";
+        WHERE amc_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $enquiry_id);
 $stmt->execute();

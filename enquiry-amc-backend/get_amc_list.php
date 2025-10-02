@@ -22,6 +22,7 @@ if (!$enquiry_id) {
 $stmt = $conn->prepare("
     SELECT 
         enquiry_id,
+amc_id,
         client_name,
         contact_person_name,
         contact_no1,
