@@ -22,8 +22,6 @@ $ui_columns = [
     "client_name",
     "contact_person_name",
     "contact_no1",
-    "requirement_category",
-    "delivered_date",
     "service_date",
     "service_status"
 ];
@@ -46,6 +44,7 @@ switch ($mode) {
             $input['service_date'],
             $input['created_by']
         );
+
         if ($stmt->execute()) {
             echo json_encode(["status" => "success", "message" => "Service inserted successfully", "id" => $stmt->insert_id]);
         } else {

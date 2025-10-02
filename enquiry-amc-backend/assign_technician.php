@@ -126,7 +126,7 @@ if ($mode === 'insert') {
                 delivery_instructions,
                 customer_location,
                 assigned_by,
-                assigned_at,
+                assigned_on
                 is_active,
                 updated_by,
                 updated_at,
@@ -272,7 +272,7 @@ $assignment_id            = $data['id'] ?? null;
                 $ins = $conn->prepare("
                     INSERT INTO enquiry_assignments 
                     (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, 
-                     completed_status, completed_at, assigned_by, assigned_at, is_active, updated_by, updated_at) 
+                     completed_status, completed_at, assigned_by, assigned_on, is_active, updated_by, updated_at) 
                     VALUES (?, ?, ?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
                 ");
                 $ins->bind_param("ssssisss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, 
@@ -319,7 +319,7 @@ if ($mode === 'fetch_detail') {
                 ea.assigned_by,
                 ea.delivery_instructions,
                 ea.customer_location,
-                DATE_FORMAT(ea.assigned_at, '%d-%m-%Y') AS assigned_at,
+                DATE_FORMAT(ea.assigned_on, '%d-%m-%Y') AS assigned_on,
                 ea.completed_status,
                 DATE_FORMAT(ea.completed_at, '%d-%m-%Y') AS completed_at,
                 ea.remarks,
@@ -355,7 +355,7 @@ if ($mode === 'fetch_admin') {
             ea.delivery_instructions,
             ea.customer_location,
             ea.assigned_by,
-            ea.assigned_at,
+            ea.assigned_on,
             ea.created_at,
             ea.updated_at,
             ea.technician_employee_id,
@@ -367,7 +367,7 @@ if ($mode === 'fetch_admin') {
         FROM enquiry_assignments ea
         LEFT JOIN enquiries q ON q.enquiry_id = ea.enquiry_id
         LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type, emp.employee_name
+        ORDER BY ea.assigned_on DESC, ea.enquiry_id, ea.assignment_type, emp.employee_name
     ";
 
     $res = $conn->query($sql);
@@ -410,7 +410,7 @@ if ($mode === 'fetch_admin') {
             "delivery_instructions"=> $row['delivery_instructions'],
             "customer_location"    => $row['customer_location'],
             "assigned_by"          => $row['assigned_by'],
-            "assigned_at"          => fmt_date($row['assigned_at']),
+            "assigned_on"          => fmt_date($row['assigned_on']),
             "created_at"           => fmt_date($row['created_at']),
             "updated_at"           => fmt_date($row['updated_at']),
             "employee_number"      => $row['technician_employee_id'],
@@ -432,7 +432,7 @@ if ($mode === 'fetch_admin') {
         "technician_names",
         "assignment_type",
         "customer_location",
-        "assigned_at"
+        "assigned_on"
     ];
     $response['data'] = $final;
     echo json_encode($response);
@@ -457,7 +457,7 @@ if ($mode === 'fetch_by_technician') {
               AND x.assignment_type = ea.assignment_type
               AND x.technician_employee_id = ?
         )
-        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
+        ORDER BY ea.assigned_on DESC, ea.enquiry_id, ea.assignment_type
     ";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $my_emp_no);
@@ -482,7 +482,7 @@ if ($mode === 'fetch_by_technician') {
                 "delivery_instructions"=> $row['delivery_instructions'],
                 "customer_location"    => $row['customer_location'],
                 "assigned_by"          => $row['assigned_by'],
-                "assigned_at"          => fmt_date($row['assigned_at']),
+                "assigned_on"          => fmt_date($row['assigned_on']),
                 "created_at"           => fmt_date($row['created_at']),
                 "updated_at"           => fmt_date($row['updated_at']),
                 "completed_status"     => (string)$row['completed_status'],
@@ -513,7 +513,7 @@ if ($mode === 'fetch_by_technician') {
         "completed_status",
         "assignment_type",
         "customer_location",
-        "assigned_at"
+        "assigned_on"
     ];
     $response['data'] = array_values($grouped);
     echo json_encode($response);
@@ -540,7 +540,7 @@ if ($mode === 'fetch_by_technician') {
             FROM enquiry_assignments ea
             LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
             WHERE ea.enquiry_id = ?
-            ORDER BY ea.assignment_type, ea.assigned_at DESC
+            ORDER BY ea.assignment_type, ea.assigned_on DESC
         ";
         $a = $conn->prepare($asql);
         $a->bind_param("s", $enquiry_id);
@@ -562,7 +562,7 @@ if ($mode === 'fetch_by_technician') {
                 "delivery_instructions" => $row['delivery_instructions'],
                 "customer_location"     => $row['customer_location'],
                 "assigned_by"           => $row['assigned_by'],
-                "assigned_at"           => fmt_date($row['assigned_at']),
+                "assigned_on"           => fmt_date($row['assigned_on']),
                 "created_at"            => fmt_date($row['created_at']),
                 "updated_at"            => fmt_date($row['updated_at']),
                 "ass_type"              => $row['assignment_type']
@@ -618,7 +618,7 @@ if ($mode === "task_details") {
     // format datetime fields if they exist
     $task['created_at']   = isset($task['created_at'])   ? fmt_date($task['created_at'])   : null;
     $task['updated_at']   = isset($task['updated_at'])   ? fmt_date($task['updated_at'])   : null;
-    $task['assigned_at']  = isset($task['assigned_at'])  ? fmt_date($task['assigned_at'])  : null;
+    $task['assigned_on']  = isset($task['assigned_on'])  ? fmt_date($task['assigned_on'])  : null;
     $task['completed_at'] = isset($task['completed_at']) ? fmt_date($task['completed_at']) : null;
 
     $response['status']  = "success";
