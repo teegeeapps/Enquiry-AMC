@@ -22,7 +22,7 @@ $columns = array(
 
 // Default params
 $mode = "all";
-$enquiry_id = null;
+$amc_id = null;
 
 // Read input
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -30,21 +30,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($input['mode'])) {
         $mode = strtolower(trim($input['mode']));
     }
-    if (isset($input['enquiry_id'])) {
-        $enquiry_id = $conn->real_escape_string($input['enquiry_id']);
+    if (isset($input['amc_id'])) {
+        $amc_id = $conn->real_escape_string($input['amc_id']);
     }
 } else {
     if (isset($_GET['mode'])) {
         $mode = strtolower(trim($_GET['mode']));
     }
-    if (isset($_GET['enquiry_id'])) {
-        $enquiry_id = $conn->real_escape_string($_GET['enquiry_id']);
+    if (isset($_GET['amc_id'])) {
+        $amc_id = $conn->real_escape_string($_GET['amc_id']);
     }
 }
 
 // Base query
 $sql = "SELECT 
             enquiry_id,
+		amc_id,
             client_name,
             contact_person_name,
             contact_no1 AS contact_no_1,
@@ -56,8 +57,8 @@ $sql = "SELECT
         FROM amc_list";
 
 // Apply mode
-if ($mode === "single" && $enquiry_id) {
-    $sql .= " WHERE enquiry_id = '$enquiry_id'";
+if ($mode === "single" && $amc_id) {
+    $sql .= " WHERE amc_id = '$amc_id'";
 }
 
 $result = $conn->query($sql);
