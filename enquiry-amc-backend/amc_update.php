@@ -56,7 +56,7 @@ if ($result->num_rows > 0) {
             amc_period = ?,
             modified_by = ?, 
             modified_at = NOW()
-        WHERE enquiry_id = ?
+        WHERE amc_id = ?
     ");
     $updateStmt->bind_param(
         "sssssssss",

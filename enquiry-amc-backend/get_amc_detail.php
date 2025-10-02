@@ -15,7 +15,7 @@ if (!$enquiry_id) {
 }
 
 // ✅ Fetch AMC Details
-$sql = "SELECT enquiry_id, client_name, contact_person_name, contact_no1, 
+$sql = "SELECT enquiry_id,amc_id, client_name, contact_person_name, contact_no1, 
                delivered_date, amc_status, amc_date, amc_period, requirement_category 
         FROM amc_list 
         WHERE enquiry_id = ?";
