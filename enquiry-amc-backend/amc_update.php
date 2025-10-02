@@ -10,7 +10,8 @@ $input = json_decode(file_get_contents("php://input"), true);
 /*
 Sample JSON to send:
 {
-    "amc_id": "AMC1",
+    "enquiry_id": "EQ005",
+	"amc_id": "AMC1",
     "client_name": "XYZ Ltd",
     "contact_person_name": "Suresh",
     "contact_no1": "9876501234",
@@ -25,6 +26,7 @@ Sample JSON to send:
 */
 
 // Mandatory fields
+$enquiry_id          = $input['enquiry_id'] ?? null;
 $amc_id          = $input['amc_id'] ?? null;
 $client_name         = $input['client_name'] ?? null;
 $contact_person_name = $input['contact_person_name'] ?? null;
@@ -68,7 +70,7 @@ if ($result->num_rows > 0) {
         $amc_date,
         $amc_period,
         $user,
-        $enquiry_id
+        $amc_id
     );
 
     $success = $updateStmt->execute();
