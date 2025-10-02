@@ -233,7 +233,7 @@ $assignment_id            = $data['id'] ?? null;
             $placeholders = implode(",", array_fill(0, count($technicians), "?"));
             $del = $conn->prepare("
                 DELETE FROM enquiry_assignments 
-                WHERE assignment_id=? AND assignment_type=? 
+                WHERE id=? AND assignment_type=? 
                 AND completed_status IS NULL
                 AND technician_employee_id NOT IN ($placeholders)
             ");
@@ -485,7 +485,7 @@ if ($mode === 'fetch_by_technician') {
                 "assigned_at"          => fmt_date($row['assigned_at']),
                 "created_at"           => fmt_date($row['created_at']),
                 "updated_at"           => fmt_date($row['updated_at']),
-                "my_status"            => "Pending", // default text
+                "completed_status"     => (string)$row['completed_status'],
                 "technicians"          => []
             ];
         }
@@ -498,9 +498,9 @@ if ($mode === 'fetch_by_technician') {
         ];
 
         // ✅ Set my_status as text instead of int
-        if ((string)$row['technician_employee_id'] === (string)$my_emp_no) {
-            $grouped[$key]['my_status'] = $row['completed_status'];
-        }
+      //  if ((string)$row['technician_employee_id'] === (string)$my_emp_no) {
+        //    $grouped[$key]['my_status'] = $row['completed_status'];
+        //}
 
         $grouped[$key]['technicians'][] = $tech;
     }
@@ -510,7 +510,7 @@ if ($mode === 'fetch_by_technician') {
     $response['columns'] = [
         "client_name",
         "contact_no1",
-        "my_status",
+        "completed_status",
         "assignment_type",
         "customer_location",
         "assigned_at"

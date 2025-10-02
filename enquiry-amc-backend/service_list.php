@@ -38,7 +38,7 @@ switch ($mode) {
         $stmt->bind_param(
             "ssssssss",
             $input['enquiry_id'],
-            $input['amc_id'],
+            $input['assignment_id'],
             $input['client_name'],
             $input['contact_person_name'],
             $input['contact_no1'],
