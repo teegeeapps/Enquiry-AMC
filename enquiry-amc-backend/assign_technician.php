@@ -209,11 +209,9 @@ if ($mode === 'insert') {
     exit();
 }
 // ---------------------------
-// UPDATE ASSIGNMENTS (with technician status by id)
-// ---------------------------
 if ($mode === 'update') {
-    $assignment_id         = $data['id'] ?? null;   // <-- take id from request
-    $technician_status     = $data['technician_status'] ?? null; // e.g. 1 or 0
+    $assignment_id         = $data['id'] ?? null;   // <-- unique assignment row id
+    $technician_status     = $data['technician_status'] ?? null; 
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
     $customer_location     = trim($data['customer_location'] ?? '');
     $visit_date            = trim($data['visit_date'] ?? '');
@@ -225,7 +223,25 @@ if ($mode === 'update') {
 
     $conn->begin_transaction();
     try {
-        // Update directly by id
+        // 🔹 Step 1: Get enquiry_id & assignment_type from assignment row
+        $sel = $conn->prepare("
+            SELECT enquiry_id, assignment_type 
+            FROM enquiry_assignments 
+            WHERE id=? LIMIT 1
+        ");
+        $sel->bind_param("i", $assignment_id);
+        $sel->execute();
+        $res = $sel->get_result();
+        $row = $res->fetch_assoc();
+
+        if (!$row) {
+            throw new Exception("Assignment not found");
+        }
+
+        $enquiry_id      = $row['enquiry_id'];
+        $assignment_type = $row['assignment_type'];
+
+        // 🔹 Step 2: Update the assignment
         $upd = $conn->prepare("
             UPDATE enquiry_assignments 
             SET delivery_instructions=?, 
@@ -236,28 +252,30 @@ if ($mode === 'update') {
                 updated_at=NOW()
             WHERE id=?
         ");
-        $upd->bind_param("ssisi", 
-            $delivery_instructions, 
-            $customer_location, 
-            $technician_status, 
-            $technician_status, 
+        $upd->bind_param(
+            "ssisi",
+            $delivery_instructions,
+            $customer_location,
+            $technician_status,
+            $technician_status,
             $assignment_id
         );
         $upd->execute();
 
-        // Log visit history if visit_date provided
+        // 🔹 Step 3: Insert visit history with enquiry_id
         if ($visit_date) {
             $vh = $conn->prepare("
-                INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) 
-                SELECT enquiry_id, assignment_type, ?, NOW() 
-                FROM enquiry_assignments WHERE id=?
+                INSERT INTO enquiry_visit_history 
+                (enquiry_id, added_by, visit_date, created_at) 
+                VALUES (?, ?, ?, NOW())
             ");
-            $vh->bind_param("si", $visit_date, $assignment_id);
+            $vh->bind_param("sss", $enquiry_id, 'admin', $visit_date);
             $vh->execute();
         }
 
         $conn->commit();
-        echo json_encode(["status" => "success", "message" => "Assignment updated"]);
+        echo json_encode(["status" => "success", "message" => "Assignment updated successfully"]);
+
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Update failed", "error" => $e->getMessage()]);
