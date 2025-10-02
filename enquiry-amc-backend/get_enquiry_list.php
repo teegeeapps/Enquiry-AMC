@@ -30,7 +30,7 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
                 emp.employee_name,
                 etm.completed_status,
                 etm.assigned_by,
-                etm.assigned_at,
+                etm.assigned_on,
                 etm.completed_at
             FROM enquiry_assignments etm
             INNER JOIN employees emp 
@@ -43,7 +43,7 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
 
     $techs = [];
     while ($row = $result->fetch_assoc()) {
-        $row['assigned_at']  = fmt_date($row['assigned_at']);
+        $row['assigned_on']  = fmt_date($row['assigned_on']);
         $row['completed_at'] = fmt_date($row['completed_at']);
         $techs[] = $row;
     }
