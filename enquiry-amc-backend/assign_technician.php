@@ -209,89 +209,55 @@ if ($mode === 'insert') {
     exit();
 }
 // ---------------------------
-// UPDATE ASSIGNMENTS (with technician status)
+// UPDATE ASSIGNMENTS (with technician status by id)
 // ---------------------------
 if ($mode === 'update') {
-    $enquiry_id            = $data['enquiry_id'] ?? null;
-    $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
-    $technicians           = $data['technicians'] ?? [];
+    $assignment_id         = $data['id'] ?? null;   // <-- take id from request
+    $technician_status     = $data['technician_status'] ?? null; // e.g. 1 or 0
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
     $customer_location     = trim($data['customer_location'] ?? '');
     $visit_date            = trim($data['visit_date'] ?? '');
-    $technician_status     = $data['technician_status'] ?? []; // e.g. { "E002": 1 }
 
-    if (!$enquiry_id || !is_array($technicians)) {
-        echo json_encode(["status" => "error", "message" => "Missing required fields"]);
+    if (!$assignment_id) {
+        echo json_encode(["status" => "error", "message" => "Missing assignment id"]);
         exit();
     }
 
     $conn->begin_transaction();
     try {
-        // Soft delete old unselected technicians (only those with NULL completed_status)
-        if (!empty($technicians)) {
-            $placeholders = implode(",", array_fill(0, count($technicians), "?"));
-            $del = $conn->prepare("
-                DELETE FROM enquiry_assignments 
-                WHERE enquiry_id=? AND assignment_type=? 
-                AND completed_status IS NULL
-                AND technician_employee_id NOT IN ($placeholders)
-            ");
-            $types = "ss" . str_repeat("s", count($technicians));
-            $params = array_merge([$enquiry_id, $assignment_type], $technicians);
-            $del->bind_param($types, ...$params);
-            $del->execute();
-        }
-
-        // Insert or update assignments
-        foreach ($technicians as $tech) {
-            $completed_status = isset($technician_status[$tech]) ? (int)$technician_status[$tech] : null;
-
-            // Check if record exists
-            $check = $conn->prepare("
-                SELECT id FROM enquiry_assignments 
-                WHERE enquiry_id=? AND assignment_type=? AND technician_employee_id=? LIMIT 1
-            ");
-            $check->bind_param("sss", $enquiry_id, $assignment_type, $tech);
-            $check->execute();
-            $row = $check->get_result()->fetch_assoc();
-
-            if ($row) {
-                // Update existing assignment
-                $upd = $conn->prepare("
-                    UPDATE enquiry_assignments 
-                    SET delivery_instructions=?, customer_location=?, completed_status=?, 
-                        completed_at=IFNULL(completed_at, IF(? IS NOT NULL, NOW(), NULL)),
-                        updated_by='admin', updated_at=NOW()
-                    WHERE id=?
-                ");
-                $upd->bind_param("ssisi", $delivery_instructions, $customer_location, $completed_status, $completed_status, $row['id']);
-                $upd->execute();
-            } else {
-                // Insert new assignment
-                $ins = $conn->prepare("
-                    INSERT INTO enquiry_assignments 
-                    (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, 
-                     completed_status, completed_at, assigned_by, assigned_at, is_active, updated_by, updated_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
-                ");
-                $ins->bind_param("ssssisss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, 
-                                 $customer_location, $completed_status, $completed_status, $loggedInUser);
-                $ins->execute();
-            }
-        }
+        // Update directly by id
+        $upd = $conn->prepare("
+            UPDATE enquiry_assignments 
+            SET delivery_instructions=?, 
+                customer_location=?, 
+                completed_status=?, 
+                completed_at = IF(? IS NOT NULL, NOW(), completed_at), 
+                updated_by='admin', 
+                updated_at=NOW()
+            WHERE id=?
+        ");
+        $upd->bind_param("ssisi", 
+            $delivery_instructions, 
+            $customer_location, 
+            $technician_status, 
+            $technician_status, 
+            $assignment_id
+        );
+        $upd->execute();
 
         // Log visit history if visit_date provided
         if ($visit_date) {
             $vh = $conn->prepare("
                 INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) 
-                VALUES (?, ?, ?, NOW())
+                SELECT enquiry_id, assignment_type, ?, NOW() 
+                FROM enquiry_assignments WHERE id=?
             ");
-            $vh->bind_param("sss", $enquiry_id, $assignment_type, $visit_date);
+            $vh->bind_param("si", $visit_date, $assignment_id);
             $vh->execute();
         }
 
         $conn->commit();
-        echo json_encode(["status" => "success", "message" => "Assignments updated with technician status"]);
+        echo json_encode(["status" => "success", "message" => "Assignment updated"]);
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Update failed", "error" => $e->getMessage()]);
