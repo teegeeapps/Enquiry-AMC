@@ -267,7 +267,7 @@ $assignment_id            = $data['id'] ?? null;
                 ");
                 $upd->bind_param("ssisi", $delivery_instructions, $customer_location, $completed_status, $completed_status, $assignment_id);
                 $upd->execute();
-if ($completed_status === 1) {
+if ($completed_status === 2) {
     $updateService = $conn->prepare("
         UPDATE service_list 
         SET service_status='Completed', modified_by='admin', modified_at=NOW()
@@ -288,7 +288,7 @@ if ($completed_status === 1) {
                 $ins->bind_param("ssssisss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, 
                                  $customer_location, $completed_status, $completed_status, $loggedInUser);
                 $ins->execute();
-if ($completed_status === 1) {
+if ($completed_status === 2) {
     $updateService = $conn->prepare("
         UPDATE service_list 
         SET service_status='Completed', modified_by='admin', modified_at=NOW()
