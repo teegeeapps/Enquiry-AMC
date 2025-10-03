@@ -270,7 +270,7 @@ $assignment_id            = $data['id'] ?? null;
 if ($completed_status === 1) {
     $updateService = $conn->prepare("
         UPDATE service_list 
-        SET service_status='COMPLETED', modified_by='admin', modified_at=NOW()
+        SET service_status='Completed', modified_by='admin', modified_at=NOW()
         WHERE enquiry_id = ?
     ");
     $updateService->bind_param("s", $enquiry_id);
@@ -291,7 +291,7 @@ if ($completed_status === 1) {
 if ($completed_status === 1) {
     $updateService = $conn->prepare("
         UPDATE service_list 
-        SET service_status='COMPLETED', modified_by='admin', modified_at=NOW()
+        SET service_status='Completed', modified_by='admin', modified_at=NOW()
         WHERE enquiry_id = ?
     ");
     $updateService->bind_param("s", $enquiry_id);
