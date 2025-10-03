@@ -35,7 +35,7 @@ function getTechniciansForEnquiry($conn, $enquiryId) {
             FROM enquiry_assignments etm
             INNER JOIN employees emp 
                 ON etm.technician_employee_id = emp.employee_number
-            WHERE etm.enquiry_id = ?";
+            WHERE etm.enquiry_id = ? AND etm.assignment_type = 'ENQUIRY'";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $enquiryId);
     $stmt->execute();
