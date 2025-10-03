@@ -15,9 +15,9 @@ $input = json_decode(file_get_contents("php://input"), true);
     "contact_no1": "9876543210",
     "requirement_category": "AMC Renewal",
     "delivered_date": "2025-08-01",
-    "amc_date": "2025-08-02",
-    "amc_period": "1 Year",
-    "amc_status": "Active",
+    "refilling_date": "2025-08-02",
+    "refilling_period": "1 Year",
+    "refilling_status": "Active",
     "user": "Admin"
 }
 */
@@ -28,9 +28,9 @@ $contact_person_name = $input['contact_person_name'];
 $contact_no1 = $input['contact_no1'];
 $requirement_category = $input['requirement_category'];
 $delivered_date = $input['delivered_date'];
-$amc_date = $input['amc_date'];
-$amc_period = $input['amc_period'];
-$amc_status = $input['amc_status'];
+$refilling_date = $input['refilling_date'];
+$refilling_period = $input['refilling_period'];
+$refilling_status = $input['refilling_status'];
 $user = $input['user']; // created_by or modified_by
 
 // -------- Generate Next AMC ID (Global Increment) --------
@@ -51,15 +51,15 @@ $newAmcId = "AMC" . $nextNumber;
 $insertStmt = $conn->prepare("
     INSERT INTO amc_list (
         amc_id, enquiry_id, client_name, contact_person_name, contact_no1,
-        requirement_category, delivered_date, amc_date, amc_period,
-        amc_status, created_by
+        requirement_category, delivered_date, refilling_date, refilling_period,
+        refilling_status, created_by
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 
 $insertStmt->bind_param("sssssssssss", 
     $newAmcId, $enquiry_id, $client_name, $contact_person_name, $contact_no1,
-    $requirement_category, $delivered_date, $amc_date, $amc_period,
-    $amc_status, $user
+    $requirement_category, $delivered_date, $refilling_date, $refilling_period,
+    $refilling_status, $user
 );
 
 $success = $insertStmt->execute();

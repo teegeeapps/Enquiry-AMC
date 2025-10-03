@@ -16,8 +16,8 @@ $columns = array(
     "contact_no_1",
     "requirement_category",
     "delivery_date",
-    "amc_date",
-"amc_status"
+    "refilling_date",
+"refilling_status"
 );
 
 // Default params
@@ -51,9 +51,9 @@ $sql = "SELECT
             contact_no1 AS contact_no_1,
             requirement_category,
             delivered_date,
-            amc_date,
-            amc_period,
-            amc_status
+            refilling_date,
+            refilling_period,
+            refilling_status
         FROM amc_list";
 
 // Apply mode
@@ -71,8 +71,8 @@ if ($result && $result->num_rows > 0) {
             ? date("d-m-Y", strtotime($row['delivered_date']))
             : null;
 
-        $row['amc_date'] = (!empty($row['amc_date']) && $row['amc_date'] !== "0000-00-00")
-            ? date("d-m-Y", strtotime($row['amc_date']))
+        $row['refilling_date'] = (!empty($row['refilling_date']) && $row['refilling_date'] !== "0000-00-00")
+            ? date("d-m-Y", strtotime($row['refilling_date']))
             : null;
 
         unset($row['delivered_date']); // remove raw db field (optional)

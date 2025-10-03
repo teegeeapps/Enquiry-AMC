@@ -16,7 +16,7 @@ if (!$enquiry_id) {
 
 // ✅ Fetch AMC Details
 $sql = "SELECT enquiry_id,amc_id, client_name, contact_person_name, contact_no1, 
-               delivered_date, amc_status, amc_date, amc_period, requirement_category 
+               delivered_date, refilling_status, refilling_date, refilling_period, requirement_category 
         FROM amc_list 
         WHERE amc_id = ?";
 $stmt = $conn->prepare($sql);
@@ -31,9 +31,9 @@ $columns = [
     "contact_person_name",
     "contact_no1",
     "delivered_date",
-    "amc_status",
-    "amc_date",
-    "amc_period",
+    "refilling_status",
+    "refilling_date",
+    "refilling_period",
     "requirement_category",
     "latest_followup_date",
     "latest_followup_notes"

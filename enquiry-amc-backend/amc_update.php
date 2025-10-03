@@ -16,9 +16,9 @@ Sample JSON to send:
     "contact_person_name": "Suresh",
     "contact_no1": "9876501234",
     "delivered_date": "2025-08-20",
-    "amc_status": "Renewed",
-    "amc_date": "2025-08-21",
-    "amc_period": "1 Year",
+    "refilling_status": "Renewed",
+    "refilling_date": "2025-08-21",
+    "refilling_period": "1 Year",
     "followup_date": "2025-09-10",
     "followup_notes": "Customer wants callback next week",
     "user": "Admin"
@@ -32,9 +32,9 @@ $client_name         = $input['client_name'] ?? null;
 $contact_person_name = $input['contact_person_name'] ?? null;
 $contact_no1         = $input['contact_no1'] ?? null;
 $delivered_date      = $input['delivered_date'] ?? null;
-$amc_status          = $input['amc_status'] ?? null;
-$amc_date            = $input['amc_date'] ?? null;
-$amc_period          = $input['amc_period'] ?? null;
+$refilling_status          = $input['refilling_status'] ?? null;
+$refilling_date            = $input['refilling_date'] ?? null;
+$refilling_period          = $input['refilling_period'] ?? null;
 $followup_date       = $input['followup_date'] ?? null;
 $followup_notes      = $input['followup_notes'] ?? null;
 $user                = $input['user'] ?? null;
@@ -53,9 +53,9 @@ if ($result->num_rows > 0) {
             contact_person_name = ?, 
             contact_no1 = ?, 
             delivered_date = ?, 
-            amc_status = ?, 
-            amc_date = ?, 
-            amc_period = ?,
+            refilling_status = ?, 
+            refilling_date = ?, 
+            refilling_period = ?,
             modified_by = ?, 
             modified_at = NOW()
         WHERE amc_id = ?
@@ -66,9 +66,9 @@ if ($result->num_rows > 0) {
         $contact_person_name,
         $contact_no1,
         $delivered_date,
-        $amc_status,
-        $amc_date,
-        $amc_period,
+        $refilling_status,
+        $refilling_date,
+        $refilling_period,
         $user,
         $amc_id
     );
