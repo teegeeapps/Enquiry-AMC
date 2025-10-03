@@ -49,7 +49,7 @@
 
 
      <mat-form-field appearance="outline">
-      <mat-label>Assigned For</mat-label>
+      <mat-label>Assign For</mat-label>
       <input matInput type="text" formControlName="assigned_for" readonly/>
     </mat-form-field>
     <!-- Assigned For Dropdown -->
@@ -75,7 +75,7 @@
    <!-- Assigned To Multi-Select -->
    
 <mat-form-field appearance="outline">
-      <mat-label>Assigned {{this.assignType}} To  (Technicians)</mat-label>
+      <mat-label>Assign {{this.assignType}} To  (Technicians)</mat-label>
       <mat-select formControlName="assigned_to" multiple required>
         <mat-option *ngFor="let employee of employeeData" [value]="employee.employee_number">
           {{ employee.employee_name }}

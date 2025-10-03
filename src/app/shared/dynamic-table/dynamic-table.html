@@ -66,7 +66,7 @@
             <mat-icon>person</mat-icon>
           </button>
 
-          <button *ngIf="showTechAssignAMC && row.amc_status == 'Order Confirmed'" mat-icon-button color="warn"
+          <button *ngIf="showTechAssignAMC && row.refilling_status == 'Order Confirmed'" mat-icon-button color="warn"
             (click)="onAssignTech(row)">
             <mat-icon>person</mat-icon>
           </button>
@@ -132,7 +132,7 @@
             (click)="onAssignTechnician(row)">
             <mat-icon>person</mat-icon>
           </button>
-          <button *ngIf="showTechAssignAMC && row.amc_status == 'Order Confirmed'" mat-icon-button color="warn"
+          <button *ngIf="showTechAssignAMC && row.refilling_status == 'Order Confirmed'" mat-icon-button color="warn"
             (click)="onAssignTech(row)">
             <mat-icon>person</mat-icon>
           </button>

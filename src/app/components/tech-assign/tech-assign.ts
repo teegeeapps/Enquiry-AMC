@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { ApiService } from '../../services/api-service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import moment from 'moment';
-import { formatDate, DatePipe } from '@angular/common';
+import { formatDate, DatePipe, Location } from '@angular/common';
 
 @Component({
   selector: 'app-tech-assign',
@@ -22,7 +22,8 @@ export class TechAssignComponent {
    enquiry: any;
    assignType: string | null = null;
 
-  constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService, private snackBar: MatSnackBar) {
+  constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService, 
+    private snackBar: MatSnackBar, private location: Location) {
     const nav = this.router.getCurrentNavigation();
         const state = nav?.extras?.state as { enquiryId?: string, assignType?: string };
         this.enquiryId = state?.enquiryId || null;
@@ -53,15 +54,11 @@ export class TechAssignComponent {
     }
     this.apiService.post('assign_technician.php', postjso).subscribe({
       next: (res: any) => {
-        console.log('signle enquiry', res);
         this.employeeData = res.data.technician_list;
-        console.log('this.employeeData', this.employeeData);
         this.enquiry = res.data.enquiry;
-        console.log('this.enquiry', this.enquiry);
-         console.log('this.assignment', this.assignment);
-        if(res.data.assignments!== undefined && res.data.assignments.length > 0){
-           this.assignment = res.data.assignments.filter((a: any) => a.ass_type == this.assignType)[0];
-        console.log('this.assignment', this.assignment);
+        this.assignment = res.data.assignments.filter((a: any) => a.ass_type == this.assignType)[0];
+      //  console.log('this.assignment.legnth', this.assignment.length);
+        if(this.assignment !== undefined){
         this.visit_history = res.data.visit_history;
         if(this.assignment!== " " && this.assignment!== null){
         this.assignForm.patchValue({
@@ -114,7 +111,8 @@ export class TechAssignComponent {
         verticalPosition: 'top',
         horizontalPosition: 'right',
       });
-        this.router.navigate(['/enquiry-list']);
+       // this.router.navigate(['/enquiry-list']);
+       this.location.back();
       });
       // Submit logic or API call here
     } else {

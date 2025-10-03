@@ -1,5 +1,5 @@
 <div class="amc-form-wrapper">
-  <h2>{{ isEditMode ? 'Update AMC' : 'Create AMC' }}</h2>
+  <h2>{{ isEditMode ? 'Update Refilling' : 'Create Refilling' }}</h2>
 
   <form [formGroup]="amcForm" (ngSubmit)="onSubmit()">
 
@@ -44,8 +44,8 @@
 
         <!-- AMC Date with Datepicker (User can override) -->
         <mat-form-field appearance="outline">
-          <mat-label>AMC Date</mat-label>
-          <input matInput [matDatepicker]="amcPicker" formControlName="amc_date" required />
+          <mat-label>Refilling Date</mat-label>
+          <input matInput [matDatepicker]="amcPicker" formControlName="refilling_date" required />
           <mat-datepicker-toggle matSuffix [for]="amcPicker"></mat-datepicker-toggle>
           <mat-datepicker #amcPicker></mat-datepicker>
         </mat-form-field>
@@ -62,8 +62,8 @@
         </mat-form-field> -->
 
         <mat-form-field appearance="outline" *ngIf="isEditMode && enquiryStatusOptions?.length">
-            <mat-label>Current Year AMC Status</mat-label>
-            <mat-select formControlName="current_amc_status" required>
+            <mat-label>Current Year Refilling Status</mat-label>
+            <mat-select formControlName="current_refilling_status" required>
               <mat-option *ngFor="let status of enquiryStatusOptions" [value]="status.status_name">
                 {{ status.status_name }}
               </mat-option>

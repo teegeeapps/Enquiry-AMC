@@ -50,6 +50,8 @@ import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/materia
 import * as _moment from 'moment';
 import { ServiceListComponent } from './components/service-list/service-list';
 import { ServiceUpdateComponent } from './components/service-update/service-update';
+import { IstDateAdapter } from './shared/ist-date-adapter'; // adjust path if needed
+
 
 
 const moment = _moment;
@@ -88,7 +90,8 @@ export const MY_FORMATS = {
     FormatHeaderPipe,
     TaskViewComponent,
     ServiceListComponent,
-    ServiceUpdateComponent
+    ServiceUpdateComponent,
+
 
   ],
   imports: [
@@ -125,8 +128,9 @@ export const MY_FORMATS = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideHttpClient(),
-    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] },
+    { provide: DateAdapter, useClass: IstDateAdapter },
     { provide: MAT_DATE_FORMATS, useValue: MY_FORMATS },
+    { provide: MAT_DATE_LOCALE, useValue: 'en-GB' },
   ],
   bootstrap: [AppComponent]
 })

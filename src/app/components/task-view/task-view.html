@@ -63,10 +63,18 @@
 
 
     <!-- Assigned For Dropdown -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" *ngIf="this.assignment.ass_type == 'REFILLING'">
       <mat-label>Completed Status</mat-label>
       <mat-select formControlName="completed_status" required>
+        <mat-option value="Pending">Pending</mat-option>
         <mat-option value="Assign For Service">Assign For Service</mat-option>
+        <mat-option value="Completed">Completed</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" *ngIf="this.assignment.ass_type !== 'REFILLING'">
+      <mat-label>Completed Status</mat-label>
+      <mat-select formControlName="completed_status" required>
         <mat-option value="Pending">Pending</mat-option>
         <mat-option value="Completed">Completed</mat-option>
       </mat-select>

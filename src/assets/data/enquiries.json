@@ -8,7 +8,7 @@
     "requested_delivery_date": "2025-06-25",
     "enquiry_status": "Order Confirmed",
     "latest_stage": "Delivery",
-    "amc_date": "2026-06-25",
+    "refilling_date": "2026-06-25",
     "technician_name": "Karthik",
     "enquiry_remarks": "Needs urgent delivery"
   },
@@ -21,7 +21,7 @@
     "requested_delivery_date": "2025-06-30",
     "enquiry_status": "Quotation Send",
     "latest_stage": "Product Initial Enquiry",
-    "amc_date": null,
+    "refilling_date": null,
     "technician_name": null,
     "enquiry_remarks": ""
   }

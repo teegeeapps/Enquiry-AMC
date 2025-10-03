@@ -20,16 +20,16 @@ export class AmcUpdateComponent implements OnInit {
   submitted = false;
   singleAmc: any;
    enquiryStatusOptions: any;
-  enquiryId: string | null = null;
+  amc_id: string | null = null;
   isEditMode = false; // Set to true if updating
   yearsList: number[] = Array.from({ length: 10 }, (_, i) => i + 1);
   constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService,
     private datePipe: DatePipe, private dialog: MatDialog, private snackBar: MatSnackBar, private http: HttpClient,) {
     const nav = this.router.getCurrentNavigation();
-    const state = nav?.extras?.state as { enquiryId?: string, editMode?: boolean };
-    this.enquiryId = state?.enquiryId || null;
+    const state = nav?.extras?.state as { amc_id?: string, editMode?: boolean };
+    this.amc_id = state?.amc_id || null;
     this.isEditMode = state?.editMode || false;
-    console.log('this.enquiryId', this.enquiryId);
+    console.log('this.amc_id', this.amc_id);
     console.log('Edit Mode:', this.isEditMode);
   }
 
@@ -40,8 +40,8 @@ export class AmcUpdateComponent implements OnInit {
       contact_number: ['', Validators.required],
       delivered_date: ['', Validators.required],
       no_of_years: ['', Validators.required],
-      amc_date: [''],
-      current_amc_status: [''],
+      refilling_date: [''],
+      current_refilling_status: [''],
       follow_up_dates: [''],
       follow_up_notes: ['', Validators.required],
       follow_up_his: ['']
@@ -58,7 +58,7 @@ export class AmcUpdateComponent implements OnInit {
   loadAMC() {
     let postjson = {
       "mode": "single",
-      "enquiry_id": this.enquiryId
+      "amc_id": this.amc_id
     }
     console.log('postjson', postjson);
     this.apiService.post('get_amc_detail.php', postjson).subscribe({
@@ -71,9 +71,9 @@ export class AmcUpdateComponent implements OnInit {
           contact_person: result.contact_person_name,
           contact_number: result.contact_no1,
           delivered_date: result.delivered_date,
-          amc_date: result.amc_date,
-          no_of_years: parseInt(result.amc_period),
-          current_amc_status: result.amc_status,
+          refilling_date: result.refilling_date,
+          no_of_years: parseInt(result.refilling_period),
+          current_refilling_status: result.refilling_status,
           follow_up_dates: result.latest_followup_date,
           follow_up_notes: result.latest_followup_notes,
           follow_up_his: res.followup_text
@@ -115,7 +115,7 @@ export class AmcUpdateComponent implements OnInit {
         amcDate.setFullYear(amcDate.getFullYear() + Number(noOfYears));
 
         const formattedAmcDate = this.datePipe.transform(amcDate, 'yyyy-MM-dd');
-        this.amcForm.patchValue({ amc_date: formattedAmcDate });
+        this.amcForm.patchValue({ refilling_date: formattedAmcDate });
       }
     }
   }
@@ -145,15 +145,16 @@ export class AmcUpdateComponent implements OnInit {
     if (this.amcForm.valid) {
       console.log(this.isEditMode ? 'Updating AMC...' : 'Creating AMC...', this.amcForm.value);
       let postjson = {
-        "enquiry_id": this.enquiryId,
+        "amc_id": this.singleAmc.amc_id,
+        "enquiry_id": this.singleAmc.enquiry_id,
         "client_name": this.amcForm.value.client_name,
         "contact_person_name": this.amcForm.value.contact_person,
         "contact_no1": this.amcForm.value.contact_number,
         "delivered_date": this.amcForm.value.delivered_date,
-        "amc_date": this.amcForm.value.amc_date,
-        "amc_period": this.amcForm.value.no_of_years.toString(),
-        "amc_status": this.amcForm.value.current_amc_status,
-        "followup_date": this.amcForm.value.follow_up_dates,
+        "refilling_date": this.amcForm.value.refilling_date,
+        "refilling_period": this.amcForm.value.no_of_years.toString(),
+        "refilling_status": this.amcForm.value.current_refilling_status,
+        "followup_date":  this.datePipe.transform(this.amcForm.value.follow_up_dates, 'yyyy-MM-dd'),
         "followup_notes": this.amcForm.value.follow_up_notes,
         "user": "Admin"
       }
@@ -161,7 +162,7 @@ export class AmcUpdateComponent implements OnInit {
       this.apiService.post('amc_update.php', postjson).subscribe({
         next: (res: any) => {
           console.log('amc submit res', res);
-          if(this.amcForm.value.current_amc_status == "Order Delivered"){
+          if(this.singleAmc.refilling_status!== "Order Delivered" && this.amcForm.value.current_refilling_status == "Order Delivered"){
             this.createAMC();
           }
           this.snackBar.open(res.message, 'Close', {
@@ -178,15 +179,15 @@ export class AmcUpdateComponent implements OnInit {
 
   createAMC(){
       let amcpost = {
-      "enquiry_id": this.enquiryId,
+      "enquiry_id": this.singleAmc.enquiry_id,
       "client_name": this.amcForm.value.client_name,
       "contact_person_name": this.amcForm.value.contact_person,
       "contact_no1": this.amcForm.value.contact_number,
       "requirement_category": this.singleAmc.requirement_category,
       "delivered_date": this.amcForm.value.delivered_date,
-      "amc_date": this.getFutureDate(this.amcForm.value.no_of_years),
-      "amc_period": this.amcForm.value.no_of_years,
-      "amc_status": "Refilling Order Received",
+      "refilling_date": this.getFutureDate(this.amcForm.value.no_of_years),
+      "refilling_period": this.amcForm.value.no_of_years,
+      "refilling_status": "Refilling Order Received",
       "user": "Admin"
     }
 

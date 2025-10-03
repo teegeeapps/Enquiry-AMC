@@ -126,13 +126,14 @@ this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
     let completed_status: any;
     if(this.assignForm.value.completed_status == "Pending"){
       completed_status = 1;
-    } else if(this.assignForm.value.completed_status == "Completed") {
+    } else if(this.assignForm.value.completed_status == "Assign For Service") {
       completed_status = 2;
     } else {
       completed_status = 3;
     }
     let postjson = {
       "mode": "update",
+      "id": this.taskId,
       "enquiry_id": this.enquiryId,
       "assignment_type": this.assignment.ass_type,
       "technicians": [empNo],
@@ -147,7 +148,7 @@ this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
 
       this.apiService.post('assign_technician.php', postjson).subscribe((res: any) => {
         console.log(res, "res");
-        if(this.assignForm.value.completed_status == "Assign For Service"){
+        if(this.assignment.completed_status!=="Assign For Service" && this.assignForm.value.completed_status == "Assign For Service"){
           this.createService();
         }
         this.snackBar.open(res.message, 'Close', {
@@ -163,7 +164,7 @@ this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
 
     createService(){
       const today = new Date();
-      let formattedDate = this.datePipe.transform(today, 'dd-MM-yyyy') || '';
+      let formattedDate = this.datePipe.transform(today, 'yyyy-MM-dd') || '';
       let postjson = {
         "mode": "INSERT",
         "enquiry_id": this.enquiryId,

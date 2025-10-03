@@ -6,13 +6,15 @@ import { HttpClient } from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { DatePipe } from '@angular/common';
 import moment from 'moment';
 
 @Component({
   selector: 'app-create-enquiry',
   standalone: false,
   templateUrl: './create-enquiry.html',
-  styleUrl: './create-enquiry.scss'
+  styleUrl: './create-enquiry.scss',
+  providers: [DatePipe]
 })
 export class CreateEnquiryComponent implements OnInit {
   enquiryForm!: FormGroup;
@@ -26,7 +28,8 @@ export class CreateEnquiryComponent implements OnInit {
   isdeliverysec= false;
   yearsList: number[] = Array.from({ length: 10 }, (_, i) => i + 1);
   constructor(private fb: FormBuilder, private apiService: ApiService, private router: Router,
-    private http: HttpClient, private dialog: MatDialog, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {
+    private http: HttpClient, private dialog: MatDialog, private cdr: ChangeDetectorRef, 
+    private snackBar: MatSnackBar, private datePipe: DatePipe,) {
     const nav = this.router.getCurrentNavigation();
     const state = nav?.extras?.state as { enquiryId?: string };
     this.enquiryId = state?.enquiryId || null;
@@ -56,6 +59,10 @@ export class CreateEnquiryComponent implements OnInit {
       { "id": 4, "name": "Reference" },
       { "id": 5, "name": "Social Media" },
     ]
+
+    this.enquiryForm.get('follow_up_dates')?.valueChanges.subscribe(selectedDate => {
+      console.log('selectedDate', selectedDate);
+    });
   }
 
   initForm() {
@@ -77,7 +84,7 @@ export class CreateEnquiryComponent implements OnInit {
       delivered_date: [''],
       no_of_years: [1],
       enquiry_status: [''],
-      amc_date: [''],
+      refilling_date: [''],
       follow_up_dates: [''],
       follow_up_notes: ['', Validators.required],
       follow_up_his: ['']
@@ -87,7 +94,7 @@ export class CreateEnquiryComponent implements OnInit {
       console.log('status', status);
       const deliveredDateControl = this.enquiryForm.get('delivered_date');
       const followUpNotesControl = this.enquiryForm.get('follow_up_notes');
-      if (status === 5) {
+      if (parseInt(status) === 5) {
         this.isdeliverysec = true;
         deliveredDateControl?.setValidators([Validators.required]);
       } else {
@@ -145,11 +152,11 @@ export class CreateEnquiryComponent implements OnInit {
           requirement: result.requirement,
           requirement_category: result.requirement_category,
           source: result.source_of_enquiry,
-          enquiry_date: moment(result.enquiry_date, 'DD-MM-YYYY'),
+          enquiry_date: result.enquiry_date,
           requested_delivery_date: result.requested_delivery_date,
           delivered_date: result.delivered_date,
           enquiry_status: result.enquiry_status_id.toString(),
-          amc_date: result.amc_date,
+          refilling_date: result.refilling_date,
           follow_up_dates: result.follow_up_date,
           follow_up_notes: result.follow_up_notes,
           follow_up_his: result.followup_history
@@ -211,13 +218,13 @@ export class CreateEnquiryComponent implements OnInit {
       "requirement": this.enquiryForm.value.requirement,
       "requirement_category": this.enquiryForm.value.requirement_category,
       "source_of_enquiry": this.enquiryForm.value.source,
-      "enquiry_date": this.enquiryForm.value.enquiry_date,
+      "enquiry_date": this.datePipe.transform(this.enquiryForm.value.enquiry_date, 'yyyy-MM-dd'),
       "enquiry_status_id": parseInt(this.enquiryForm.value.enquiry_status),
-      "follow_up_date": this.enquiryForm.value.follow_up_dates,
+      "follow_up_date": this.datePipe.transform(this.enquiryForm.value.follow_up_dates, 'yyyy-MM-dd'),
       "follow_up_notes": this.enquiryForm.value.follow_up_notes,
       "delivered_date": this.enquiryForm.value.delivered_date,
       "requested_delivery_date": this.enquiryForm.value.requested_delivery_date,
-      "amc_date": this.enquiryForm.value.amc_date,
+      "refilling_date": this.enquiryForm.value.refilling_date,
       "created_by": "Admin",
       "updated_by": "Admin"
     }
@@ -230,9 +237,9 @@ export class CreateEnquiryComponent implements OnInit {
       "contact_no1": this.enquiryForm.value.contact_number,
       "requirement_category": this.enquiryForm.value.requirement_category,
       "delivered_date": this.enquiryForm.value.delivered_date,
-      "amc_date": this.enquiryForm.value.amc_date,
-      "amc_period": this.enquiryForm.value.no_of_years,
-      "amc_status": "Refilling Order Received",
+      "refilling_date": this.enquiryForm.value.refilling_date,
+      "refilling_period": this.enquiryForm.value.no_of_years,
+      "refilling_status": "Refilling Order Received",
       "user": "Admin"
     }
     console.log("DD", this.enquiryForm.value.delivered_date);
@@ -306,7 +313,7 @@ export class CreateEnquiryComponent implements OnInit {
     if (deliveredDate && noOfYears) {
       const amcDate = new Date(deliveredDate);
       amcDate.setFullYear(amcDate.getFullYear() + noOfYears);
-      this.enquiryForm.get('amc_date')?.setValue(amcDate);
+      this.enquiryForm.get('refilling_date')?.setValue(amcDate);
     }
   }
 

@@ -81,7 +81,7 @@ export class EnquiryListComponent implements OnInit {
         ...item,
         sno: index + 1,
         requested_delivery_date: item.requested_delivery_date ? new Date(item.requested_delivery_date).toLocaleDateString() : '',
-        amc_date: item.amc_date ? new Date(item.amc_date).toLocaleDateString() : '-'
+        refilling_date: item.refilling_date ? new Date(item.refilling_date).toLocaleDateString() : '-'
       }));
   }
 
