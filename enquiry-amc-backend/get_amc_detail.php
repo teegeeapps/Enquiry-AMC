@@ -7,7 +7,7 @@ require 'db.php';
 
 // Read enquiry_id from request (JSON body or GET param)
 $input = json_decode(file_get_contents("php://input"), true);
-$enquiry_id = $input['amc_id'] ?? ($_GET['amc_id'] ?? null);
+$amc_id = $input['amc_id'] ?? ($_GET['amc_id'] ?? null);
 
 if (!$enquiry_id) {
     echo json_encode(["status" => "error", "message" => "amc_id is required"]);
@@ -20,13 +20,13 @@ $sql = "SELECT enquiry_id,amc_id, client_name, contact_person_name, contact_no1,
         FROM amc_list 
         WHERE amc_id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $enquiry_id);
+$stmt->bind_param("s", $amc_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
 // Define base response
 $columns = [
-    "enquiry_id",
+    "amc_id",
     "client_name",
     "contact_person_name",
     "contact_no1",
@@ -45,10 +45,10 @@ if ($result->num_rows > 0) {
     // ✅ Fetch AMC Follow-Up History
     $followup_sql = "SELECT followup_date, followup_notes, created_by, created_at
                      FROM amc_followups 
-                     WHERE enquiry_id = ?
+                     WHERE amc_id = ?
                      ORDER BY created_at DESC";
     $followup_stmt = $conn->prepare($followup_sql);
-    $followup_stmt->bind_param("s", $enquiry_id);
+    $followup_stmt->bind_param("s", $amc_id);
     $followup_stmt->execute();
     $followup_result = $followup_stmt->get_result();
 
