@@ -126,7 +126,7 @@ if ($mode === 'insert') {
                 delivery_instructions,
                 customer_location,
                 assigned_by,
-                assigned_on
+                assigned_on,
                 is_active,
                 updated_by,
                 updated_at,
