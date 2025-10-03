@@ -9,7 +9,7 @@ require 'db.php';
 $input = json_decode(file_get_contents("php://input"), true);
 $amc_id = $input['amc_id'] ?? ($_GET['amc_id'] ?? null);
 
-if (!$enquiry_id) {
+if (!$amc_id) {
     echo json_encode(["status" => "error", "message" => "amc_id is required"]);
     exit();
 }
