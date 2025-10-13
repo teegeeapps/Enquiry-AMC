@@ -23,20 +23,23 @@ $ui_columns = [
     "contact_person_name",
     "contact_no1",
     "service_date",
-    "service_status"
+    "service_status",
+    "technician_names"
 ];
 
 switch ($mode) {
 
     // ----------------- INSERT -----------------
     case "INSERT":
-        $stmt = $conn->prepare("INSERT INTO service_list 
-            (enquiry_id, assignment_id, client_name, contact_person_name, contact_no1, service_status, service_date, created_by) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("
+            INSERT INTO service_list 
+                (enquiry_id, service_task_id, client_name, contact_person_name, contact_no1, service_status, service_date, created_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
         $stmt->bind_param(
             "ssssssss",
             $input['enquiry_id'],
-            $input['assignment_id'],
+            $input['service_task_id'],
             $input['client_name'],
             $input['contact_person_name'],
             $input['contact_no1'],
@@ -46,7 +49,11 @@ switch ($mode) {
         );
 
         if ($stmt->execute()) {
-            echo json_encode(["status" => "success", "message" => "Service inserted successfully", "id" => $stmt->insert_id]);
+            echo json_encode([
+                "status" => "success",
+                "message" => "Service inserted successfully",
+                "id" => $stmt->insert_id
+            ]);
         } else {
             echo json_encode(["status" => "error", "message" => $stmt->error]);
         }
@@ -60,20 +67,22 @@ switch ($mode) {
             exit();
         }
 
-        $stmt = $conn->prepare("UPDATE service_list SET 
-            client_name=?, contact_person_name=?, contact_no1=?, requirement_category=?, service_status=?, service_date=?, modified_by=? 
-            WHERE id=?");
+        $stmt = $conn->prepare("
+            UPDATE service_list 
+            SET client_name=?, contact_person_name=?, contact_no1=?, service_status=?, service_date=?, modified_by=? 
+            WHERE id=?
+        ");
         $stmt->bind_param(
-            "sssssssi",
+            "ssssssi",
             $input['client_name'],
             $input['contact_person_name'],
             $input['contact_no1'],
-            $input['requirement_category'],
             $input['service_status'],
             $input['service_date'],
             $input['modified_by'],
             $input['id']
         );
+
         if ($stmt->execute()) {
             echo json_encode(["status" => "success", "message" => "Service updated successfully"]);
         } else {
@@ -84,18 +93,50 @@ switch ($mode) {
 
     // ----------------- FETCH ALL -----------------
     case "FETCH_ALL":
-        $sql = "SELECT * FROM service_list ORDER BY id DESC";
+        $sql = "
+            SELECT 
+                s.id,
+                s.enquiry_id,
+                s.service_task_id,
+                s.client_name,
+                s.contact_person_name,
+                s.contact_no1,
+                s.service_status,
+                s.service_date,
+                s.created_by,
+                s.modified_by,
+                IFNULL(
+                    (
+                        SELECT GROUP_CONCAT(e.employee_name SEPARATOR ', ')
+                        FROM enquiry_assignments ea
+                        INNER JOIN employees e 
+                            ON ea.technician_employee_id = e.employee_number
+                        WHERE ea.service_task_id = s.service_task_id
+                    ),
+                    ''
+                ) AS technician_names
+            FROM service_list s
+            ORDER BY s.id DESC
+        ";
+
         $result = $conn->query($sql);
 
-        $data = array();
-        while ($row = $result->fetch_assoc()) {
-            $data[] = $row;
+        $data = [];
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                // Format date safely
+                $row['service_date'] = (!empty($row['service_date']) && $row['service_date'] !== "0000-00-00")
+                    ? date("d-m-Y", strtotime($row['service_date']))
+                    : null;
+                $data[] = $row;
+            }
         }
-          echo json_encode([
-        "status" => "success",
-        "columns" => $ui_columns,   // ✅ fixed UI schema
-        "data" => $data
-    ]);
+
+        echo json_encode([
+            "status" => "success",
+            "columns" => $ui_columns,
+            "data" => $data
+        ]);
         break;
 
     // ----------------- FETCH ONE -----------------
@@ -104,13 +145,32 @@ switch ($mode) {
             echo json_encode(["status" => "error", "message" => "Service ID required for fetch"]);
             exit();
         }
-        $stmt = $conn->prepare("SELECT * FROM service_list WHERE id=?");
+
+        $stmt = $conn->prepare("
+            SELECT 
+                s.*, 
+                IFNULL(
+                    (
+                        SELECT GROUP_CONCAT(e.employee_name SEPARATOR ', ')
+                        FROM enquiry_assignments ea
+                        INNER JOIN employees e 
+                            ON ea.technician_employee_id = e.employee_number
+                        WHERE ea.service_task_id = s.service_task_id
+                    ),
+                    ''
+                ) AS technician_names
+            FROM service_list s
+            WHERE s.id=?
+        ");
         $stmt->bind_param("i", $input['id']);
         $stmt->execute();
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
 
         if ($row) {
+            $row['service_date'] = (!empty($row['service_date']) && $row['service_date'] !== "0000-00-00")
+                ? date("d-m-Y", strtotime($row['service_date']))
+                : null;
             echo json_encode(["status" => "success", "data" => $row]);
         } else {
             echo json_encode(["status" => "error", "message" => "Service not found"]);
@@ -123,3 +183,4 @@ switch ($mode) {
 }
 
 $conn->close();
+?>

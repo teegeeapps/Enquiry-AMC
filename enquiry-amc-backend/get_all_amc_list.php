@@ -51,7 +51,7 @@ function getTechniciansForAmc($conn, $amcId)
         FROM enquiry_assignments a
         INNER JOIN employees e 
             ON a.technician_employee_id = e.employee_number
-        WHERE a.assignment_type = 'AMC' AND a.enquiry_id IN (
+        WHERE a.assignment_type = 'REFILLING' AND a.enquiry_id IN (
             SELECT enquiry_id FROM amc_list WHERE amc_id = ?
         )
     ";
