@@ -80,7 +80,7 @@ if ($result->num_rows > 0) {
         if (!empty($followup_date) || !empty($followup_notes)) {
             $insertFollowup = $conn->prepare("
                 INSERT INTO amc_followups (enquiry_id, amc_id, followup_date, followup_notes, created_by)
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
             ");
             $insertFollowup->bind_param("sssss", $enquiry_id,  $amc_id, $followup_date, $followup_notes, $user);
             $insertFollowup->execute();

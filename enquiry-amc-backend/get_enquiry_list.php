@@ -17,7 +17,7 @@ $toDate       = $data['to_date'] ?? null;
  */
 function fmt_date($date) {
     return (!empty($date) && $date !== "0000-00-00" && $date !== "0000-00-00 00:00:00")
-        ? date("d-m-Y", strtotime($date))
+        ? date("Y-m-d", strtotime($date))
         : null;
 }
 
