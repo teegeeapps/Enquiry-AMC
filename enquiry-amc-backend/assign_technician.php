@@ -554,14 +554,15 @@ if ($mode === 'fetch_by_technician') {
         $es->close();
 
         // assignments for this enquiry (flat list, each with lifecycle)
-        $asql = "
+       $asql = "
     SELECT ea.*, emp.employee_name, al.amc_id
     FROM enquiry_assignments ea
     LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-    LEFT JOIN amc_list al ON al.amc_id = ea.amc_id
+    LEFT JOIN amc_list al ON al.enquiry_id = ea.enquiry_id
     WHERE ea.enquiry_id = ?
     ORDER BY ea.assignment_type, ea.assigned_on DESC
 ";
+
         $a = $conn->prepare($asql);
         $a->bind_param("s", $enquiry_id);
         $a->execute();
