@@ -152,7 +152,7 @@ if ($mode === 'insert') {
                 $res = $conn->query("SELECT amc_task_id FROM enquiry_assignments WHERE amc_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
                 $last = $res->fetch_assoc();
                 $nextNum = $last ? (intval(substr($last['amc_task_id'], 3)) + 1) : 1;
-                $amc_task_id = "AMC" . $nextNum;
+                $amc_task_id = "AT" . $nextNum;
                 $enq_task_id = $enq_task_id_req;
                 $service_task_id = null;
             } elseif ($assignment_type === "SERVICE") {
@@ -573,7 +573,7 @@ if ($mode === 'fetch_by_technician') {
 		"enq_task_id"      => $row['enq_task_id'],
 		"amc_task_id"      => $row['amc_task_id'],
 		"service_task_id"      => $row['service_task_id'],
-
+		"amc_id"      => $row['amc_id'],
                 "employee_number"       => $row['technician_employee_id'],
                 "employee_name"         => $row['employee_name'],
                 "completed_status"      => $row['completed_status'],
