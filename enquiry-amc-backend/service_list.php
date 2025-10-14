@@ -58,7 +58,9 @@ function getTechniciansForService($conn, $serviceTaskId)
         INNER JOIN employees e 
             ON a.technician_employee_id = e.employee_number
         WHERE a.assignment_type = 'SERVICE'
-          AND a.service_task_id = ?
+         AND a.enquiry_id IN (
+            SELECT enquiry_id FROM service_list WHERE service_id = ?
+)
     ";
 
     $stmt = $conn->prepare($sql);
@@ -118,14 +120,14 @@ switch ($mode) {
 
     // ----------------- UPDATE -----------------
     case "UPDATE":
-        if (!isset($input['id'])) {
+        if (!isset($input['service_id'])) {
             echo json_encode(["status" => "error", "message" => "Service ID required for update"]);
             exit();
         }
 
         $stmt = $conn->prepare("UPDATE service_list SET 
             client_name=?, contact_person_name=?, contact_no1=?, requirement_category=?, service_status=?, service_date=?, modified_by=? 
-            WHERE id=?");
+            WHERE service_id=?");
         $stmt->bind_param(
             "sssssssi",
             $input['client_name'],
@@ -135,7 +137,7 @@ switch ($mode) {
             $input['service_status'],
             $input['service_date'],
             $input['modified_by'],
-            $input['id']
+            $input['service_id']
         );
 
         if ($stmt->execute()) {
@@ -154,7 +156,7 @@ switch ($mode) {
         $data = [];
         while ($row = $result->fetch_assoc()) {
             if (!empty($row['service_task_id'])) {
-                $row['technician_names'] = getTechniciansForService($conn, $row['service_task_id']);
+                $row['technician_names'] = getTechniciansForService($conn, $row['service_id']);
             } else {
                 $row['technician_names'] = "";
             }
