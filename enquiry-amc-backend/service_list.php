@@ -19,6 +19,7 @@ if (!isset($input['mode'])) {
 
 $mode = strtoupper($input['mode']);
 $ui_columns = [
+    "service_id",
     "client_name",
     "contact_person_name",
     "contact_no1",
@@ -28,7 +29,26 @@ $ui_columns = [
 ];
 
 // ----------------------------------------------------
-// Helper function to get technicians for a service task
+// Helper: Get next service_id (SR1, SR2, SR3, ...)
+// ----------------------------------------------------
+function generateServiceId($conn)
+{
+    $sql = "SELECT service_id FROM service_list ORDER BY id DESC LIMIT 1";
+    $result = $conn->query($sql);
+    $nextId = 1;
+
+    if ($result && $row = $result->fetch_assoc()) {
+        $lastId = $row['service_id'];
+        if (preg_match('/SR(\d+)/', $lastId, $matches)) {
+            $nextId = intval($matches[1]) + 1;
+        }
+    }
+
+    return "SR" . $nextId;
+}
+
+// ----------------------------------------------------
+// Helper: Get technicians for service_task_id
 // ----------------------------------------------------
 function getTechniciansForService($conn, $serviceTaskId)
 {
@@ -42,9 +62,7 @@ function getTechniciansForService($conn, $serviceTaskId)
     ";
 
     $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        return ""; // SQL error fallback
-    }
+    if (!$stmt) return "";
 
     $stmt->bind_param("s", $serviceTaskId);
     $stmt->execute();
@@ -54,8 +72,8 @@ function getTechniciansForService($conn, $serviceTaskId)
     while ($row = $result->fetch_assoc()) {
         $names[] = $row['employee_name'];
     }
-
     $stmt->close();
+
     return implode(", ", $names);
 }
 
@@ -66,11 +84,15 @@ switch ($mode) {
 
     // ----------------- INSERT -----------------
     case "INSERT":
+        // Auto-generate service_id
+        $service_id = generateServiceId($conn);
+
         $stmt = $conn->prepare("INSERT INTO service_list 
-            (enquiry_id, assignment_id, client_name, contact_person_name, contact_no1, service_status, service_date, created_by) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            (service_id, enquiry_id, assignment_id, client_name, contact_person_name, contact_no1, service_status, service_date, created_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param(
-            "ssssssss",
+            "sssssssss",
+            $service_id,
             $input['enquiry_id'],
             $input['assignment_id'],
             $input['client_name'],
@@ -82,7 +104,12 @@ switch ($mode) {
         );
 
         if ($stmt->execute()) {
-            echo json_encode(["status" => "success", "message" => "Service inserted successfully", "id" => $stmt->insert_id]);
+            echo json_encode([
+                "status" => "success",
+                "message" => "Service inserted successfully",
+                "service_id" => $service_id,
+                "id" => $stmt->insert_id
+            ]);
         } else {
             echo json_encode(["status" => "error", "message" => $stmt->error]);
         }
@@ -110,6 +137,7 @@ switch ($mode) {
             $input['modified_by'],
             $input['id']
         );
+
         if ($stmt->execute()) {
             echo json_encode(["status" => "success", "message" => "Service updated successfully"]);
         } else {
@@ -125,7 +153,6 @@ switch ($mode) {
 
         $data = [];
         while ($row = $result->fetch_assoc()) {
-            // Technician names fetched using service_task_id column
             if (!empty($row['service_task_id'])) {
                 $row['technician_names'] = getTechniciansForService($conn, $row['service_task_id']);
             } else {
