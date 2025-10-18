@@ -110,7 +110,10 @@ switch ($mode) {
         $data = [];
         while ($row = $result->fetch_assoc()) {
             $serviceTaskId = $row['service_id'];
-
+  // Format service_date to dd/mm/yyyy
+    if (!empty($row['service_date'])) {
+        $row['service_date'] = date("d/m/Y", strtotime($row['service_date']));
+    }
             // Fetch technician names based on service_id from enquiry_assignments
             $row['technician_names'] = getTechniciansForService($conn, $serviceTaskId);
 
