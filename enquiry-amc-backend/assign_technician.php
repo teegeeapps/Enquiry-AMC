@@ -50,6 +50,7 @@ try {
 // ---------------------------
 if ($mode === 'insert') {
     $enquiry_id        = trim($data['enquiry_id'] ?? '');
+$service_id        = trim($data['service_id'] ?? '');
     $assignment_type   = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians       = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
@@ -121,6 +122,7 @@ if ($mode === 'insert') {
         $ins = $conn->prepare("
             INSERT INTO enquiry_assignments (
                 enquiry_id,
+service_id,
                 assignment_type,
                 technician_employee_id,
                 delivery_instructions,
@@ -134,7 +136,7 @@ if ($mode === 'insert') {
                 enq_task_id,
                 amc_task_id,
                 service_task_id
-            ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW(), 1, ?, ?, ?)
+            ) VALUES (?, ?,?, ?, ?, ?, ?, NOW(), 1, ?, NOW(), 1, ?, ?, ?)
         ");
 
         $generated_ids = [];
@@ -166,8 +168,9 @@ if ($mode === 'insert') {
 
             // --- Bind & insert row ---
             $ins->bind_param(
-                "ssssssssss",
+                "sssssssssss",
                 $enquiry_id,
+$service_id,
                 $assignment_type,
                 $tech,
                 $delivery_instructions,
@@ -213,6 +216,7 @@ if ($mode === 'insert') {
 // ---------------------------
 if ($mode === 'update') {
     $enquiry_id            = $data['enquiry_id'] ?? null;
+$service_id        = trim($data['service_id'] ?? '');
 $assignment_id            = $data['id'] ?? null;
     $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians           = $data['technicians'] ?? [];
@@ -281,11 +285,11 @@ if ($completed_status === 3) {
                 // Insert new assignment
                 $ins = $conn->prepare("
                     INSERT INTO enquiry_assignments 
-                    (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, 
+                    (enquiry_id,service_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, 
                      completed_status, completed_at, assigned_by, assigned_on, is_active, updated_by, updated_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
+                    VALUES (?, ?, ?, ?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
                 ");
-                $ins->bind_param("ssssisss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, 
+                $ins->bind_param("sssssisss", $enquiry_id, $service_id, $assignment_type, $tech, $delivery_instructions, 
                                  $customer_location, $completed_status, $completed_status, $loggedInUser);
                 $ins->execute();
 if ($completed_status === 3) {
