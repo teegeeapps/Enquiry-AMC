@@ -54,6 +54,7 @@ $service_id        = trim($data['service_id'] ?? '');
     $assignment_type   = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians       = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
+$technician_instructions = trim($data['technician_instructions'] ?? '');
     $customer_location = trim($data['customer_location'] ?? '');
     $visit_date        = trim($data['visit_date'] ?? '');
     $assigned_by       = trim($data['assigned_by'] ?? 'admin');
@@ -126,6 +127,7 @@ service_id,
                 assignment_type,
                 technician_employee_id,
                 delivery_instructions,
+technician_instructions,
                 customer_location,
                 assigned_by,
                 assigned_on,
@@ -174,6 +176,7 @@ $service_id,
                 $assignment_type,
                 $tech,
                 $delivery_instructions,
+technician_instructions,
                 $customer_location,
                 $assigned_by,
                 $assigned_by,   // updated_by
@@ -221,6 +224,7 @@ $assignment_id            = $data['id'] ?? null;
     $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians           = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
+$technician_instructions = trim($data['delivery_instructions'] ?? '');
     $customer_location     = trim($data['customer_location'] ?? '');
     $visit_date            = trim($data['visit_date'] ?? '');
     $technician_status     = $data['technician_status'] ?? []; // e.g. { "E002": 1 }
@@ -264,12 +268,12 @@ $assignment_id            = $data['id'] ?? null;
                 // Update existing assignment
                 $upd = $conn->prepare("
                     UPDATE enquiry_assignments 
-                    SET delivery_instructions=?, customer_location=?, completed_status=?, 
+                    SET delivery_instructions=?, technician_instructions=?,customer_location=?, completed_status=?, 
                         completed_at=IFNULL(completed_at, IF(? IS NOT NULL, NOW(), NULL)),
                         updated_by='admin', updated_at=NOW()
                     WHERE id=?
                 ");
-                $upd->bind_param("ssisi", $delivery_instructions, $customer_location, $completed_status, $completed_status, $assignment_id);
+                $upd->bind_param("sssisi", $delivery_instructions,$technician_instructions, $customer_location, $completed_status, $completed_status, $assignment_id);
                 $upd->execute();
 if ($completed_status === 3) {
     $updateService = $conn->prepare("
@@ -285,11 +289,11 @@ if ($completed_status === 3) {
                 // Insert new assignment
                 $ins = $conn->prepare("
                     INSERT INTO enquiry_assignments 
-                    (enquiry_id,service_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, 
+                    (enquiry_id,service_id, assignment_type, technician_employee_id, delivery_instructions, technician_instructions, customer_location, 
                      completed_status, completed_at, assigned_by, assigned_on, is_active, updated_by, updated_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
+                    VALUES (?, ?, ?, ?,?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
                 ");
-                $ins->bind_param("sssssisss", $enquiry_id, $service_id, $assignment_type, $tech, $delivery_instructions, 
+                $ins->bind_param("ssssssisss", $enquiry_id, $service_id, $assignment_type, $tech, $delivery_instructions, technician_instructions,
                                  $customer_location, $completed_status, $completed_status, $loggedInUser);
                 $ins->execute();
 if ($completed_status === 3) {
@@ -341,6 +345,7 @@ if ($mode === 'fetch_detail') {
                 t.employee_name AS technician_name,
                 ea.assigned_by,
                 ea.delivery_instructions,
+		ea.technician_instructions,
                 ea.customer_location,
                 DATE_FORMAT(ea.assigned_on, '%d-%m-%Y') AS assigned_on,
                 ea.completed_status,
@@ -376,6 +381,7 @@ if ($mode === 'fetch_admin') {
 	    ea.service_task_id,
             ea.assignment_type,
             ea.delivery_instructions,
+	ea.technician_instructions,
             ea.customer_location,
             ea.assigned_by,
             ea.assigned_on,
@@ -431,6 +437,7 @@ if ($mode === 'fetch_admin') {
             "client_name"          => $row['client_name'],
             "contact_no1"          => $row['contact_no1'],
             "delivery_instructions"=> $row['delivery_instructions'],
+"technician_instructions"=> $row['technician_instructions'],
             "customer_location"    => $row['customer_location'],
             "assigned_by"          => $row['assigned_by'],
             "assigned_on"          => fmt_date($row['assigned_on']),
@@ -503,6 +510,8 @@ if ($mode === 'fetch_by_technician') {
                 "client_name"          => $row['client_name'],
                 "contact_no1"          => $row['contact_no1'],
                 "delivery_instructions"=> $row['delivery_instructions'],
+"technician_instructions"=> $row['technician_instructions'],
+
                 "customer_location"    => $row['customer_location'],
                 "assigned_by"          => $row['assigned_by'],
                 "assigned_on"          => fmt_date($row['assigned_on']),
@@ -587,6 +596,7 @@ if ($mode === 'fetch_by_technician') {
                 "completed_status"      => $row['completed_status'],
                 "completed_at"          => fmt_date($row['completed_at']),
                 "delivery_instructions" => $row['delivery_instructions'],
+"technician_instructions" => $row['technician_instructions'],
                 "customer_location"     => $row['customer_location'],
                 "assigned_by"           => $row['assigned_by'],
                 "assigned_on"           => fmt_date($row['assigned_on']),
