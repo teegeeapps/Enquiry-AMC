@@ -577,6 +577,8 @@ if ($mode === 'fetch_by_technician') {
             $assignments[] = [
 		"assignment_id"        => $row['id'],
 		"enq_task_id"      => $row['enq_task_id'],
+		"service_id"      => $row['service_id'],
+
 		"amc_task_id"      => $row['amc_task_id'],
 		"service_task_id"      => $row['service_task_id'],
 		"amc_id"      => $row['amc_id'],
