@@ -24,6 +24,7 @@ export class ServiceUpdateComponent implements OnInit{
   amc_id: string | null = null;
   isEditMode = false; // Set to true if updating
   yearsList: number[] = Array.from({ length: 10 }, (_, i) => i + 1);
+  serviceData: any;
 
    constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService,
     private datePipe: DatePipe, private dialog: MatDialog, private snackBar: MatSnackBar, private http: HttpClient,) {
@@ -59,6 +60,7 @@ loadService(){
       next: (res: any) => {
         console.log('signle service', res);
         let result = res.data;
+        this.serviceData = res.data;
         this.serviceForm.patchValue({
           client_name: result.client_name,
           contact_person: result.contact_person_name,
@@ -100,7 +102,7 @@ loadService(){
       console.log(this.isEditMode ? 'Updating AMC...' : 'Creating AMC...', this.serviceForm.value);
       let postjson = {
         "mode": "UPDATE",
-        "id": this.serviceId,
+        "service_id": this.serviceData.service_id,
         "client_name": this.serviceForm.value.client_name,
         "contact_person_name": this.serviceForm.value.contact_person,
         "contact_no1": this.serviceForm.value.contact_number,

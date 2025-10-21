@@ -1,5 +1,4 @@
 import { Component, OnInit, ChangeDetectorRef   } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api-service';
 
@@ -11,8 +10,9 @@ import { ApiService } from '../../services/api-service';
 })
 export class EmployeeListComponent implements OnInit{
   employeeData: any[] = [];
+  filteredEmployeeData: any[] = [];
   employeeColumns: string[] = [];
-
+  selectedStatus: string = 'Active'; // ✅ Default: Active employees
 constructor(private apiService: ApiService, private cdr: ChangeDetectorRef, private router: Router) {}
 
   ngOnInit(): void {
@@ -30,6 +30,8 @@ constructor(private apiService: ApiService, private cdr: ChangeDetectorRef, priv
       //  this.employeeColumns.push('Actions');   // 🔑 Extract column names
         this.employeeColumns = [ ...res.columns, 'Actions'];
         console.log('this.employeeData', this.employeeColumns );
+        // ✅ Apply initial filter (Active by default)
+        this.applyStatusFilter();
           this.cdr.detectChanges();
     //  });
        
@@ -38,6 +40,21 @@ constructor(private apiService: ApiService, private cdr: ChangeDetectorRef, priv
       }
     });
   }
+
+   // ✅ Status filter logic
+applyStatusFilter(): void {
+  const selected = (this.selectedStatus || '').toLowerCase().trim();
+
+  if (!selected) {
+    // ✅ If "All Status" selected, show all employees
+    this.filteredEmployeeData = [...this.employeeData];
+  } else {
+    this.filteredEmployeeData = this.employeeData.filter(emp =>
+      emp.status.toLowerCase().trim() === selected
+    );
+  }
+}
+
 
    addNewEmployee() {
     this.router.navigate(['/add-employee']);

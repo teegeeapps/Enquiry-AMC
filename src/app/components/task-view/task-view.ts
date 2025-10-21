@@ -22,6 +22,10 @@ export class TaskViewComponent implements OnInit{
  assignment : any;
  enqData: any;
  isServicesec = false;
+ user: any;
+ adminview= false;
+ techview = false;
+
   isEditMode = false; // Set to true if updating
   constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService,
      private snackBar: MatSnackBar, private dialog: MatDialog, private datePipe: DatePipe){
@@ -36,20 +40,38 @@ export class TaskViewComponent implements OnInit{
 }
 
 ngOnInit(): void {
+   let user: any;
+    let postjson: any;
+    user = localStorage.getItem('user');
+    this.user = JSON.parse(user);
+    console.log("this.user", this.user);
+    if (this.user.role_name == "Admin") {
+      this.adminview = true;
+      this.techview = false;
+    } else {
+      this.adminview = false;
+      this.techview = true;
+    }
   this.assignForm = this.fb.group({
   client_name: ['', Validators.required],
   contact_person: ['', Validators.required],
   contact_number: ['', Validators.required],
   address: [''],
   delivery_instructions: [''],
+  technician_instructions: [''],
   customer_location: [''],
   visit_date: [''],
-  service_date: [''],
   assigned_for: [''],
   completed_status: [[], Validators.required], // multi-select
 });
 
-this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
+/* this.assignForm.get('visit_date')?.valueChanges.subscribe(status => {
+      console.log('status', status);
+       let formattedDate = this.datePipe.transform(status, 'yyyy-MM-dd') || '';
+         console.log('formattedDate', formattedDate);
+}); */
+
+/* this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
       console.log('status', status);
       const serviceDateControl = this.assignForm.get('service_date');
       if (status == "Assign For Service") {
@@ -59,7 +81,7 @@ this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
         this.isServicesec = false;
         serviceDateControl?.clearValidators();
       }
-      serviceDateControl?.updateValueAndValidity();})
+      serviceDateControl?.updateValueAndValidity();}) */
       this.loadTask();
   }
 
@@ -83,6 +105,7 @@ this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
           address: result.address,
           assigned_for: this.assignment.ass_type,
           delivery_instructions: this.assignment.delivery_instructions,
+          technician_instructions: this.assignment.technician_instructions,
           customer_location: this.assignment.customer_location,
           visit_date: res.data.visit_history[0].visit_date,
           completed_status: this.assignment.completed_status
@@ -138,6 +161,7 @@ this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
       "assignment_type": this.assignment.ass_type,
       "technicians": [empNo],
       "delivery_instructions": this.assignForm.value.delivery_instructions,
+      "technician_instructions": this.assignForm.value.technician_instructions,
       "customer_location": this.assignForm.value.customer_location,
       "assigned_by": this.assignment.assigned_by,
       "technician_status": { 
@@ -164,7 +188,7 @@ this.assignForm.get('completed_status')?.valueChanges.subscribe(status => {
 
     createService(){
       const today = new Date();
-      let formattedDate = this.datePipe.transform(today, 'yyyy-MM-dd') || '';
+      let formattedDate = this.datePipe.transform(this.assignForm.value.visit_date, 'yyyy-MM-dd') || '';
       let postjson = {
         "mode": "INSERT",
         "enquiry_id": this.enquiryId,

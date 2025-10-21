@@ -23,7 +23,7 @@
 
     <!-- Visit Date -->
     <mat-form-field appearance="outline">
-      <mat-label>Visit Date</mat-label>
+      <mat-label>Visit/Service Date</mat-label>
       <input matInput [matDatepicker]="visitPicker" formControlName="visit_date" required />
       <mat-datepicker-toggle matSuffix [for]="visitPicker"></mat-datepicker-toggle>
       <mat-datepicker #visitPicker></mat-datepicker>
@@ -37,8 +37,13 @@
 
     <!-- Delivery Instructions -->
     <mat-form-field appearance="outline">
-      <mat-label>Delivery Instructions</mat-label>
-      <textarea matInput formControlName="delivery_instructions" rows="2"></textarea>
+      <mat-label>Admin Instructions</mat-label>
+      <textarea matInput formControlName="delivery_instructions" rows="2" [class.readonly]="techview" [readonly]="techview"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Technician Instructions</mat-label>
+      <textarea matInput formControlName="technician_instructions" rows="2" [class.readonly]="adminview" [readonly]="adminview"></textarea>
     </mat-form-field>
 
     <!-- Customer Location -->
@@ -80,12 +85,12 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" *ngIf="isServicesec">
+    <!-- <mat-form-field appearance="outline" *ngIf="isServicesec">
           <mat-label>Service Date</mat-label>
           <input matInput [matDatepicker]="amcPicker" formControlName="service_date" required />
           <mat-datepicker-toggle matSuffix [for]="amcPicker"></mat-datepicker-toggle>
           <mat-datepicker #amcPicker></mat-datepicker>
-    </mat-form-field>
+    </mat-form-field> -->
 
      <!-- Assigned For Dropdown -->
   <!--   <mat-form-field appearance="outline">

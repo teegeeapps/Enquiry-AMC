@@ -2,8 +2,8 @@
   <h2>📋 Enquiry Dashboard</h2>
 </div>
 
+<ng-container *ngIf="displayedColumns.length">
 <app-dynamic-table
-  *ngIf="displayedColumns.length"
   [data]="enquiryData"
   [columns]="displayedColumns"  
   [enablePagination]="true"
@@ -16,6 +16,13 @@
   (amc)="onAmcUpdate($event)"
 >
 </app-dynamic-table>
+
+ <!-- Show this message if no data after filtering/search -->
+  <div *ngIf="enquiryData && enquiryData.length === 0" class="no-records">
+    No records found
+  </div>
+</ng-container>
+
 
 <!-- No Data Message -->
 <!-- <div *ngIf="!enquiryData.length" class="no-data-message">

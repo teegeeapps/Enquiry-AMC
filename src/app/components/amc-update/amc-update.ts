@@ -185,7 +185,7 @@ export class AmcUpdateComponent implements OnInit {
       "contact_no1": this.amcForm.value.contact_number,
       "requirement_category": this.singleAmc.requirement_category,
       "delivered_date": this.amcForm.value.delivered_date,
-      "refilling_date": this.getFutureDate(this.amcForm.value.no_of_years),
+      "refilling_date": this.getFutureDate1(this.amcForm.value.no_of_years),
       "refilling_period": this.amcForm.value.no_of_years,
       "refilling_status": "Refilling Order Received",
       "user": "Admin"
@@ -211,5 +211,20 @@ export class AmcUpdateComponent implements OnInit {
   return formatted;
 }
 
+
+getFutureDate1(yearsToAdd: number): string {
+  const today = new Date();
+
+  // Create a new Date object so we don't mutate today
+  const futureDate = new Date(today.getTime());
+  futureDate.setFullYear(futureDate.getFullYear() + yearsToAdd);
+
+  // Format as yyyy-MM-dd
+  const year = futureDate.getFullYear();
+  const month = (futureDate.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-based
+  const day = futureDate.getDate().toString().padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 }

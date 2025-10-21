@@ -82,12 +82,12 @@
         </mat-cell>
       </ng-container>
 
-      <!-- No Data Row -->
-      <mat-row *matNoDataRow>
-        <mat-cell [attr.colspan]="columns.length + 1" style="text-align:center;">
-          No data found.
-        </mat-cell>
-      </mat-row>
+   <!-- ✅ Proper No Data Row (works with search filter) -->
+<tr class="mat-row" *matNoDataRow>
+  <td [attr.colspan]="columns.length + 1" class="no-data-cell">
+    No records found
+  </td>
+</tr>
 
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
       <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>

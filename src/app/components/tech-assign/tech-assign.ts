@@ -36,9 +36,11 @@ export class TechAssignComponent {
         contact_number: ['', Validators.required],
         address: [''],
         delivery_instructions: [''],
+        technician_instructions: [''],
         customer_location: [''],
         visit_date: ['', Validators.required],
         assigned_for: [''],
+        assigned: ['DELIVERY'],
         assigned_to: [[], Validators.required], // multi-select
       });
 
@@ -57,12 +59,13 @@ export class TechAssignComponent {
         this.employeeData = res.data.technician_list;
         this.enquiry = res.data.enquiry;
         this.assignment = res.data.assignments.filter((a: any) => a.ass_type == this.assignType)[0];
-      //  console.log('this.assignment.legnth', this.assignment.length);
+          console.log('this.assignment', this.assignment);
         if(this.assignment !== undefined){
         this.visit_history = res.data.visit_history;
         if(this.assignment!== " " && this.assignment!== null){
         this.assignForm.patchValue({
             delivery_instructions: this.assignment.delivery_instructions,
+            technician_instructions: this.assignment.technician_instructions,
             customer_location: this.assignment.customer_location,
             assigned_to: res.data.assignments.filter((a: any) => a.ass_type == this.assignType).map((a: any) => a.employee_number),
             assigned_for: this.assignment.ass_type,
@@ -96,9 +99,11 @@ export class TechAssignComponent {
       let postjson = {
         "mode": "insert",
         "enquiry_id": this.enquiryId,
+        "service_id": this.assignment.service_id,
         "assignment_type": this.assignForm.value.assigned_for,
         "technicians": this.assignForm.value.assigned_to,
         "delivery_instructions": this.assignForm.value.delivery_instructions,
+        "technician_instructions":this.assignForm.value.technician_instructions,
         "customer_location": this.assignForm.value.customer_location,
         "assigned_by": "Admin",
         "visit_date":  formatDate(this.assignForm.value.visit_date, 'yyyy-MM-dd', 'en-IN')

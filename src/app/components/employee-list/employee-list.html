@@ -2,17 +2,27 @@
   <h2>📋 Employee Master</h2>
 </div>
 
-<app-dynamic-table *ngIf="employeeColumns.length && employeeData.length"
-  [data]="employeeData"
+<div class="filter-row">
+  <mat-form-field appearance="outline" class="filter-field">
+    <mat-label>Status</mat-label>
+    <mat-select [(ngModel)]="selectedStatus" (selectionChange)="applyStatusFilter()">
+      <mat-option value="">All Status</mat-option> <!-- ✅ All Status option -->
+      <mat-option value="Active">Active</mat-option>
+      <mat-option value="In Active">In Active</mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<!-- Employee Table -->
+<app-dynamic-table *ngIf="employeeColumns.length && filteredEmployeeData.length"
+  [data]="filteredEmployeeData"
   [columns]="employeeColumns"
   [enablePagination]="true"
   [enableFilter]="true"
   [showAssignTechnician]="false"
-  [showEditButton]="true" 
-  (edit)="onEditEmployee($event)"
-  >
+  [showEditButton]="true"
+  (edit)="onEditEmployee($event)">
 </app-dynamic-table>
-
 
 <!-- Floating Add Button -->
 <button mat-fab color="primary" class="fab-button" (click)="addNewEmployee()" matTooltip="Add New Employee">

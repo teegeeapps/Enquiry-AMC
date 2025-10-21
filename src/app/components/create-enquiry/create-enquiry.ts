@@ -66,6 +66,42 @@ export class CreateEnquiryComponent implements OnInit {
   }
 
   initForm() {
+
+    /*  this.enquiryForm = this.fb.group({
+  basicInfo: this.fb.group({
+     client_name: ['', Validators.required],
+      contact_person: ['', Validators.required],
+      contact_number: ['', [
+        Validators.required,
+        Validators.pattern(/^[0-9]{10}$/) // exactly 10 digits
+      ]],
+      alt_contact_number: ['', Validators.pattern(/^[0-9]{10}$/)],
+      email: ['', Validators.email],
+      address: [''],
+  }),
+  requirement: this.fb.group({
+    requirement: ['', Validators.required],
+      requirement_category: [''],
+      source: [''],
+  }),
+  enquiry: this.fb.group({
+     enquiry_date: [''],
+      requested_delivery_date: [''],
+      enquiry_status: [''],
+  }),
+  followup: this.fb.group({
+     follow_up_dates: [''],
+      follow_up_notes: ['', Validators.required],
+      follow_up_his: ['']
+  }),
+   delivery: this.fb.group({
+     delivered_date: [''],
+     no_of_years: [1],
+     refilling_date: [''],
+  })
+}); */
+
+
     this.enquiryForm = this.fb.group({
       client_name: ['', Validators.required],
       contact_person: ['', Validators.required],

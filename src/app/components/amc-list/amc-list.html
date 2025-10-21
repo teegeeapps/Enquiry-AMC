@@ -1,9 +1,33 @@
-<div class="enquiry-header">
+<div class="enquiry-header"> 
   <h2>📋 Refilling Dashboard</h2>
 </div>
 
+<!-- Filters Row -->
+<div class="filters-row">
+  <mat-form-field appearance="outline" class="filter-field">
+    <mat-label>Year</mat-label>
+    <mat-select [(ngModel)]="selectedYear" (selectionChange)="applyFilters()">
+    <mat-option value="">All Years</mat-option>
+    <mat-option *ngFor="let year of yearList" [value]="year.toString()">
+      {{ year }}
+    </mat-option>
+  </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-field">
+    <mat-label>Status</mat-label>
+    <mat-select [(ngModel)]="selectedStatus" (selectionChange)="applyFilters()">
+      <mat-option value="">All Status</mat-option>
+      <mat-option *ngFor="let status of enquiryStatusOptions" [value]="status.status_name">
+          {{ status.status_name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<!-- Dynamic Table -->
 <app-dynamic-table *ngIf="amcColumns.length"
-  [data]="amcData" 
+  [data]="filteredData" 
   [columns]="amcColumns" 
   [enableFilter]="true" 
   [enablePagination]="true"
@@ -11,9 +35,9 @@
   [showAssignTechnician]="true"
   [showTechAssignAMC]="true"
   (edit)="editAMC($event)"
-  (assignTech)="onAssignTech($event)"
-  >
+  (assignTech)="onAssignTech($event)">
 </app-dynamic-table>
+
 
 <!-- Floating Add Button -->
 <!-- <button mat-fab color="primary" class="fab-button" (click)="addNewAMC()" matTooltip="Add New AMC">

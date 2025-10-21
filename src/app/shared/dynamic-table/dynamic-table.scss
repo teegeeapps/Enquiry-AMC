@@ -85,6 +85,16 @@ mat-cell.mat-mdc-cell{
     background-color: white!important;
 }
 
+.no-data-cell {
+  text-align: center;
+  vertical-align: middle; 
+  color: #777;
+  font-style: italic;
+  padding: 16px;
+  height: 60px;    
+}
+
+
 @media (max-width: 768px) {
   .table-desktop {
     display: none;
