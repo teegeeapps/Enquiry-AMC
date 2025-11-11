@@ -25,7 +25,6 @@ import { CreateEnquiryComponent } from './components/create-enquiry/create-enqui
 import { EnquiryListComponent } from './components/enquiry-list/enquiry-list';
 import { AmcListComponent } from './components/amc-list/amc-list';
 import { AmcUpdateComponent } from './components/amc-update/amc-update';
-import { DashboardComponent } from './components/dashboard/dashboard';
 import { LoginComponent } from './components/login/login';
 import { TaskListComponent } from './components/task-list/task-list';
 import { TechAssignComponent } from './components/tech-assign/tech-assign';
@@ -78,7 +77,6 @@ export const MY_FORMATS = {
     EnquiryListComponent,
     AmcListComponent,
     AmcUpdateComponent,
-    DashboardComponent,
     LoginComponent,
     TaskListComponent,
     TechAssignComponent,

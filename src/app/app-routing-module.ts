@@ -3,7 +3,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { EmployeeListComponent } from './components/employee-list/employee-list';
 import { AddEmployeeComponent } from './components/add-employee/add-employee';
 import { LoginComponent } from './components/login/login';
-import { DashboardComponent } from './components/dashboard/dashboard';
 
 import { CreateEnquiryComponent  } from './components/create-enquiry/create-enquiry';
 import { EnquiryListComponent } from './components/enquiry-list/enquiry-list';
@@ -18,28 +17,32 @@ import { ViewEmployeeComponent } from './components/view-employee/view-employee'
 import { TaskViewComponent } from './components/task-view/task-view';
 import { ServiceListComponent } from './components/service-list/service-list';
 import { ServiceUpdateComponent } from './components/service-update/service-update';
+import { AuthGuard } from './guards/auth-guard';
+
 
 const routes: Routes = [
-  { path: 'dashboard', component: DashboardComponent },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
+   { path: 'login', component: LoginComponent },
   // other routes
-  { path: 'employee-list', component: EmployeeListComponent},
-  { path: 'add-employee', component: AddEmployeeComponent }, // optional
-  { path: 'login', component: LoginComponent },
-  { path: 'create-enquiry', component: CreateEnquiryComponent },
-   { path: 'enquiry-list', component: EnquiryListComponent },
-  { path: 'amc-list', component: AmcListComponent },
-  { path: 'amc-update', component: AmcUpdateComponent },
-  { path: 'tech-assign', component: TechAssignComponent },
-  { path: 'task-list', component: TaskListComponent },
-   { path: 'assign-role', component: AssignRoleComponent },
-   { path: 'config', component: ConfigComponent },
-    { path: 'view-employee', component: ViewEmployeeComponent },
-   { path: 'view-enquiry', component: ViewEnquiryComponent },
-   { path: 'task-view', component: TaskViewComponent },
-   { path: 'service-list', component: ServiceListComponent },
-   { path: 'service-update', component: ServiceUpdateComponent },
-  { path: '**', redirectTo: '/dashboard' } // fallback
+  { path: 'employee-list', component: EmployeeListComponent, canActivate: [AuthGuard]},
+  { path: 'add-employee', component: AddEmployeeComponent, canActivate: [AuthGuard] }, // optional
+ 
+  { path: 'create-enquiry', component: CreateEnquiryComponent, canActivate: [AuthGuard] },
+   { path: 'enquiry-list', component: EnquiryListComponent, canActivate: [AuthGuard]  },
+  { path: 'amc-list', component: AmcListComponent, canActivate: [AuthGuard] },
+  { path: 'amc-update', component: AmcUpdateComponent, canActivate: [AuthGuard] },
+  { path: 'tech-assign', component: TechAssignComponent,canActivate: [AuthGuard] },
+  { path: 'task-list', component: TaskListComponent, canActivate: [AuthGuard] },
+   { path: 'assign-role', component: AssignRoleComponent, canActivate: [AuthGuard] },
+   { path: 'config', component: ConfigComponent, canActivate: [AuthGuard] },
+    { path: 'view-employee', component: ViewEmployeeComponent, canActivate: [AuthGuard] },
+   { path: 'view-enquiry', component: ViewEnquiryComponent, canActivate: [AuthGuard] },
+   { path: 'task-view', component: TaskViewComponent, canActivate: [AuthGuard] },
+   { path: 'service-list', component: ServiceListComponent, canActivate: [AuthGuard] },
+   { path: 'service-update', component: ServiceUpdateComponent, canActivate: [AuthGuard] },
+
+   { path: '**', canActivate: [AuthGuard], component: LoginComponent }
+// { path: '**', redirectTo: '/login' }
 ];
 
 

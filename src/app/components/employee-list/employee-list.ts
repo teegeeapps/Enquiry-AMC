@@ -43,15 +43,18 @@ constructor(private apiService: ApiService, private cdr: ChangeDetectorRef, priv
 
    // ✅ Status filter logic
 applyStatusFilter(): void {
+  console.log("inside applyStatusFilter");
   const selected = (this.selectedStatus || '').toLowerCase().trim();
-
+ console.log("inside applyStatusFilter selected", selected);
   if (!selected) {
     // ✅ If "All Status" selected, show all employees
     this.filteredEmployeeData = [...this.employeeData];
+    console.log("inside if", this.filteredEmployeeData);
   } else {
     this.filteredEmployeeData = this.employeeData.filter(emp =>
       emp.status.toLowerCase().trim() === selected
     );
+     console.log("inside else", this.filteredEmployeeData);
   }
 }
 

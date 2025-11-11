@@ -14,7 +14,7 @@
 </div>
 
 <!-- Employee Table -->
-<app-dynamic-table *ngIf="employeeColumns.length && filteredEmployeeData.length"
+<app-dynamic-table *ngIf="employeeColumns.length"
   [data]="filteredEmployeeData"
   [columns]="employeeColumns"
   [enablePagination]="true"

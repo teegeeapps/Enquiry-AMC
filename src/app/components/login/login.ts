@@ -7,6 +7,8 @@ import {
 import { Router  } from '@angular/router';
 import { ApiService } from '../../services/api-service';
 import { UserService } from '../../services/user-service/user-service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-login',
@@ -18,8 +20,9 @@ export class LoginComponent implements OnInit{
     loginForm!: FormGroup;
     submitted = false;
     hidePassword = true;
+    errorMessage = '';
   constructor(private apiService: ApiService, private fb: FormBuilder, private router: Router, 
-    private userService: UserService) {
+    private userService: UserService, private snackBar: MatSnackBar, private ngZone: NgZone) {
     
   }
 
@@ -36,9 +39,14 @@ export class LoginComponent implements OnInit{
     });
     const userData = localStorage.getItem('user');
     if (userData) {
-      // ✅ User is already logged in, redirect to dashboard
-      this.router.navigate(['/dashboard']);
-    } 
+      const parsedUser = JSON.parse(userData);
+      const role = parsedUser.role_name?.toLowerCase();
+      if (role === 'Admin') {
+        this.router.navigate(['/enquiry-list']);
+      } else if (role === 'Technician') {
+        this.router.navigate(['/task-list']);
+      }
+    }
   }
 
   login(): void {
@@ -57,19 +65,36 @@ export class LoginComponent implements OnInit{
         let userjson = {
           "employee_number" : res.employee_number
         }
-        this.apiService.post('get_individual_employee.php', userjson).subscribe((data: any) => {
+
+         if(res.status == 1){
+          this.apiService.post('get_individual_employee.php', userjson).subscribe((data: any) => {
            console.log('empresult', data);
-           localStorage.removeItem("user");
+            localStorage.removeItem("user");
            localStorage.setItem("user", JSON.stringify(data.profile));
            this.userService.setUsername(data.profile.employee_name); 
            this.userService.setRole(data.profile.role_name); 
            if(data.profile.role_name == 'Admin'){
-              this.router.navigate(['/enquiry-list']);
-           } else {
-              this.router.navigate(['/task-list']);
-           }
-           
+            console.log('inside role admin');
+              Promise.resolve().then(() => {
+                this.ngZone.run(() => this.router.navigate(['/enquiry-list']));
+              });
+           } else if(data.profile.role_name == 'Technician'){
+            console.log('inside role technician');
+              Promise.resolve().then(() => {
+              this.ngZone.run(() => this.router.navigate(['/task-list']));
+            }); 
+           } 
         });
+         }
+          else{
+             this.snackBar.open(res.message, 'Close', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'right',
+          });
+           }
+
+        
       });
    
     }
