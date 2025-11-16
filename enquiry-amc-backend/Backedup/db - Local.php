@@ -1,8 +1,8 @@
 <?php
-$host = '82.180.142.5';
-$user = 'u285523860_emsprd';
-$pass = 'Safeway@1234';
-$db = 'u285523860_safewayems';
+$host = 'localhost';
+$user = 'root';
+$pass = '';
+$db = 'enquiry_amc';
 
 $conn = new mysqli($host, $user, $pass, $db);
 

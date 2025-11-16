@@ -49,20 +49,13 @@ try {
 // INSERT assignment
 // ---------------------------
 if ($mode === 'insert') {
-    $enquiry_id        = trim($data['enquiry_id'] ?? '');
-$service_id        = trim($data['service_id'] ?? '');
-    $assignment_type   = strtoupper(trim($data['assignment_type'] ?? ''));
-    $technicians       = $data['technicians'] ?? [];
+    $enquiry_id            = trim($data['enquiry_id'] ?? '');
+    $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
+    $technicians           = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
-$technician_instructions = trim($data['technician_instructions'] ?? '');
-    $customer_location = trim($data['customer_location'] ?? '');
-    $visit_date        = trim($data['visit_date'] ?? '');
-    $assigned_by       = trim($data['assigned_by'] ?? 'admin');
-
-    // Task IDs passed from request (may be null)
-    $enq_task_id_req     = $data['enq_task_id'] ?? null;
-    $amc_task_id_req     = $data['amc_task_id'] ?? null;
-    $service_task_id_req = $data['service_task_id'] ?? null;
+    $customer_location     = trim($data['customer_location'] ?? '');
+    $visit_date            = trim($data['visit_date'] ?? '');
+    $assigned_by           = trim($data['assigned_by'] ?? 'admin');
 
     // --- Validations ---
     if (!$enquiry_id) {
@@ -70,7 +63,7 @@ $technician_instructions = trim($data['technician_instructions'] ?? '');
         exit();
     }
 
-    $validTypes = ["ENQUIRY", "REFILLING", "SERVICE"];
+    $validTypes = ["ENQUIRY", "AMC", "SERVICE"];
     if (!in_array($assignment_type, $validTypes)) {
         echo json_encode(["status" => "error", "message" => "Invalid assignment_type"]);
         exit();
@@ -87,7 +80,7 @@ $technician_instructions = trim($data['technician_instructions'] ?? '');
     }
 
     // Restrict AMC/SERVICE unless delivered_date exists
-    if (in_array($assignment_type, ["REFILLING", "SERVICE"])) {
+    if (in_array($assignment_type, ["AMC", "SERVICE"])) {
         $chk = $conn->prepare("SELECT delivered_date FROM amc_list WHERE enquiry_id=? LIMIT 1");
         $chk->bind_param("s", $enquiry_id);
         $chk->execute();
@@ -119,80 +112,11 @@ $technician_instructions = trim($data['technician_instructions'] ?? '');
         $delq->bind_param("ss", $enquiry_id, $assignment_type);
         $delq->execute();
 
-        // Insert statement
-        $ins = $conn->prepare("
-            INSERT INTO enquiry_assignments (
-                enquiry_id,
-service_id,
-                assignment_type,
-                technician_employee_id,
-                delivery_instructions,
-technician_instructions,
-                customer_location,
-                assigned_by,
-                assigned_on,
-                is_active,
-                updated_by,
-                updated_at,
-                completed_status,
-                enq_task_id,
-                amc_task_id,
-                service_task_id
-            ) VALUES (?, ?,?, ?, ?, ?, ?, NOW(), 1, ?, NOW(), 1, ?, ?, ?)
-        ");
-
-        $generated_ids = [];
-
+        // Insert new assignments
+        $ins = $conn->prepare("INSERT INTO enquiry_assignments (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, assigned_by, assigned_at, is_active, updated_by, updated_at, completed_status) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, ?, NOW(),1)");
         foreach ($technicians as $tech) {
-            // --- Generate unique task ID per technician ---
-            if ($assignment_type === "ENQUIRY") {
-                $res = $conn->query("SELECT enq_task_id FROM enquiry_assignments WHERE enq_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
-                $last = $res->fetch_assoc();
-                $nextNum = $last ? (intval(substr($last['enq_task_id'], 2)) + 1) : 1;
-                $enq_task_id = "ET" . $nextNum;
-                $amc_task_id = null;
-                $service_task_id = null;
-            } elseif ($assignment_type === "REFILLING") {
-                $res = $conn->query("SELECT amc_task_id FROM enquiry_assignments WHERE amc_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
-                $last = $res->fetch_assoc();
-                $nextNum = $last ? (intval(substr($last['amc_task_id'], 3)) + 1) : 1;
-                $amc_task_id = "AT" . $nextNum;
-                $enq_task_id = $enq_task_id_req;
-                $service_task_id = null;
-            } elseif ($assignment_type === "SERVICE") {
-                $res = $conn->query("SELECT service_task_id FROM enquiry_assignments WHERE service_task_id IS NOT NULL ORDER BY id DESC LIMIT 1");
-                $last = $res->fetch_assoc();
-                $nextNum = $last ? (intval(substr($last['service_task_id'], 2)) + 1) : 1;
-                $service_task_id = "ST" . $nextNum;
-                $enq_task_id = $enq_task_id_req;
-                $amc_task_id = $amc_task_id_req;
-            }
-
-            // --- Bind & insert row ---
-            $ins->bind_param(
-                "sssssssssss",
-                $enquiry_id,
-$service_id,
-                $assignment_type,
-                $tech,
-                $delivery_instructions,
-technician_instructions,
-                $customer_location,
-                $assigned_by,
-                $assigned_by,   // updated_by
-                $enq_task_id,
-                $amc_task_id,
-                $service_task_id
-            );
+            $ins->bind_param("sssssss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, $customer_location, $assigned_by, $assigned_by);
             $ins->execute();
-
-            // Collect for response
-            $generated_ids[] = [
-                "technician"     => $tech,
-                "enq_task_id"    => $enq_task_id,
-                "amc_task_id"    => $amc_task_id,
-                "service_task_id"=> $service_task_id
-            ];
         }
 
         // Log visit history if provided
@@ -203,33 +127,27 @@ technician_instructions,
         }
 
         $conn->commit();
-        echo json_encode([
-            "status" => "success",
-            "message" => "Assignments inserted",
-            "generated_task_ids" => $generated_ids
-        ]);
+        echo json_encode(["status" => "success", "message" => "Assignments inserted"]);
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Insert failed: ".$e->getMessage()]);
     }
     exit();
 }
+
 // ---------------------------
 // UPDATE ASSIGNMENTS (with technician status)
 // ---------------------------
 if ($mode === 'update') {
     $enquiry_id            = $data['enquiry_id'] ?? null;
-$service_id        = trim($data['service_id'] ?? '');
-$assignment_id            = $data['id'] ?? null;
     $assignment_type       = strtoupper(trim($data['assignment_type'] ?? ''));
     $technicians           = $data['technicians'] ?? [];
     $delivery_instructions = trim($data['delivery_instructions'] ?? '');
-$technician_instructions = trim($data['delivery_instructions'] ?? '');
     $customer_location     = trim($data['customer_location'] ?? '');
     $visit_date            = trim($data['visit_date'] ?? '');
     $technician_status     = $data['technician_status'] ?? []; // e.g. { "E002": 1 }
 
-    if (!$assignment_id || !is_array($technicians)) {
+    if (!$enquiry_id || !is_array($technicians)) {
         echo json_encode(["status" => "error", "message" => "Missing required fields"]);
         exit();
     }
@@ -241,12 +159,12 @@ $technician_instructions = trim($data['delivery_instructions'] ?? '');
             $placeholders = implode(",", array_fill(0, count($technicians), "?"));
             $del = $conn->prepare("
                 DELETE FROM enquiry_assignments 
-                WHERE id=? AND assignment_type=? 
+                WHERE enquiry_id=? AND assignment_type=? 
                 AND completed_status IS NULL
                 AND technician_employee_id NOT IN ($placeholders)
             ");
             $types = "ss" . str_repeat("s", count($technicians));
-            $params = array_merge([$assignment_id, $assignment_type], $technicians);
+            $params = array_merge([$enquiry_id, $assignment_type], $technicians);
             $del->bind_param($types, ...$params);
             $del->execute();
         }
@@ -258,9 +176,9 @@ $technician_instructions = trim($data['delivery_instructions'] ?? '');
             // Check if record exists
             $check = $conn->prepare("
                 SELECT id FROM enquiry_assignments 
-                WHERE id=? AND assignment_type=? AND technician_employee_id=? LIMIT 1
+                WHERE enquiry_id=? AND assignment_type=? AND technician_employee_id=? LIMIT 1
             ");
-            $check->bind_param("sss", $assignment_id, $assignment_type, $tech);
+            $check->bind_param("sss", $enquiry_id, $assignment_type, $tech);
             $check->execute();
             $row = $check->get_result()->fetch_assoc();
 
@@ -268,53 +186,34 @@ $technician_instructions = trim($data['delivery_instructions'] ?? '');
                 // Update existing assignment
                 $upd = $conn->prepare("
                     UPDATE enquiry_assignments 
-                    SET delivery_instructions=?, technician_instructions=?,customer_location=?, completed_status=?, 
+                    SET delivery_instructions=?, customer_location=?, completed_status=?, 
                         completed_at=IFNULL(completed_at, IF(? IS NOT NULL, NOW(), NULL)),
                         updated_by='admin', updated_at=NOW()
                     WHERE id=?
                 ");
-                $upd->bind_param("sssisi", $delivery_instructions,$technician_instructions, $customer_location, $completed_status, $completed_status, $assignment_id);
+                $upd->bind_param("ssisi", $delivery_instructions, $customer_location, $completed_status, $completed_status, $row['id']);
                 $upd->execute();
-if ($completed_status === 3) {
-    $updateService = $conn->prepare("
-        UPDATE service_list 
-        SET service_status='Completed', modified_by='admin', modified_at=NOW()
-        WHERE enquiry_id = ?
-    ");
-    $updateService->bind_param("s", $enquiry_id);
-    $updateService->execute();
-}
-
             } else {
                 // Insert new assignment
                 $ins = $conn->prepare("
                     INSERT INTO enquiry_assignments 
-                    (enquiry_id,service_id, assignment_type, technician_employee_id, delivery_instructions, technician_instructions, customer_location, 
-                     completed_status, completed_at, assigned_by, assigned_on, is_active, updated_by, updated_at) 
-                    VALUES (?, ?, ?, ?,?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
+                    (enquiry_id, assignment_type, technician_employee_id, delivery_instructions, customer_location, 
+                     completed_status, completed_at, assigned_by, assigned_at, is_active, updated_by, updated_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, IF(? IS NOT NULL, NOW(), NULL), ?, NOW(), 1, 'admin', NOW())
                 ");
-                $ins->bind_param("ssssssisss", $enquiry_id, $service_id, $assignment_type, $tech, $delivery_instructions, technician_instructions,
+                $ins->bind_param("ssssisss", $enquiry_id, $assignment_type, $tech, $delivery_instructions, 
                                  $customer_location, $completed_status, $completed_status, $loggedInUser);
                 $ins->execute();
-if ($completed_status === 3) {
-    $updateService = $conn->prepare("
-        UPDATE service_list 
-        SET service_status='Completed', modified_by='admin', modified_at=NOW()
-        WHERE enquiry_id = ?
-    ");
-    $updateService->bind_param("s", $enquiry_id);
-    $updateService->execute();
-}
             }
         }
 
         // Log visit history if visit_date provided
         if ($visit_date) {
             $vh = $conn->prepare("
-                INSERT INTO enquiry_visit_history (enquiry_id, added_by, visit_date, created_at) 
+                INSERT INTO enquiry_visit_history (enquiry_id, assignment_type, visit_date, created_at) 
                 VALUES (?, ?, ?, NOW())
             ");
-            $vh->bind_param("sss", $enquiry_id, 'admin', $visit_date);
+            $vh->bind_param("sss", $enquiry_id, $assignment_type, $visit_date);
             $vh->execute();
         }
 
@@ -337,17 +236,13 @@ if ($mode === 'fetch_detail') {
     $sql = "SELECT 
                 ea.id AS assignment_id,
                 ea.enquiry_id,
-		ea.enq_task_id,
-	    	ea.amc_task_id,
-	    	ea.service_task_id,
                 ea.assignment_type,
                 ea.technician_employee_id,
                 t.employee_name AS technician_name,
                 ea.assigned_by,
                 ea.delivery_instructions,
-		ea.technician_instructions,
                 ea.customer_location,
-                DATE_FORMAT(ea.assigned_on, '%d-%m-%Y') AS assigned_on,
+                DATE_FORMAT(ea.assigned_at, '%d-%m-%Y') AS assigned_at,
                 ea.completed_status,
                 DATE_FORMAT(ea.completed_at, '%d-%m-%Y') AS completed_at,
                 ea.remarks,
@@ -376,15 +271,11 @@ if ($mode === 'fetch_admin') {
         SELECT 
             ea.id AS assignment_id,
             ea.enquiry_id,
-	    ea.enq_task_id,
-	    ea.amc_task_id,
-	    ea.service_task_id,
             ea.assignment_type,
             ea.delivery_instructions,
-	ea.technician_instructions,
             ea.customer_location,
             ea.assigned_by,
-            ea.assigned_on,
+            ea.assigned_at,
             ea.created_at,
             ea.updated_at,
             ea.technician_employee_id,
@@ -396,7 +287,7 @@ if ($mode === 'fetch_admin') {
         FROM enquiry_assignments ea
         LEFT JOIN enquiries q ON q.enquiry_id = ea.enquiry_id
         LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-        ORDER BY ea.assigned_on DESC, ea.enquiry_id, ea.assignment_type, emp.employee_name
+        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type, emp.employee_name
     ";
 
     $res = $conn->query($sql);
@@ -431,16 +322,12 @@ if ($mode === 'fetch_admin') {
             "assignment_id"        => $row['assignment_id'],
             "enquiry_id"           => $row['enquiry_id'],
             "assignment_type"      => $row['assignment_type'],
-	"enq_task_id"      => $row['enq_task_id'],
-	"amc_task_id"      => $row['amc_task_id'],
-	"service_task_id"      => $row['service_task_id'],
             "client_name"          => $row['client_name'],
             "contact_no1"          => $row['contact_no1'],
             "delivery_instructions"=> $row['delivery_instructions'],
-"technician_instructions"=> $row['technician_instructions'],
             "customer_location"    => $row['customer_location'],
             "assigned_by"          => $row['assigned_by'],
-            "assigned_on"          => fmt_date($row['assigned_on']),
+            "assigned_at"          => fmt_date($row['assigned_at']),
             "created_at"           => fmt_date($row['created_at']),
             "updated_at"           => fmt_date($row['updated_at']),
             "employee_number"      => $row['technician_employee_id'],
@@ -460,9 +347,9 @@ if ($mode === 'fetch_admin') {
         "employee_name",
         "completed_status",
         "technician_names",
-        "assignment_type",
+        "delivery_instructions",
         "customer_location",
-        "assigned_on"
+        "assigned_at"
     ];
     $response['data'] = $final;
     echo json_encode($response);
@@ -487,7 +374,7 @@ if ($mode === 'fetch_by_technician') {
               AND x.assignment_type = ea.assignment_type
               AND x.technician_employee_id = ?
         )
-        ORDER BY ea.assigned_on DESC, ea.enquiry_id, ea.assignment_type
+        ORDER BY ea.assigned_at DESC, ea.enquiry_id, ea.assignment_type
     ";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $my_emp_no);
@@ -503,21 +390,15 @@ if ($mode === 'fetch_by_technician') {
                 "assignment_id"        => $row['id'], // primary key
                 "enquiry_id"           => $row['enquiry_id'],
                 "assignment_type"      => $row['assignment_type'],
-		"enq_task_id"      => $row['enq_task_id'],
-		"amc_task_id"      => $row['amc_task_id'],
-		"service_task_id"      => $row['service_task_id'],
-
                 "client_name"          => $row['client_name'],
                 "contact_no1"          => $row['contact_no1'],
                 "delivery_instructions"=> $row['delivery_instructions'],
-"technician_instructions"=> $row['technician_instructions'],
-
                 "customer_location"    => $row['customer_location'],
                 "assigned_by"          => $row['assigned_by'],
-                "assigned_on"          => fmt_date($row['assigned_on']),
+                "assigned_at"          => fmt_date($row['assigned_at']),
                 "created_at"           => fmt_date($row['created_at']),
                 "updated_at"           => fmt_date($row['updated_at']),
-                "completed_status"     => (string)$row['completed_status'],
+                "my_status"            => "Pending", // default text
                 "technicians"          => []
             ];
         }
@@ -530,9 +411,9 @@ if ($mode === 'fetch_by_technician') {
         ];
 
         // ✅ Set my_status as text instead of int
-      //  if ((string)$row['technician_employee_id'] === (string)$my_emp_no) {
-        //    $grouped[$key]['my_status'] = $row['completed_status'];
-        //}
+        if ((string)$row['technician_employee_id'] === (string)$my_emp_no) {
+            $grouped[$key]['my_status'] = $row['completed_status'];
+        }
 
         $grouped[$key]['technicians'][] = $tech;
     }
@@ -542,100 +423,131 @@ if ($mode === 'fetch_by_technician') {
     $response['columns'] = [
         "client_name",
         "contact_no1",
-        "completed_status",
-        "assignment_type",
+        "my_status",
+        "delivery_instructions",
         "customer_location",
-        "assigned_on"
+        "assigned_at"
     ];
     $response['data'] = array_values($grouped);
     echo json_encode($response);
     exit();
 }
 
-    // ---------------------------
-    // GET_ENQUIRY (details)
-    // ---------------------------
-    if ($mode === 'get_enquiry') {
-        $enquiry_id = $data['enquiry_id'] ?? null;
-        if (!$enquiry_id) throw new Exception("enquiry_id is required");
+  // ---------------------------
+// GET_ENQUIRY (details)
+// ---------------------------
+if ($mode === 'get_enquiry') {
+    $enquiry_id = $data['enquiry_id'] ?? null;
+    if (!$enquiry_id) throw new Exception("enquiry_id is required");
 
-        // enquiry basic
-        $es = $conn->prepare("SELECT enquiry_id, client_name, contact_person_name, contact_no1, address FROM enquiries WHERE enquiry_id = ? LIMIT 1");
-        $es->bind_param("s", $enquiry_id);
-        $es->execute();
-        $enquiry = $es->get_result()->fetch_assoc();
-        $es->close();
+    // enquiry basic info
+    $es = $conn->prepare("SELECT enquiry_id, client_name, contact_person_name, contact_no1, address 
+                          FROM enquiries WHERE enquiry_id = ? LIMIT 1");
+    $es->bind_param("s", $enquiry_id);
+    $es->execute();
+    $enquiry = $es->get_result()->fetch_assoc();
+    $es->close();
 
-        // assignments for this enquiry (flat list, each with lifecycle)
-       $asql = "
-    SELECT ea.*, emp.employee_name, al.amc_id
-    FROM enquiry_assignments ea
-    LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
-    LEFT JOIN amc_list al ON al.enquiry_id = ea.enquiry_id
-    WHERE ea.enquiry_id = ?
-    ORDER BY ea.assignment_type, ea.assigned_on DESC
-";
+    // assignments list (ENQUIRY / AMC / SERVICE)
+    $asql = "
+        SELECT 
+            ea.*, 
+            emp.employee_name,
+            sl.service_id
+        FROM enquiry_assignments ea
+        LEFT JOIN employees emp 
+            ON emp.employee_number = ea.technician_employee_id
+        LEFT JOIN service_list sl 
+            ON sl.service_task_id = ea.service_task_id
+        WHERE ea.enquiry_id = ?
+        ORDER BY ea.assignment_type, ea.assigned_at DESC
+    ";
+    $a = $conn->prepare($asql);
+    $a->bind_param("s", $enquiry_id);
+    $a->execute();
+    $ar = $a->get_result();
 
-        $a = $conn->prepare($asql);
-        $a->bind_param("s", $enquiry_id);
-        $a->execute();
-        $ar = $a->get_result();
+    $assignments = [];
+    while ($row = $ar->fetch_assoc()) {
+        $assignments[] = [
+            "assignment_id"        => $row['id'],
+            "employee_number"      => $row['technician_employee_id'],
+            "employee_name"        => $row['employee_name'],
+            "completed_status"     => $row['completed_status'],
+            "completed_at"         => fmt_date($row['completed_at']),
+            "delivery_instructions"=> $row['delivery_instructions'],
+            "customer_location"    => $row['customer_location'],
+            "assigned_by"          => $row['assigned_by'],
+            "assigned_at"          => fmt_date($row['assigned_at']),
+            "created_at"           => fmt_date($row['created_at']),
+            "updated_at"           => fmt_date($row['updated_at']),
+            "assignment_type"      => $row['assignment_type'],
 
-        $assignments = [];
-        while ($row = $ar->fetch_assoc()) {
-            $assignments[] = [
-		"assignment_id"        => $row['id'],
-		"enq_task_id"      => $row['enq_task_id'],
-		"service_id"      => $row['service_id'],
+            // ✅ include all task identifiers
+            "enq_task_id"          => $row['enq_task_id'],
+            "amc_task_id"          => $row['amc_task_id'],
+            "service_task_id"      => $row['service_task_id'],
 
-		"amc_task_id"      => $row['amc_task_id'],
-		"service_task_id"      => $row['service_task_id'],
-		"amc_id"      => $row['amc_id'],
-                "employee_number"       => $row['technician_employee_id'],
-                "employee_name"         => $row['employee_name'],
-                "completed_status"      => $row['completed_status'],
-                "completed_at"          => fmt_date($row['completed_at']),
-                "delivery_instructions" => $row['delivery_instructions'],
-"technician_instructions" => $row['technician_instructions'],
-                "customer_location"     => $row['customer_location'],
-                "assigned_by"           => $row['assigned_by'],
-                "assigned_on"           => fmt_date($row['assigned_on']),
-                "created_at"            => fmt_date($row['created_at']),
-                "updated_at"            => fmt_date($row['updated_at']),
-                "ass_type"              => $row['assignment_type']
-            ];
-        }
-        $a->close();
+            // ✅ service reference
+            "service_id"           => $row['service_id']
+        ];
+    }
+    $a->close();
 
-        // visit history
-        $vh = $conn->prepare("SELECT visit_date, added_by, added_at FROM enquiry_visit_history WHERE enquiry_id = ? ORDER BY added_at DESC");
-        $vh->bind_param("s", $enquiry_id);
-        $vh->execute();
-        $vhres = $vh->get_result();
-        $visits = [];
-        while ($row = $vhres->fetch_assoc()) {
-            $row['added_at'] = fmt_date($row['added_at']);
-            $visits[] = $row;
-        }
-        $vh->close();
+    // visit history
+    $vh = $conn->prepare("SELECT visit_date, added_by, added_at 
+                          FROM enquiry_visit_history 
+                          WHERE enquiry_id = ? ORDER BY added_at DESC");
+    $vh->bind_param("s", $enquiry_id);
+    $vh->execute();
+    $vhres = $vh->get_result();
+    $visits = [];
+    while ($row = $vhres->fetch_assoc()) {
+        $row['added_at'] = fmt_date($row['added_at']);
+        $visits[] = $row;
+    }
+    $vh->close();
 
-        // technician list
-        $tq = "SELECT id AS employee_id, employee_number, employee_name FROM employees WHERE role_id = (SELECT id FROM roles WHERE role_name = 'Technician') AND status = 1 ORDER BY employee_name ASC";
-        $tres = $conn->query($tq);
-        $tech_list = [];
-        while ($row = $tres->fetch_assoc()) $tech_list[] = $row;
+    // technician list
+    $tq = "SELECT id AS employee_id, employee_number, employee_name 
+           FROM employees 
+           WHERE role_id = (SELECT id FROM roles WHERE role_name = 'Technician') 
+             AND status = 1 
+           ORDER BY employee_name ASC";
+    $tres = $conn->query($tq);
+    $tech_list = [];
+    while ($row = $tres->fetch_assoc()) {
+        $tech_list[] = $row;
+    }
 
-        $response['status'] = "success";
-        $response['message'] = "Enquiry details fetched";
-        $response['data'] = [
+    // ✅ columns for UI
+    $columns = [
+        "employee_name",
+        "assignment_type",
+        "enq_task_id",
+        "amc_task_id",
+        "service_task_id",
+        "service_id",
+        "assigned_at",
+        "completed_status"
+    ];
+
+    $response = [
+        "status" => "success",
+        "message" => "Enquiry details fetched",
+        "columns" => $columns,
+        "data" => [
             "enquiry" => $enquiry,
             "assignments" => $assignments,
             "visit_history" => $visits,
             "technician_list" => $tech_list
-        ];
-        echo json_encode($response);
-        exit();
-    }
+        ]
+    ];
+
+    echo json_encode($response);
+    exit();
+}
+
 
    // TASK_DETAILS (fetch single assignment details by its id)
 if ($mode === "task_details") {
@@ -655,7 +567,7 @@ if ($mode === "task_details") {
     // format datetime fields if they exist
     $task['created_at']   = isset($task['created_at'])   ? fmt_date($task['created_at'])   : null;
     $task['updated_at']   = isset($task['updated_at'])   ? fmt_date($task['updated_at'])   : null;
-    $task['assigned_on']  = isset($task['assigned_on'])  ? fmt_date($task['assigned_on'])  : null;
+    $task['assigned_at']  = isset($task['assigned_at'])  ? fmt_date($task['assigned_at'])  : null;
     $task['completed_at'] = isset($task['completed_at']) ? fmt_date($task['completed_at']) : null;
 
     $response['status']  = "success";
