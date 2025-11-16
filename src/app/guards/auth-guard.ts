@@ -44,7 +44,7 @@ export class AuthGuard implements CanActivate {
     // 🔹 3. Define allowed routes by role
     const adminRoutes = [
       '/enquiry-list', '/employee-list', '/add-employee', '/assign-role',
-      '/config', '/amc-list', '/amc-update', '/service-list', '/service-update'
+      '/config', '/amc-list', '/amc-update', '/service-list', '/service-update', '/create-enquiry', '/tech-assign'
     ];
     const techRoutes = [
       '/task-list', '/task-view'

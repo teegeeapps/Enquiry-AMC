@@ -188,7 +188,7 @@ export class CreateEnquiryComponent implements OnInit {
           requirement: result.requirement,
           requirement_category: result.requirement_category,
           source: result.source_of_enquiry,
-          enquiry_date: result.enquiry_date,
+          enquiry_date: this.convertToYYYYMMDD(result.enquiry_date),
           requested_delivery_date: result.requested_delivery_date,
           delivered_date: result.delivered_date,
           enquiry_status: result.enquiry_status_id.toString(),
@@ -358,5 +358,10 @@ export class CreateEnquiryComponent implements OnInit {
     // Allow only digits (0-9)
     return charCode >= 48 && charCode <= 57;
   }
+
+  convertToYYYYMMDD(dateStr: string): string {
+  const [dd, mm, yyyy] = dateStr.split('/');
+  return `${yyyy}/${mm}/${dd}`;
+}
 
 }
