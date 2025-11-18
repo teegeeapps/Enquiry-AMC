@@ -433,121 +433,81 @@ if ($mode === 'fetch_by_technician') {
     exit();
 }
 
-  // ---------------------------
-// GET_ENQUIRY (details)
-// ---------------------------
-if ($mode === 'get_enquiry') {
-    $enquiry_id = $data['enquiry_id'] ?? null;
-    if (!$enquiry_id) throw new Exception("enquiry_id is required");
+    // ---------------------------
+    // GET_ENQUIRY (details)
+    // ---------------------------
+    if ($mode === 'get_enquiry') {
+        $enquiry_id = $data['enquiry_id'] ?? null;
+        if (!$enquiry_id) throw new Exception("enquiry_id is required");
 
-    // enquiry basic info
-    $es = $conn->prepare("SELECT enquiry_id, client_name, contact_person_name, contact_no1, address 
-                          FROM enquiries WHERE enquiry_id = ? LIMIT 1");
-    $es->bind_param("s", $enquiry_id);
-    $es->execute();
-    $enquiry = $es->get_result()->fetch_assoc();
-    $es->close();
+        // enquiry basic
+        $es = $conn->prepare("SELECT enquiry_id, client_name, contact_person_name, contact_no1, address FROM enquiries WHERE enquiry_id = ? LIMIT 1");
+        $es->bind_param("s", $enquiry_id);
+        $es->execute();
+        $enquiry = $es->get_result()->fetch_assoc();
+        $es->close();
 
-    // assignments list (ENQUIRY / AMC / SERVICE)
-    $asql = "
-        SELECT 
-            ea.*, 
-            emp.employee_name,
-            sl.service_id
-        FROM enquiry_assignments ea
-        LEFT JOIN employees emp 
-            ON emp.employee_number = ea.technician_employee_id
-        LEFT JOIN service_list sl 
-            ON sl.service_task_id = ea.service_task_id
-        WHERE ea.enquiry_id = ?
-        ORDER BY ea.assignment_type, ea.assigned_at DESC
-    ";
-    $a = $conn->prepare($asql);
-    $a->bind_param("s", $enquiry_id);
-    $a->execute();
-    $ar = $a->get_result();
+        // assignments for this enquiry (flat list, each with lifecycle)
+        $asql = "
+            SELECT ea.*, emp.employee_name
+            FROM enquiry_assignments ea
+            LEFT JOIN employees emp ON emp.employee_number = ea.technician_employee_id
+            WHERE ea.enquiry_id = ?
+            ORDER BY ea.assignment_type, ea.assigned_at DESC
+        ";
+        $a = $conn->prepare($asql);
+        $a->bind_param("s", $enquiry_id);
+        $a->execute();
+        $ar = $a->get_result();
 
-    $assignments = [];
-    while ($row = $ar->fetch_assoc()) {
-        $assignments[] = [
-            "assignment_id"        => $row['id'],
-            "employee_number"      => $row['technician_employee_id'],
-            "employee_name"        => $row['employee_name'],
-            "completed_status"     => $row['completed_status'],
-            "completed_at"         => fmt_date($row['completed_at']),
-            "delivery_instructions"=> $row['delivery_instructions'],
-            "customer_location"    => $row['customer_location'],
-            "assigned_by"          => $row['assigned_by'],
-            "assigned_at"          => fmt_date($row['assigned_at']),
-            "created_at"           => fmt_date($row['created_at']),
-            "updated_at"           => fmt_date($row['updated_at']),
-            "assignment_type"      => $row['assignment_type'],
+        $assignments = [];
+        while ($row = $ar->fetch_assoc()) {
+            $assignments[] = [
+		"assignment_id"        => $row['id'],
+                "employee_number"       => $row['technician_employee_id'],
+                "employee_name"         => $row['employee_name'],
+                "completed_status"      => $row['completed_status'],
+                "completed_at"          => fmt_date($row['completed_at']),
+                "delivery_instructions" => $row['delivery_instructions'],
+                "customer_location"     => $row['customer_location'],
+                "assigned_by"           => $row['assigned_by'],
+                "assigned_at"           => fmt_date($row['assigned_at']),
+                "created_at"            => fmt_date($row['created_at']),
+                "updated_at"            => fmt_date($row['updated_at']),
+                "ass_type"              => $row['assignment_type']
+            ];
+        }
+        $a->close();
 
-            // ✅ include all task identifiers
-            "enq_task_id"          => $row['enq_task_id'],
-            "amc_task_id"          => $row['amc_task_id'],
-            "service_task_id"      => $row['service_task_id'],
+        // visit history
+        $vh = $conn->prepare("SELECT visit_date, added_by, added_at FROM enquiry_visit_history WHERE enquiry_id = ? ORDER BY added_at DESC");
+        $vh->bind_param("s", $enquiry_id);
+        $vh->execute();
+        $vhres = $vh->get_result();
+        $visits = [];
+        while ($row = $vhres->fetch_assoc()) {
+            $row['added_at'] = fmt_date($row['added_at']);
+            $visits[] = $row;
+        }
+        $vh->close();
 
-            // ✅ service reference
-            "service_id"           => $row['service_id']
-        ];
-    }
-    $a->close();
+        // technician list
+        $tq = "SELECT id AS employee_id, employee_number, employee_name FROM employees WHERE role_id = (SELECT id FROM roles WHERE role_name = 'Technician') AND status = 1 ORDER BY employee_name ASC";
+        $tres = $conn->query($tq);
+        $tech_list = [];
+        while ($row = $tres->fetch_assoc()) $tech_list[] = $row;
 
-    // visit history
-    $vh = $conn->prepare("SELECT visit_date, added_by, added_at 
-                          FROM enquiry_visit_history 
-                          WHERE enquiry_id = ? ORDER BY added_at DESC");
-    $vh->bind_param("s", $enquiry_id);
-    $vh->execute();
-    $vhres = $vh->get_result();
-    $visits = [];
-    while ($row = $vhres->fetch_assoc()) {
-        $row['added_at'] = fmt_date($row['added_at']);
-        $visits[] = $row;
-    }
-    $vh->close();
-
-    // technician list
-    $tq = "SELECT id AS employee_id, employee_number, employee_name 
-           FROM employees 
-           WHERE role_id = (SELECT id FROM roles WHERE role_name = 'Technician') 
-             AND status = 1 
-           ORDER BY employee_name ASC";
-    $tres = $conn->query($tq);
-    $tech_list = [];
-    while ($row = $tres->fetch_assoc()) {
-        $tech_list[] = $row;
-    }
-
-    // ✅ columns for UI
-    $columns = [
-        "employee_name",
-        "assignment_type",
-        "enq_task_id",
-        "amc_task_id",
-        "service_task_id",
-        "service_id",
-        "assigned_at",
-        "completed_status"
-    ];
-
-    $response = [
-        "status" => "success",
-        "message" => "Enquiry details fetched",
-        "columns" => $columns,
-        "data" => [
+        $response['status'] = "success";
+        $response['message'] = "Enquiry details fetched";
+        $response['data'] = [
             "enquiry" => $enquiry,
             "assignments" => $assignments,
             "visit_history" => $visits,
             "technician_list" => $tech_list
-        ]
-    ];
-
-    echo json_encode($response);
-    exit();
-}
-
+        ];
+        echo json_encode($response);
+        exit();
+    }
 
    // TASK_DETAILS (fetch single assignment details by its id)
 if ($mode === "task_details") {
